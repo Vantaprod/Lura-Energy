@@ -1,0 +1,257 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  QUOTED
+  WON
+  LOST
+}
+
+enum MediaKind {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+model User {
+  id                  String            @id @default(cuid())
+  email               String            @unique
+  name                String
+  passwordHash        String
+  role                Role              @default(ADMIN)
+  active              Boolean           @default(true)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  lastLoginAt         DateTime?
+  sessions            Session[]
+  auditLogs           AuditLog[]
+  invitationsCreated  AdminInvitation[] @relation("Inviter")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+model LoginAttempt {
+  id         String   @id @default(cuid())
+  key        String   @unique
+  failures   Int      @default(0)
+  lockedUntil DateTime?
+  updatedAt  DateTime @updatedAt
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model ProductCategory {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  sortOrder   Int       @default(0)
+  published   Boolean   @default(false)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id              String                @id @default(cuid())
+  name            String
+  slug            String                @unique
+  categoryId      String?
+  category        ProductCategory?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  summary         String?
+  description     String?
+  status          String?
+  featured        Boolean               @default(false)
+  warranty        String?
+  seoTitle        String?
+  seoDescription  String?
+  published       Boolean               @default(false)
+  sortOrder       Int                   @default(0)
+  specifications  ProductSpecification[]
+  media           Media[]
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model ProductSpecification {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  label     String
+  value     String
+  unit      String?
+  sortOrder Int     @default(0)
+}
+
+model Project {
+  id             String   @id @default(cuid())
+  title          String
+  slug           String   @unique
+  category       String?
+  location       String?
+  clientName     String?
+  description    String?
+  systemCapacity String?
+  completionDate DateTime?
+  featured       Boolean  @default(false)
+  published      Boolean  @default(false)
+  sortOrder      Int      @default(0)
+  media          Media[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model Solution {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  summary     String?
+  description String?
+  published   Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  summary     String?
+  description String?
+  benefits    Json?
+  process     Json?
+  published   Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Media {
+  id        String    @id @default(cuid())
+  kind      MediaKind
+  url       String
+  alt       String?
+  title     String?
+  mimeType  String?
+  sizeBytes Int?
+  productId String?
+  product   Product?  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  projectId String?
+  project   Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  role      String?
+  company   String?
+  quote     String
+  imageUrl  String?
+  published Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FAQ {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  published Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Resource {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  summary       String?
+  body          String?
+  coverImageUrl String?
+  published     Boolean  @default(false)
+  publishedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Lead {
+  id                  String     @id @default(cuid())
+  name                String
+  email               String
+  phone               String?
+  location            String?
+  propertyType        String?
+  company             String?
+  interestedSolution  String?
+  interestedProduct   String?
+  energyRequirements  String?
+  message             String
+  preferredContact    String?
+  consent             Boolean    @default(false)
+  status              LeadStatus @default(NEW)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model AdminInvitation {
+  id        String   @id @default(cuid())
+  email     String
+  role      Role     @default(ADMIN)
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  inviterId String?
+  inviter   User?     @relation("Inviter", fields: [inviterId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}

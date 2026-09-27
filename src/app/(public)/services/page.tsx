@@ -1,0 +1,2 @@
+import { prisma } from '@/lib/db/prisma'; import { ContentIndex } from '@/components/public/content-index';
+export const dynamic = 'force-dynamic'; export default async function ServicesPage() { const items=(process.env.NODE_ENV === 'development' && process.env.PREVIEW_WITHOUT_DATABASE)==='true'?[]:await prisma.service.findMany({where:{published:true},orderBy:{sortOrder:'asc'}}); return <ContentIndex title="Services" eyebrow="How Lura can help" description="Services currently published by Lura." items={items} path="/services"/>; }

@@ -1,0 +1,2 @@
+import { redirect } from 'next/navigation';import { getCurrentUser } from '@/lib/auth/session';import { AdminsManager } from '@/components/admin/admins-manager';
+export default async function AdministratorsPage(){const user=await getCurrentUser();if(!user)redirect('/admin/login');if(user.role!=='OWNER')redirect('/admin');return <section><p className="eyebrow">Access control</p><h1 style={{fontSize:'3rem'}}>Administrators</h1><p className="form-note">The server enforces active accounts plus pending invitations against the seat limit.</p><AdminsManager/></section>;}

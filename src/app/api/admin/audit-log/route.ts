@@ -1,0 +1,2 @@
+import { NextResponse } from 'next/server';import { prisma } from '@/lib/db/prisma';import { getCurrentUser } from '@/lib/auth/session';import { can } from '@/lib/permissions/policy';
+export async function GET(){const user=await getCurrentUser();if(!user||!can(user.role,'audit.read'))return NextResponse.json({error:'Unauthorized'},{status:401});return NextResponse.json(await prisma.auditLog.findMany({include:{actor:{select:{name:true,email:true}}},orderBy:{createdAt:'desc'},take:200}));}

@@ -1,0 +1,2 @@
+import Link from 'next/link';
+export function SiteHeader() { return <header className="site-header"><Link className="wordmark" href="/">LURA<span>ENERGY</span></Link><nav aria-label="Main navigation"><Link href="/products">Products</Link><Link href="/solutions">Solutions</Link><Link href="/projects">Projects</Link><Link href="/services">Services</Link><Link href="/resources">Resources</Link><Link href="/about">About</Link></nav><Link className="button button-small" href="/contact">Request a quote <span aria-hidden="true">↗</span></Link></header>; }

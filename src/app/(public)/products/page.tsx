@@ -1,0 +1,3 @@
+import { prisma } from '@/lib/db/prisma'; import { ContentIndex } from '@/components/public/content-index';
+export const dynamic = 'force-dynamic';
+export default async function ProductsPage() { const items = (process.env.NODE_ENV === 'development' && process.env.PREVIEW_WITHOUT_DATABASE) === 'true' ? [] : await prisma.product.findMany({ where: { published: true }, include: { category: true,media:true }, orderBy: { sortOrder: 'asc' } }); return <ContentIndex title="Products" eyebrow="Lura portfolio" description="Explore the products currently published by Lura." items={items.map(item => ({ ...item, category: item.category?.name ?? null }))} path="/products" />; }

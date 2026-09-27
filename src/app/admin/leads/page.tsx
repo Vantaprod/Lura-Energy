@@ -1,0 +1,1 @@
+import { LeadsManager } from '@/components/admin/leads-manager';import { getCurrentUser } from '@/lib/auth/session';import { redirect } from 'next/navigation';export default async function AdminLeads(){if(!await getCurrentUser())redirect('/admin/login');return <section><p className="eyebrow">Customer enquiries</p><h1 style={{fontSize:'3rem'}}>Leads</h1><LeadsManager/></section>;}

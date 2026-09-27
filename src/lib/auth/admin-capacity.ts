@@ -1,0 +1,1 @@
+export const INITIAL_ADMIN_SEAT_LIMIT = 6;

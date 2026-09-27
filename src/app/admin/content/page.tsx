@@ -1,0 +1,2 @@
+import { redirect } from 'next/navigation';import { getCurrentUser } from '@/lib/auth/session';import { SettingsEditor } from '@/components/admin/settings-editor';
+export default async function ContentSettingsPage(){const user=await getCurrentUser();if(!user)redirect('/admin/login');if(user.role!=='OWNER')redirect('/admin');return <section><p className="eyebrow">CMS</p><h1 style={{fontSize:'3rem'}}>Site settings</h1><p className="form-note">Only enter company-approved statements and official contact details. Empty values stay unpublished.</p><SettingsEditor/></section>;}
