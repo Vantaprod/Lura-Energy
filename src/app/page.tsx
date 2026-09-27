@@ -1,7 +1,24 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/db/prisma';
+import { HeroCarousel, type HeroSlide } from '@/components/public/hero-carousel';
 
 export const dynamic = 'force-dynamic';
+
+function parseHeroImages(value: unknown): HeroSlide[] {
+  if (typeof value !== 'string' || !value.trim()) return [];
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter(
+        (item): item is { url: string; alt?: string } =>
+          item && typeof item === 'object' && typeof item.url === 'string',
+      )
+      .map((item) => ({ url: item.url, alt: item.alt ?? '' }));
+  } catch {
+    return [];
+  }
+}
 
 export default async function HomePage() {
   const isPreview =
@@ -18,9 +35,9 @@ export default async function HomePage() {
                 'home.heroEyebrow',
                 'home.heroTitle',
                 'home.heroBody',
+                'home.heroImages',
                 'home.heroImageUrl',
                 'home.heroImageAlt',
-                'home.heroVideoUrl',
                 'home.heroPrimaryLabel',
                 'home.heroPrimaryHref',
                 'home.heroSecondaryLabel',
@@ -65,11 +82,8 @@ export default async function HomePage() {
   };
 
   const heroEyebrow = pick('home.heroEyebrow', 'Energy, by Lura');
-  const heroTitle = pick('home.heroTitle', 'Lura Energy');
+  const heroTitle = pick('home.heroTitle', 'Power for what comes next');
   const heroBody = pick('home.heroBody', '');
-  const heroImageUrl = pick('home.heroImageUrl', '');
-  const heroImageAlt = pick('home.heroImageAlt', '');
-  const heroVideoUrl = pick('home.heroVideoUrl', '');
   const primaryLabel = pick('home.heroPrimaryLabel', 'Request a quote');
   const primaryHref = pick('home.heroPrimaryHref', '/contact');
   const secondaryLabel = pick('home.heroSecondaryLabel', 'Explore products');
@@ -78,28 +92,24 @@ export default async function HomePage() {
   const ctaBody = pick('home.ctaBody', '');
   const intro = pick('company.intro', '');
 
-  const hasHeroMedia = Boolean(heroVideoUrl || heroImageUrl);
+  let heroSlides = parseHeroImages(content['home.heroImages']);
+  if (heroSlides.length === 0) {
+    const singleUrl = pick('home.heroImageUrl', '');
+    if (singleUrl) {
+      heroSlides = [{ url: singleUrl, alt: pick('home.heroImageAlt', '') }];
+    }
+  }
+  const hasHeroMedia = heroSlides.length > 0;
 
   return (
     <main>
       <section className="hero">
-        {heroVideoUrl ? (
-          <div className="hero-media">
-            <video
-              src={heroVideoUrl}
-              autoPlay
-              muted
-              loop
-              playsInline
-              poster={heroImageUrl || undefined}
-            />
-          </div>
-        ) : heroImageUrl ? (
-          <div className="hero-media">
-            <img src={heroImageUrl} alt={heroImageAlt} />
-          </div>
+        {hasHeroMedia ? (
+          <>
+            <HeroCarousel slides={heroSlides} />
+            <div className="hero-scrim" aria-hidden="true" />
+          </>
         ) : null}
-        {hasHeroMedia && <div className="hero-scrim" aria-hidden="true" />}
         <div className="hero-content">
           <p className="eyebrow">{heroEyebrow}</p>
           <h1 className="display">{heroTitle}</h1>

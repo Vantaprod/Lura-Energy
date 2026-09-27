@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { prisma } from '@/lib/db/prisma';
 
@@ -31,8 +32,6 @@ async function loadContactSettings(): Promise<ContactSettings> {
       whatsapp: (map['contact.whatsapp'] ?? '').replace(/\D/g, ''),
     };
   } catch {
-    // DB unreachable during prerender (e.g. CI, cold deploy, local build).
-    // Render the shell without contact details rather than failing the build.
     return empty;
   }
 }
@@ -44,22 +43,22 @@ export async function SiteFooter() {
   return (
     <footer className="site-footer">
       <div>
-        <Link className="wordmark" href="/">
-          LURA<span>ENERGY</span>
-        </Link>
-        <p>Premium solar energy systems, delivered end to end.</p>
+        <div className="brand-logo-wrap">
+          <Image
+            src="/brand/lura-logo.png"
+            alt="Lura Energy"
+            width={184}
+            height={80}
+            className="brand-logo"
+          />
+        </div>
+        <p>Energy Permutations.</p>
       </div>
       <div>
         {email && <a href={`mailto:${email}`}>{email}</a>}
-        {phone && (
-          <a href={`tel:${phone.replace(/[^+\d]/g, '')}`}>{phone}</a>
-        )}
+        {phone && <a href={`tel:${phone.replace(/[^+\d]/g, '')}`}>{phone}</a>}
         {whatsapp && (
-          <a
-            href={`https://wa.me/${whatsapp}`}
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer">
             WhatsApp {'\u2192'}
           </a>
         )}
