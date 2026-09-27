@@ -1,2 +1,30 @@
 import Link from 'next/link';
-export function SiteHeader() { return <header className="site-header"><Link className="wordmark" href="/">LURA<span>ENERGY</span></Link><nav aria-label="Main navigation"><Link href="/products">Products</Link><Link href="/solutions">Solutions</Link><Link href="/projects">Projects</Link><Link href="/services">Services</Link><Link href="/resources">Resources</Link><Link href="/about">About</Link></nav><Link className="button button-small" href="/contact">Request a quote <span aria-hidden="true">↗</span></Link></header>; }
+
+const NAV_ITEMS = [
+  { href: '/products', label: 'Products' },
+  { href: '/solutions', label: 'Solutions' },
+  { href: '/projects', label: 'Projects' },
+  { href: '/services', label: 'Services' },
+  { href: '/resources', label: 'Resources' },
+  { href: '/about', label: 'About' },
+] as const;
+
+export function SiteHeader() {
+  return (
+    <header className="site-header">
+      <Link className="wordmark" href="/" aria-label="Lura Energy, home">
+        LURA<span>ENERGY</span>
+      </Link>
+      <nav aria-label="Main navigation">
+        {NAV_ITEMS.map((item) => (
+          <Link key={item.href} href={item.href}>
+            {item.label}
+          </Link>
+        ))}
+      </nav>
+      <Link className="button button-small" href="/contact">
+        Request a quote
+      </Link>
+    </header>
+  );
+}
