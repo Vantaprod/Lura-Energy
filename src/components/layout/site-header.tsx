@@ -17,10 +17,10 @@ export function SiteHeader() {
         <Image
           src="/brand/lura-logo.png"
           alt="Lura Energy"
-          width={200}
-          height={80}
+          width={220}
+          height={88}
           priority
-          style={{ height: '52px', width: 'auto' }}
+          style={{ height: '64px', width: 'auto' }}
         />
       </Link>
       <nav aria-label="Main navigation">
