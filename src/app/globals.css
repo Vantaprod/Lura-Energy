@@ -115,8 +115,7 @@ p { margin: 0; }
 
 .eyebrow-plain::before { content: none; }
 
-.site-header {
-  min-height: 84px;
+.site-header { min-height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -150,7 +149,7 @@ p { margin: 0; }
   flex-shrink: 0;
 }
 
-.wordmark img { height: 60px; width: auto; }
+.wordmark img { height: 34px; width: auto; }
 
 .button {
   display: inline-flex;
@@ -410,14 +409,9 @@ p { margin: 0; }
   font-size: 15px;
 }
 
-.footer-logo {
-  display: inline-flex;
-  background: #FFFFFF;
-  padding: 10px 14px;
-  border-radius: 4px;
-}
+.footer-logo { display: inline-flex; align-items: center; }
 
-.footer-logo img { height: 48px; width: auto; }
+.footer-logo img { height: 26px; width: auto; }
 
 .site-footer small {
   display: block;

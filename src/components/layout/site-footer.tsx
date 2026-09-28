@@ -33,8 +33,8 @@ export async function SiteFooter() {
             <Image
               src="/brand/lura-logo.png"
               alt="Lura Energy"
-              width={220}
-              height={88}
+              width={110}
+              height={32}
             />
           </Link>
           <p style={{ marginTop: '16px' }}>Home of Premium Solar.</p>
