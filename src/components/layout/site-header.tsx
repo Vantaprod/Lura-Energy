@@ -1,5 +1,5 @@
+import Image from 'next/image';
 import Link from 'next/link';
-import { LuraLogo } from './lura-logo';
 
 const NAV_ITEMS = [
   { href: '/products', label: 'Products' },
@@ -14,18 +14,21 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <Link className="wordmark" href="/" aria-label="Lura Energy, home">
-        <LuraLogo height={40} />
+        <Image
+          src="/brand/lura-logo.png"
+          alt="Lura Energy"
+          width={200}
+          height={80}
+          priority
+          style={{ height: '52px', width: 'auto' }}
+        />
       </Link>
       <nav aria-label="Main navigation">
         {NAV_ITEMS.map((item) => (
-          <Link key={item.href} href={item.href}>
-            {item.label}
-          </Link>
+          <Link key={item.href} href={item.href}>{item.label}</Link>
         ))}
       </nav>
-      <Link className="button button-small" href="/contact">
-        Request a quote
-      </Link>
+      <Link className="button button-small" href="/contact">Request a quote</Link>
     </header>
   );
 }
