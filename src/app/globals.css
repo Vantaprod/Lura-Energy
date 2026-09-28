@@ -1,18 +1,18 @@
-/* ============================================================
-   LURA â€” DESIGN TOKENS + PRIMITIVES
+﻿/* ============================================================
+   LURA ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â DESIGN TOKENS + PRIMITIVES
    ============================================================ */
 :root {
-  --blue-950: #08123E;
-  --blue-900: #1E2D78;
-  --blue-800: #26368A;
-  --blue-700: #2E40A0;
-  --blue-600: #3A4EB8;
-  --blue-500: #4A5FD0;
+  --blue-950: #0A1550;
+  --blue-900: #1428A0;
+  --blue-800: #1A2FB8;
+  --blue-700: #2547CC;
+  --blue-600: #2A50E0;
+  --blue-500: #3A65F0;
   --blue-100: #E8EEF9;
 
   --orange-600: #D96A0F;
   --orange-500: #F58220;
-  --orange-400: #FB9B3E;
+  --orange-400: #F5A623;
   --orange-100: #FFEDE0;
 
   --ink:      #0B0F17;
@@ -672,25 +672,7 @@ summary:focus-visible {
   .admin-top { align-items: flex-start; flex-direction: column; }
 }
 /* ============================================================
-   BRAND LOGO
-   ============================================================ */
-.brand-logo {
-  height: 40px;
-  width: auto;
-  display: block;
-}
-.site-footer .brand-logo-wrap {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  background: rgba(255,255,255,0.06);
-  border-radius: var(--radius);
-  margin-bottom: 1rem;
-}
-.site-footer .brand-logo { height: 34px; }
-
-/* ============================================================
-   HERO CAROUSEL — smooth crossfade (itel-style)
+   HERO CAROUSEL Ã¢â‚¬â€ smooth crossfade (itel-style)
    ============================================================ */
 .hero-carousel {
   position: absolute;
@@ -739,4 +721,36 @@ summary:focus-visible {
 
 @media (prefers-reduced-motion: reduce) {
   .hero-slide { transition-duration: 0.01ms; }
+}
+/* ============================================================
+   BRAND GRID TEXTURE â€” signature Lura pattern
+   ============================================================ */
+.hero::before,
+.section-dark::before,
+.split-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+.hero > *,
+.section-dark > *,
+.split-cta > * {
+  position: relative;
+  z-index: 1;
+}
+/* Remove the old solid orange bar on split-cta; the grid replaces it */
+.split-cta::before {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+  background-size: 48px 48px;
+  width: auto;
+  left: 0; top: 0; bottom: 0; right: 0;
+  background-color: transparent;
 }

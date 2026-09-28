@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import { prisma } from '@/lib/db/prisma';
 import { HeroCarousel, type HeroSlide } from '@/components/public/hero-carousel';
 
@@ -81,7 +81,7 @@ export default async function HomePage() {
     return typeof value === 'string' && value.trim() ? value : fallback;
   };
 
-  const heroEyebrow = pick('home.heroEyebrow', 'Energy, by Lura');
+  const heroEyebrow = pick('home.heroEyebrow', 'Home of Premium Solar');
   const heroTitle = pick('home.heroTitle', 'Power for what comes next');
   const heroBody = pick('home.heroBody', '');
   const primaryLabel = pick('home.heroPrimaryLabel', 'Request a quote');

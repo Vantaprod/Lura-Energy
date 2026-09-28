@@ -1,6 +1,6 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { prisma } from '@/lib/db/prisma';
+import { LuraLogo } from './lura-logo';
 
 type ContactSettings = {
   email: string;
@@ -43,16 +43,10 @@ export async function SiteFooter() {
   return (
     <footer className="site-footer">
       <div>
-        <div className="brand-logo-wrap">
-          <Image
-            src="/brand/lura-logo.png"
-            alt="Lura Energy"
-            width={184}
-            height={80}
-            className="brand-logo"
-          />
-        </div>
-        <p>Energy Permutations.</p>
+        <Link className="wordmark" href="/" aria-label="Lura Energy, home">
+          <LuraLogo variant="white" height={44} />
+        </Link>
+        <p style={{ marginTop: '1rem' }}>Home of Premium Solar.</p>
       </div>
       <div>
         {email && <a href={`mailto:${email}`}>{email}</a>}
