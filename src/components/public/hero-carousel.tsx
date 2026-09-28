@@ -9,7 +9,6 @@ export type HeroSlide = {
 
 type Props = {
   slides: HeroSlide[];
-  /** Crossfade interval in milliseconds. */
   interval?: number;
 };
 
@@ -32,7 +31,7 @@ export function HeroCarousel({ slides, interval = 6000 }: Props) {
       {slides.map((slide, i) => (
         <div
           key={slide.url}
-          className={`hero-slide ${i === index ? 'is-active' : ''}`}
+          className={'hero-slide' + (i === index ? ' is-active' : '')}
         >
           <img src={slide.url} alt={slide.alt} />
         </div>
@@ -43,9 +42,9 @@ export function HeroCarousel({ slides, interval = 6000 }: Props) {
             <button
               key={slide.url}
               type="button"
-              className={`hero-dot ${i === index ? 'is-active' : ''}`}
+              className={'hero-dot' + (i === index ? ' is-active' : '')}
               onClick={() => setIndex(i)}
-              aria-label={`Show slide ${i + 1}`}
+              aria-label={'Show slide ' + (i + 1)}
               aria-selected={i === index}
               role="tab"
             />

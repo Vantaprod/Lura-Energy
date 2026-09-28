@@ -1,5 +1,6 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 import { prisma } from '@/lib/db/prisma';
+import { loadHeroSlides } from '@/lib/hero-slides';
 import { HeroCarousel, type HeroSlide } from '@/components/public/hero-carousel';
 
 export const dynamic = 'force-dynamic';
@@ -36,8 +37,6 @@ export default async function HomePage() {
                 'home.heroTitle',
                 'home.heroBody',
                 'home.heroImages',
-                'home.heroImageUrl',
-                'home.heroImageAlt',
                 'home.heroPrimaryLabel',
                 'home.heroPrimaryHref',
                 'home.heroSecondaryLabel',
@@ -92,13 +91,9 @@ export default async function HomePage() {
   const ctaBody = pick('home.ctaBody', '');
   const intro = pick('company.intro', '');
 
-  let heroSlides = parseHeroImages(content['home.heroImages']);
-  if (heroSlides.length === 0) {
-    const singleUrl = pick('home.heroImageUrl', '');
-    if (singleUrl) {
-      heroSlides = [{ url: singleUrl, alt: pick('home.heroImageAlt', '') }];
-    }
-  }
+  const settingSlides = parseHeroImages(content['home.heroImages']);
+  const diskSlides = settingSlides.length === 0 ? await loadHeroSlides() : [];
+  const heroSlides = settingSlides.length > 0 ? settingSlides : diskSlides;
   const hasHeroMedia = heroSlides.length > 0;
 
   return (
@@ -115,12 +110,8 @@ export default async function HomePage() {
           <h1 className="display">{heroTitle}</h1>
           {heroBody && <p className="lead">{heroBody}</p>}
           <div className="hero-actions">
-            <Link className="button" href={primaryHref}>
-              {primaryLabel}
-            </Link>
-            <Link className="button button-ghost" href={secondaryHref}>
-              {secondaryLabel}
-            </Link>
+            <Link className="button" href={primaryHref}>{primaryLabel}</Link>
+            <Link className="button button-ghost" href={secondaryHref}>{secondaryLabel}</Link>
           </div>
         </div>
       </section>
@@ -136,8 +127,7 @@ export default async function HomePage() {
               <p className="lead">{intro}</p>
             ) : (
               <p className="form-note">
-                Company introduction pending publication. Lura administrators can add approved
-                company information in site settings.
+                Company introduction pending publication. Lura administrators can add approved company information in site settings.
               </p>
             )}
           </div>
@@ -150,9 +140,7 @@ export default async function HomePage() {
             <p className="eyebrow">Solutions</p>
             <h2>Solutions from Lura.</h2>
           </div>
-          <Link className="button button-ghost button-small" href="/solutions">
-            All solutions
-          </Link>
+          <Link className="button button-ghost button-small" href="/solutions">All solutions</Link>
         </div>
         {solutions.length ? (
           <div className="grid">
@@ -162,7 +150,7 @@ export default async function HomePage() {
                   <h3>{item.name}</h3>
                   {item.summary && <p>{item.summary}</p>}
                 </div>
-                <Link href={`/solutions/${item.slug}`}>Discover {'\u2192'}</Link>
+                <Link href={'/solutions/' + item.slug}>Discover</Link>
               </article>
             ))}
           </div>
@@ -180,9 +168,7 @@ export default async function HomePage() {
             <p className="eyebrow">Products</p>
             <h2>The Lura product line.</h2>
           </div>
-          <Link className="button button-secondary button-small" href="/products">
-            All products
-          </Link>
+          <Link className="button button-secondary button-small" href="/products">All products</Link>
         </div>
         {products.length ? (
           <div className="grid">
@@ -207,7 +193,7 @@ export default async function HomePage() {
                     <h3>{item.name}</h3>
                     {item.summary && <p>{item.summary}</p>}
                   </div>
-                  <Link href={`/products/${item.slug}`}>View product {'\u2192'}</Link>
+                  <Link href={'/products/' + item.slug}>View product</Link>
                 </article>
               );
             })}
@@ -226,9 +212,7 @@ export default async function HomePage() {
             <p className="eyebrow">Projects</p>
             <h2>Selected installations.</h2>
           </div>
-          <Link className="button button-ghost button-small" href="/projects">
-            All projects
-          </Link>
+          <Link className="button button-ghost button-small" href="/projects">All projects</Link>
         </div>
         {projects.length ? (
           <div className="grid">
@@ -253,7 +237,7 @@ export default async function HomePage() {
                     <h3>{item.title}</h3>
                     {item.category && <p>{item.category}</p>}
                   </div>
-                  <Link href={`/projects/${item.slug}`}>View project {'\u2192'}</Link>
+                  <Link href={'/projects/' + item.slug}>View project</Link>
                 </article>
               );
             })}
@@ -278,7 +262,7 @@ export default async function HomePage() {
             {testimonials.map((item) => (
               <figure className="record-card testimonial-card" key={item.id}>
                 <blockquote>
-                  <p>&ldquo;{item.quote}&rdquo;</p>
+                  <p>{'\u201C'}{item.quote}{'\u201D'}</p>
                 </blockquote>
               </figure>
             ))}
@@ -293,12 +277,8 @@ export default async function HomePage() {
           {ctaBody && <p className="lead">{ctaBody}</p>}
         </div>
         <div className="hero-actions">
-          <Link className="button" href="/contact">
-            Request a quote
-          </Link>
-          <Link className="button button-ghost" href="/products">
-            Explore products
-          </Link>
+          <Link className="button" href="/contact">Request a quote</Link>
+          <Link className="button button-ghost" href="/products">Explore products</Link>
         </div>
       </section>
     </main>
