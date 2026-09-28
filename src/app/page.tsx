@@ -33,14 +33,7 @@ export default async function HomePage() {
           where: {
             key: {
               in: [
-                'home.heroEyebrow',
-                'home.heroTitle',
-                'home.heroBody',
                 'home.heroImages',
-                'home.heroPrimaryLabel',
-                'home.heroPrimaryHref',
-                'home.heroSecondaryLabel',
-                'home.heroSecondaryHref',
                 'home.ctaTitle',
                 'home.ctaBody',
                 'company.intro',
@@ -80,13 +73,6 @@ export default async function HomePage() {
     return typeof value === 'string' && value.trim() ? value : fallback;
   };
 
-  const heroEyebrow = pick('home.heroEyebrow', 'Home of Premium Solar');
-  const heroTitle = pick('home.heroTitle', 'Power for what comes next');
-  const heroBody = pick('home.heroBody', '');
-  const primaryLabel = pick('home.heroPrimaryLabel', 'Request a quote');
-  const primaryHref = pick('home.heroPrimaryHref', '/contact');
-  const secondaryLabel = pick('home.heroSecondaryLabel', 'Explore products');
-  const secondaryHref = pick('home.heroSecondaryHref', '/products');
   const ctaTitle = pick('home.ctaTitle', 'Talk to Lura.');
   const ctaBody = pick('home.ctaBody', '');
   const intro = pick('company.intro', '');
@@ -94,26 +80,11 @@ export default async function HomePage() {
   const settingSlides = parseHeroImages(content['home.heroImages']);
   const diskSlides = settingSlides.length === 0 ? await loadHeroSlides() : [];
   const heroSlides = settingSlides.length > 0 ? settingSlides : diskSlides;
-  const hasHeroMedia = heroSlides.length > 0;
 
   return (
     <main>
       <section className="hero">
-        {hasHeroMedia ? (
-          <>
-            <HeroCarousel slides={heroSlides} />
-            <div className="hero-scrim" aria-hidden="true" />
-          </>
-        ) : null}
-        <div className="hero-content">
-          <p className="eyebrow">{heroEyebrow}</p>
-          <h1 className="display">{heroTitle}</h1>
-          {heroBody && <p className="lead">{heroBody}</p>}
-          <div className="hero-actions">
-            <Link className="button" href={primaryHref}>{primaryLabel}</Link>
-            <Link className="button button-ghost" href={secondaryHref}>{secondaryLabel}</Link>
-          </div>
-        </div>
+        <HeroCarousel slides={heroSlides} />
       </section>
 
       <section className="section-generous">
@@ -178,18 +149,9 @@ export default async function HomePage() {
                 <article className="record-card" key={item.id}>
                   <div>
                     {image && (
-                      <img
-                        className="record-image"
-                        src={image.url}
-                        alt={image.alt ?? ''}
-                        loading="lazy"
-                        width="900"
-                        height="620"
-                      />
+                      <img className="record-image" src={image.url} alt={image.alt ?? ''} loading="lazy" width="900" height="620" />
                     )}
-                    {item.category?.name && (
-                      <p className="eyebrow eyebrow-plain">{item.category.name}</p>
-                    )}
+                    {item.category?.name && <p className="eyebrow eyebrow-plain">{item.category.name}</p>}
                     <h3>{item.name}</h3>
                     {item.summary && <p>{item.summary}</p>}
                   </div>
@@ -222,18 +184,9 @@ export default async function HomePage() {
                 <article className="record-card" key={item.id}>
                   <div>
                     {image && (
-                      <img
-                        className="record-image"
-                        src={image.url}
-                        alt={image.alt ?? ''}
-                        loading="lazy"
-                        width="900"
-                        height="620"
-                      />
+                      <img className="record-image" src={image.url} alt={image.alt ?? ''} loading="lazy" width="900" height="620" />
                     )}
-                    {item.location && (
-                      <p className="eyebrow eyebrow-plain">{item.location}</p>
-                    )}
+                    {item.location && <p className="eyebrow eyebrow-plain">{item.location}</p>}
                     <h3>{item.title}</h3>
                     {item.category && <p>{item.category}</p>}
                   </div>
