@@ -766,3 +766,36 @@ select:focus-visible {
     radial-gradient(ellipse 70% 60% at 30% 40%, rgba(37,71,204,0.5), transparent 65%),
     linear-gradient(135deg, #1A2FB8 0%, #1428A0 50%, #0A1550 100%);
 }
+/* ============ PASSWORD TOGGLE ============ */
+.password-field {
+  position: relative;
+  display: block;
+}
+.password-field input {
+  width: 100%;
+  padding-right: 48px;
+}
+.password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: 0;
+  padding: 8px;
+  cursor: pointer;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color 150ms ease, background 150ms ease;
+}
+.password-toggle:hover {
+  color: var(--blue-700);
+  background: rgba(20, 40, 160, 0.06);
+}
+.password-toggle:focus-visible {
+  outline: 3px solid var(--orange-500);
+  outline-offset: 2px;
+}
