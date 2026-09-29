@@ -84,6 +84,7 @@ model Product {
   name            String
   slug            String                @unique
   categoryId      String?
+  brand           String?
   category        ProductCategory?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   summary         String?
   description     String?
