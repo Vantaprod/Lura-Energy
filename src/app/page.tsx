@@ -2,7 +2,7 @@
 import { prisma } from '@/lib/db/prisma';
 import { loadHeroSlides } from '@/lib/hero-slides';
 import { HeroCarousel, type HeroSlide } from '@/components/public/hero-carousel';
-import { ImpactSection } from '@/components/public/impact-section';
+import { ImpactSection, type ImpactContent } from '@/components/public/impact-section';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +22,12 @@ function parseHeroImages(value: unknown): HeroSlide[] {
   }
 }
 
+function parseNumber(raw: string, fallback: number): number {
+  const cleaned = raw.replace(/[^0-9.]/g, '');
+  const n = Number.parseFloat(cleaned);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 export default async function HomePage() {
   const isPreview =
     process.env.NODE_ENV === 'development' &&
@@ -38,6 +44,22 @@ export default async function HomePage() {
                 'home.ctaTitle',
                 'home.ctaBody',
                 'company.intro',
+                'impact.eyebrow',
+                'impact.headingWhite',
+                'impact.headingAccent',
+                'impact.body1',
+                'impact.body2',
+                'impact.ctaLabel',
+                'impact.ctaHref',
+                'impact.stat1Label',
+                'impact.stat1Value',
+                'impact.stat1Suffix',
+                'impact.stat2Label',
+                'impact.stat2Value',
+                'impact.stat2Suffix',
+                'impact.stat3Label',
+                'impact.stat3Value',
+                'impact.stat3Suffix',
               ],
             },
           },
@@ -78,6 +100,39 @@ export default async function HomePage() {
   const ctaBody = pick('home.ctaBody', '');
   const intro = pick('company.intro', '');
 
+  const impactContent: ImpactContent = {
+    eyebrow: pick('impact.eyebrow', 'Our Impact'),
+    headingWhite: pick('impact.headingWhite', 'Powering'),
+    headingAccent: pick('impact.headingAccent', 'Possibility'),
+    body1: pick(
+      'impact.body1',
+      'What started with a vision for more accessible and reliable energy is becoming a growing presence across Nigeria. Lura continues to expand through successful solar projects, strategic distributor partnerships, and an increasing operational footprint across key regions.',
+    ),
+    body2: pick(
+      'impact.body2',
+      'Every project represents more than an installation â€” it represents a home, business, or organization gaining greater access to dependable energy.',
+    ),
+    ctaLabel: pick('impact.ctaLabel', 'Learn more'),
+    ctaHref: pick('impact.ctaHref', '/projects'),
+    stats: [
+      {
+        label: pick('impact.stat1Label', 'Operating Regions in Nigeria'),
+        value: parseNumber(pick('impact.stat1Value', '90'), 90),
+        suffix: pick('impact.stat1Suffix', '+'),
+      },
+      {
+        label: pick('impact.stat2Label', 'Successful Projects'),
+        value: parseNumber(pick('impact.stat2Value', '5'), 5),
+        suffix: pick('impact.stat2Suffix', ''),
+      },
+      {
+        label: pick('impact.stat3Label', 'Distribution Partners'),
+        value: parseNumber(pick('impact.stat3Value', '5000'), 5000),
+        suffix: pick('impact.stat3Suffix', '+'),
+      },
+    ],
+  };
+
   const settingSlides = parseHeroImages(content['home.heroImages']);
   const diskSlides = settingSlides.length === 0 ? await loadHeroSlides() : [];
   const heroSlides = settingSlides.length > 0 ? settingSlides : diskSlides;
@@ -88,7 +143,21 @@ export default async function HomePage() {
         <HeroCarousel slides={heroSlides} />
       </section>
 
-      <ImpactSection />
+      <ImpactSection content={impactContent} />
+
+      {intro && (
+        <section className="section-generous">
+          <div className="editorial">
+            <div>
+              <p className="eyebrow">Company</p>
+              <h2 className="display-2">About Lura</h2>
+            </div>
+            <div>
+              <p className="lead">{intro}</p>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="section section-dark">
         <div className="section-heading">
@@ -136,6 +205,7 @@ export default async function HomePage() {
                     {image && (
                       <img className="record-image" src={image.url} alt={image.alt ?? ''} loading="lazy" width="900" height="620" />
                     )}
+                    {item.brand && <p className="eyebrow eyebrow-plain">{item.brand}</p>}
                     {item.category?.name && <p className="eyebrow eyebrow-plain">{item.category.name}</p>}
                     <h3>{item.name}</h3>
                     {item.summary && <p>{item.summary}</p>}

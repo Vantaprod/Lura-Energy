@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { getCurrentUser } from '@/lib/auth/session';
@@ -21,6 +21,22 @@ const keys = [
   'contact.phone',
   'contact.whatsapp',
   'legal.privacyNotice',
+  'impact.eyebrow',
+  'impact.headingWhite',
+  'impact.headingAccent',
+  'impact.body1',
+  'impact.body2',
+  'impact.ctaLabel',
+  'impact.ctaHref',
+  'impact.stat1Label',
+  'impact.stat1Value',
+  'impact.stat1Suffix',
+  'impact.stat2Label',
+  'impact.stat2Value',
+  'impact.stat2Suffix',
+  'impact.stat3Label',
+  'impact.stat3Value',
+  'impact.stat3Suffix',
 ] as const;
 
 type Key = typeof keys[number];

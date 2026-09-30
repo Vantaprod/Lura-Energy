@@ -4,19 +4,47 @@ import CountUp from 'react-countup';
 import { useInView } from 'react-intersection-observer';
 import { HolographicGlobe } from '@/components/public/holographic-globe';
 
-type Stat = {
+export type ImpactStat = {
   label: string;
   value: number;
   suffix: string;
 };
 
-const STATS: Stat[] = [
-  { label: 'Operating Regions in Nigeria', value: 90, suffix: '+' },
-  { label: 'Successful Projects', value: 5, suffix: '' },
-  { label: 'Distribution Partners', value: 5000, suffix: '+' },
-];
+export type ImpactContent = {
+  eyebrow: string;
+  headingWhite: string;
+  headingAccent: string;
+  body1: string;
+  body2: string;
+  ctaLabel: string;
+  ctaHref: string;
+  stats: ImpactStat[];
+};
 
-export function ImpactSection() {
+export const DEFAULT_IMPACT: ImpactContent = {
+  eyebrow: 'Our Impact',
+  headingWhite: 'Powering',
+  headingAccent: 'Possibility',
+  body1:
+    'What started with a vision for more accessible and reliable energy is becoming a growing presence across Nigeria. Lura continues to expand through successful solar projects, strategic distributor partnerships, and an increasing operational footprint across key regions.',
+  body2:
+    'Every project represents more than an installation — it represents a home, business, or organization gaining greater access to dependable energy.',
+  ctaLabel: 'Learn more',
+  ctaHref: '/projects',
+  stats: [
+    { label: 'Operating Regions in Nigeria', value: 90, suffix: '+' },
+    { label: 'Successful Projects', value: 5, suffix: '' },
+    { label: 'Distribution Partners', value: 5000, suffix: '+' },
+  ],
+};
+
+export function ImpactSection({ content }: { content?: Partial<ImpactContent> }) {
+  const data: ImpactContent = {
+    ...DEFAULT_IMPACT,
+    ...content,
+    stats: content?.stats && content.stats.length ? content.stats : DEFAULT_IMPACT.stats,
+  };
+
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.2,
@@ -32,38 +60,29 @@ export function ImpactSection() {
         <div className="impact-section__text">
           <p className="impact-eyebrow">
             <span className="impact-eyebrow__bar" aria-hidden="true" />
-            Our Impact
+            {data.eyebrow}
           </p>
 
           <h2 className="impact-heading">
-            Powering <span className="impact-heading__accent">Possibility</span>
+            {data.headingWhite}{' '}
+            <span className="impact-heading__accent">{data.headingAccent}</span>
           </h2>
 
           <div className="impact-rule" aria-hidden="true" />
 
-          <p className="impact-body">
-            What started with a vision for more accessible and reliable energy is
-            becoming a growing presence across Nigeria. Lura continues to expand
-            through successful solar projects, strategic distributor partnerships,
-            and an increasing operational footprint across key regions.
-          </p>
+          <p className="impact-body">{data.body1}</p>
+          <p className="impact-body">{data.body2}</p>
 
-          <p className="impact-body">
-            Every project represents more than an installation &mdash; it represents
-            a home, business, or organization gaining greater access to dependable
-            energy.
-          </p>
-
-          <a className="impact-cta" href="/projects">
-            Learn more
+          <a className="impact-cta" href={data.ctaHref}>
+            {data.ctaLabel}
             <span aria-hidden="true">{'\u2192'}</span>
           </a>
         </div>
 
         <div className="impact-section__stats">
           <ul className="impact-stats">
-            {STATS.map((stat) => (
-              <li className="impact-stat" key={stat.label}>
+            {data.stats.map((stat, index) => (
+              <li className="impact-stat" key={index}>
                 <span className="impact-stat__label">{stat.label}</span>
                 <span className="impact-stat__value">
                   {inView ? (
