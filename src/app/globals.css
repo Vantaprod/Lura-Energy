@@ -1770,3 +1770,191 @@ select:focus-visible {
   min-height: 32px;
   padding: 6px 8px;
 }
+/* User chip in admin top-right */
+.admin-user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 8px 16px;
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.admin-user-chip__name {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.admin-user-chip__role {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--orange-500);
+  padding: 3px 8px;
+  background: var(--orange-100);
+  border-radius: 999px;
+}
+
+.admin-user-chip button,
+.admin-user-chip a.admin-signout {
+  background: var(--blue-900);
+  color: #FFFFFF;
+  border: 0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  text-decoration: none;
+  line-height: 1;
+  transition: background 150ms ease;
+}
+
+.admin-user-chip button:hover,
+.admin-user-chip a.admin-signout:hover {
+  background: var(--blue-700);
+}
+
+/* Admin headings + eyebrow branded */
+.admin-shell h1,
+.admin-shell h2 {
+  color: var(--blue-950);
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+}
+
+.admin-top h2 {
+  font-weight: 800;
+}
+
+/* Mobile tweaks */
+@media (max-width: 700px) {
+  .admin-user-chip {
+    width: 100%;
+    justify-content: space-between;
+    border-radius: 4px;
+  }
+  .admin-nav a {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+}
+/* ============ SIGN OUT BRAND ============ */
+.admin-top button,
+.admin-top .admin-logout-button {
+  background: #1428A0;
+  color: #FFFFFF;
+  border: 0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 150ms ease;
+}
+
+.admin-top button:hover,
+.admin-top .admin-logout-button:hover {
+  background: #2547CC;
+}
+
+.admin-top button:focus-visible,
+.admin-top .admin-logout-button:focus-visible {
+  outline: 3px solid #F58220;
+  outline-offset: 2px;
+}
+/* Dots slightly above the very bottom */
+.hero-dots {
+  z-index: 4;
+}
+
+@media (max-width: 700px) {
+  .hero-arrow {
+    width: 40px;
+    height: 40px;
+  }
+  .hero-arrow--prev { left: 12px; }
+  .hero-arrow--next { right: 12px; }
+
+  /* On touch devices show arrows briefly when swiping is not an option.
+     Simpler: always show on mobile so the user can navigate. */
+  .hero-arrow {
+    opacity: 0.85;
+    pointer-events: auto;
+  }
+}
+/* ============ HERO CAROUSEL ARROWS (soft) ============ */
+.hero-carousel--interactive {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.hero-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  color: rgba(255, 255, 255, 0.85);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 400ms ease, background 250ms ease, color 250ms ease, transform 250ms ease;
+  z-index: 4;
+}
+
+.hero-arrow.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hero-arrow:hover {
+  background: rgba(245, 130, 32, 0.9);
+  color: #FFFFFF;
+  transform: translateY(-50%) scale(1.05);
+}
+
+.hero-arrow:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  outline: 2px solid rgba(245, 130, 32, 0.9);
+  outline-offset: 3px;
+}
+
+.hero-arrow svg {
+  width: 20px;
+  height: 20px;
+  opacity: 0.9;
+}
+
+.hero-arrow--prev { left: 28px; }
+.hero-arrow--next { right: 28px; }
+
+@media (max-width: 700px) {
+  .hero-arrow {
+    width: 42px;
+    height: 42px;
+    opacity: 0.55;
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.12);
+  }
+  .hero-arrow--prev { left: 12px; }
+  .hero-arrow--next { right: 12px; }
+}
