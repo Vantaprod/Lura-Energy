@@ -1233,3 +1233,245 @@ select:focus-visible {
   .impact-heading { font-size: 44px !important; }
   .impact-section__text { max-width: 100% !important; }
 }
+/* ============================================================
+   MOBILE / TABLET RESPONSIVE OVERRIDES
+   These rules only apply below 1000px, ensuring the desktop
+   layout is untouched.
+   ============================================================ */
+
+@media (max-width: 999px) {
+  /* Global — prevent horizontal scroll */
+  html, body {
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  .site-header {
+    padding: 10px 16px;
+    min-height: 64px;
+    gap: 12px;
+  }
+  .wordmark img {
+    height: 30px !important;
+  }
+  .site-header nav {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    gap: 16px;
+    padding: 6px 0;
+    scrollbar-width: none;
+  }
+  .site-header nav::-webkit-scrollbar { display: none; }
+  .site-header nav a {
+    white-space: nowrap;
+    font-size: 14px;
+  }
+  .site-header .button {
+    padding: 6px 12px;
+    font-size: 12px;
+    min-height: 34px;
+  }
+
+  /* Hero — shorter on mobile */
+  .hero {
+    height: 380px !important;
+    min-height: 380px !important;
+  }
+
+  /* Impact section — stack and recompose */
+  .impact-section {
+    padding: 64px 20px 72px !important;
+  }
+
+  .impact-section__globe {
+    /* Behind everything, centered, visible but not overwhelming */
+    position: absolute !important;
+    top: 32% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 140vw !important;
+    height: 140vw !important;
+    opacity: 0.35 !important;
+    z-index: 0 !important;
+  }
+
+  .impact-section__inner {
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
+    max-width: 100% !important;
+    padding-left: 0 !important;
+  }
+
+  .impact-section__text {
+    max-width: 100% !important;
+    padding-top: 180px; /* clear space above for the globe */
+    position: relative;
+    z-index: 2;
+  }
+
+  .impact-heading {
+    font-size: 40px !important;
+  }
+
+  .impact-rule {
+    max-width: 100%;
+  }
+
+  .impact-body {
+    font-size: 15px !important;
+    max-width: 100% !important;
+  }
+
+  .impact-cta {
+    font-size: 14px !important;
+    padding: 11px 20px !important;
+  }
+
+  .impact-section__stats {
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    position: relative;
+    z-index: 2;
+  }
+
+  .impact-stat {
+    padding: 20px 0;
+    gap: 12px;
+  }
+
+  .impact-stat__label {
+    font-size: 14px;
+    max-width: 60%;
+  }
+
+  .impact-stat__value {
+    font-size: 40px !important;
+  }
+
+  /* Split CTA */
+  .split-cta {
+    padding: 56px 20px !important;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .split-cta .display-2 {
+    font-size: 32px;
+  }
+
+  /* Sections — tighter padding */
+  .section { padding: 56px 20px; }
+  .section-generous { padding: 64px 20px; }
+  .section-tight { padding: 36px 20px; }
+  .section-dark { padding-left: 20px; padding-right: 20px; }
+
+  /* Headings scale */
+  .display { font-size: 40px; }
+  .display-2 { font-size: 30px; }
+  h1 { font-size: 32px; }
+  h2 { font-size: 24px; }
+  h3 { font-size: 18px; }
+
+  /* Grid — full-width cards */
+  .grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+  .record-card {
+    padding: 20px;
+    min-height: auto;
+  }
+
+  /* Buttons — full width in stacked areas */
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .hero-actions .button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Footer */
+  .site-footer {
+    padding: 40px 20px 24px;
+  }
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .footer-links {
+    justify-content: flex-start !important;
+  }
+
+  /* Admin panel */
+  .admin-shell {
+    padding: 24px 16px;
+  }
+  .admin-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .admin-nav {
+    gap: 4px;
+  }
+  .admin-nav a,
+  .admin-nav button {
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+  .admin-table {
+    font-size: 13px;
+  }
+  .admin-table th,
+  .admin-table td {
+    padding: 8px 10px;
+  }
+
+  /* Forms — full width */
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .field-wide {
+    grid-column: auto !important;
+  }
+  .lead-filters {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Auth / login */
+  .admin-login {
+    margin: 24px 16px;
+    padding: 24px 20px;
+  }
+}
+
+/* ============================================================
+   VERY SMALL PHONES (up to 380px)
+   ============================================================ */
+@media (max-width: 380px) {
+  .impact-heading { font-size: 34px !important; }
+  .impact-stat__value { font-size: 34px !important; }
+  .display { font-size: 34px; }
+  .display-2 { font-size: 26px; }
+  .hero { height: 320px !important; }
+  .site-header .button {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+}
+
+/* ============================================================
+   TABLET (600-999px) — two-column where it makes sense
+   ============================================================ */
+@media (min-width: 600px) and (max-width: 999px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .impact-heading { font-size: 48px !important; }
+  .impact-stat__value { font-size: 48px !important; }
+}
