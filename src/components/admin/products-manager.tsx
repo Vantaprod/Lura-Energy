@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useCallback, useEffect, useState } from 'react';
 import { ProductSpecifications } from '@/components/admin/product-specifications';
@@ -118,6 +118,20 @@ export function ProductsManager() {
       formElement.reset();
       setPage(1);
       await load();
+      // Open edit form on the newly created product so images can be dropped right away.
+      const created: Product = {
+        ...(data as Omit<Product, 'media' | 'specifications' | 'category'>),
+        media: [],
+        specifications: [],
+        category: null,
+      };
+      setEditing(created);
+      setValues(emptyEdit(created));
+      // Scroll to the edit panel so the user sees the dropzone.
+      window.setTimeout(() => {
+        const panel = document.querySelector('.edit-panel');
+        if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Could not save product.');
     } finally {
