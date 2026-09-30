@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db/prisma';
 import { getCurrentUser } from '@/lib/auth/session';
 import { can } from '@/lib/permissions/policy';
 import { sameOrigin } from '@/lib/security/origin';
-import { saveImageUpload, MAX_IMAGE_BYTES } from '@/lib/storage/upload';
+import { saveMediaUpload } from '@/lib/storage/upload';
 
 export const runtime = 'nodejs';
 
@@ -26,15 +26,19 @@ export async function POST(request: NextRequest) {
   const file = formData.get('file');
   const productId = formData.get('productId');
   const alt = formData.get('alt');
+  const subfolder = formData.get('subfolder');
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: 'No file provided.' }, { status: 400 });
   }
-  if (file.size > MAX_IMAGE_BYTES) {
-    return NextResponse.json({ error: 'Image exceeds 8 MB limit.' }, { status: 413 });
-  }
 
-  const result = await saveImageUpload(file, 'products');
+  const folder = typeof subfolder === 'string' && subfolder.trim()
+    ? subfolder.trim()
+    : productId && typeof productId === 'string'
+      ? 'products'
+      : 'library';
+
+  const result = await saveMediaUpload(file, folder);
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
@@ -45,15 +49,12 @@ export async function POST(request: NextRequest) {
       where: { id: productId.trim() },
       select: { id: true },
     });
-    if (!exists) {
-      return NextResponse.json({ error: 'Product not found.' }, { status: 404 });
-    }
-    linkedProductId = exists.id;
+    if (exists) linkedProductId = exists.id;
   }
 
   const media = await prisma.media.create({
     data: {
-      kind: 'IMAGE',
+      kind: result.kind,
       url: result.url,
       alt: typeof alt === 'string' && alt.trim() ? alt.trim() : null,
       mimeType: result.mimeType,
@@ -68,7 +69,12 @@ export async function POST(request: NextRequest) {
       action: 'media.upload',
       entityType: 'media',
       entityId: media.id,
-      metadata: { url: result.url, sizeBytes: result.sizeBytes, mimeType: result.mimeType },
+      metadata: {
+        url: result.url,
+        kind: result.kind,
+        sizeBytes: result.sizeBytes,
+        mimeType: result.mimeType,
+      },
     },
   });
 
