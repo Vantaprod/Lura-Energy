@@ -10,12 +10,99 @@ export const metadata: Metadata = {
     'Find Lura Chain Store service centres and pickup points across Nigeria. Verified Lura installations, sales, and support.',
 };
 
+type Centre = {
+  id: string;
+  name: string;
+  slug: string;
+  type: string | null;
+  address: string;
+  city: string;
+  state: string | null;
+  phone: string | null;
+  email: string | null;
+  hours: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  description: string | null;
+};
+
+function directionsHref(c: Centre): string {
+  // If coordinates exist, use them. Otherwise use the full address string.
+  // `dir/?api=1` with only `destination` set opens Google Maps directions
+  // with the user's current location as the origin.
+  if (c.latitude !== null && c.longitude !== null) {
+    const dest = c.latitude + ',' + c.longitude;
+    return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(dest);
+  }
+  const parts = [c.address, c.city, c.state ?? '', 'Nigeria'].filter(Boolean);
+  return (
+    'https://www.google.com/maps/dir/?api=1&destination=' +
+    encodeURIComponent(parts.join(', '))
+  );
+}
+
+function CentreCard({ centre }: { centre: Centre }) {
+  const cityLine = [centre.city, centre.state ?? ''].filter(Boolean).join(', ');
+
+  return (
+    <article className="centre-card">
+      <header className="centre-card__head">
+        <p className="eyebrow eyebrow-plain">{centre.state ?? 'Nigeria'}</p>
+        <h3 className="centre-card__name">{centre.name}</h3>
+        <p className="centre-card__address">
+          {centre.address}
+          <br />
+          {cityLine}
+        </p>
+      </header>
+
+      <dl className="centre-card__meta">
+        {centre.hours && (
+          <>
+            <dt>Hours</dt>
+            <dd>{centre.hours}</dd>
+          </>
+        )}
+        {centre.phone && (
+          <>
+            <dt>Phone</dt>
+            <dd>
+              <a href={'tel:' + centre.phone.replace(/[^+\d]/g, '')}>{centre.phone}</a>
+            </dd>
+          </>
+        )}
+        {centre.email && (
+          <>
+            <dt>Email</dt>
+            <dd>
+              <a href={'mailto:' + centre.email}>{centre.email}</a>
+            </dd>
+          </>
+        )}
+      </dl>
+
+      <div className="centre-card__actions">
+        <a
+          className="button button-small centre-card__directions"
+          href={directionsHref(centre)}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={'Get directions to ' + centre.name}
+        >
+          Get Directions
+          <span aria-hidden="true">{'\u2192'}</span>
+        </a>
+      </div>
+    </article>
+  );
+}
+
 export default async function ServiceCentresPage() {
   const isPreview =
     process.env.NODE_ENV === 'development' &&
     process.env.PREVIEW_WITHOUT_DATABASE === 'true';
 
-  const centres = isPreview
+  const centres: Centre[] = isPreview
     ? []
     : await prisma.serviceCentre.findMany({
         where: { published: true },
@@ -61,34 +148,9 @@ export default async function ServiceCentresPage() {
               parts, and warranty support.
             </p>
           </div>
-          <div className="grid">
+          <div className="grid grid--centres">
             {serviceCentres.map((c) => (
-              <article className="record-card" key={c.id}>
-                <div>
-                  <p className="eyebrow eyebrow-plain">{c.state ?? 'Nigeria'}</p>
-                  <h3>{c.name}</h3>
-                  <p>
-                    {c.address}
-                    <br />
-                    {c.city}
-                    {c.state ? ', ' + c.state : ''}
-                  </p>
-                </div>
-                <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {c.phone && <a href={'tel:' + c.phone.replace(/[^+\d]/g, '')}>Call: {c.phone}</a>}
-                  {c.email && <a href={'mailto:' + c.email}>{c.email}</a>}
-                  {c.hours && <span style={{ fontSize: '13px', color: 'var(--muted)' }}>{c.hours}</span>}
-                  {c.latitude && c.longitude && (
-                    <a
-                      href={'https://www.google.com/maps?q=' + c.latitude + ',' + c.longitude}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Directions {'\u2192'}
-                    </a>
-                  )}
-                </div>
-              </article>
+              <CentreCard centre={c} key={c.id} />
             ))}
           </div>
         </section>
@@ -106,24 +168,9 @@ export default async function ServiceCentresPage() {
               authorised locations.
             </p>
           </div>
-          <div className="grid">
+          <div className="grid grid--centres">
             {pickupPoints.map((c) => (
-              <article className="record-card" key={c.id}>
-                <div>
-                  <p className="eyebrow eyebrow-plain">{c.state ?? 'Nigeria'}</p>
-                  <h3>{c.name}</h3>
-                  <p>
-                    {c.address}
-                    <br />
-                    {c.city}
-                    {c.state ? ', ' + c.state : ''}
-                  </p>
-                </div>
-                <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {c.phone && <a href={'tel:' + c.phone.replace(/[^+\d]/g, '')}>Call: {c.phone}</a>}
-                  {c.hours && <span style={{ fontSize: '13px', color: 'var(--muted)' }}>{c.hours}</span>}
-                </div>
-              </article>
+              <CentreCard centre={c} key={c.id} />
             ))}
           </div>
         </section>
