@@ -164,7 +164,7 @@ export function MediaLibrary() {
           {uploading ? 'Uploading...' : 'Choose files'}
         </button>
         <p className="dropzone__hint">
-          Images (8 MB) Â· Videos MP4/WEBM/MOV (100 MB) Â· PDF (25 MB)
+          Images (8 MB) | Videos MP4/WEBM/MOV (100 MB) | PDF (25 MB)
         </p>
       </div>
 
@@ -189,18 +189,33 @@ export function MediaLibrary() {
 
       <div className="media-library__toolbar">
         <div className="media-library__filters" role="tablist">
-          {FILTERS.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              role="tab"
-              aria-selected={filter === f.key}
-              className={'media-chip' + (filter === f.key ? ' is-active' : '')}
-              onClick={() => setFilter(f.key)}
-            >
-              {f.label}
-            </button>
-          ))}
+          {FILTERS.map((f) => {
+            const active = filter === f.key;
+            return (
+              <button
+                key={f.key}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setFilter(f.key)}
+                style={{
+                  backgroundColor: active ? '#1428A0' : '#FFFFFF',
+                  border: '1px solid ' + (active ? '#1428A0' : '#E4E7EC'),
+                  color: active ? '#FFFFFF' : '#2B3441',
+                  fontFamily: 'inherit',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  padding: '7px 16px',
+                  borderRadius: '999px',
+                  cursor: 'pointer',
+                  lineHeight: 1.2,
+                  transition: 'background 150ms ease, color 150ms ease',
+                }}
+              >
+                {f.label}
+              </button>
+            );
+          })}
         </div>
         <input
           type="search"
