@@ -947,25 +947,49 @@ select:focus-visible {
   border-color: #B3251E;
   color: #FFFFFF;
 }
-/* ============ IMPACT SECTION ============ */
+
+/* ============ IMPACT SECTION — Fox ESS layout ============ */
 .impact-section {
   position: relative;
+  isolation: isolate;
   background: #050E1F;
   background-image:
-    radial-gradient(ellipse 60% 50% at 80% 40%, rgba(245,130,32,0.08), transparent 70%),
-    radial-gradient(ellipse 70% 60% at 20% 60%, rgba(37,71,204,0.18), transparent 70%),
-    linear-gradient(160deg, #050E1F 0%, #0A1550 60%, #050E1F 100%);
+    radial-gradient(ellipse 70% 60% at 50% 50%, rgba(37,71,204,0.22), transparent 70%),
+    linear-gradient(180deg, #050E1F 0%, #0A1550 50%, #050E1F 100%);
   color: #FFFFFF;
   overflow: hidden;
-  padding: 88px 24px;
+  padding: 96px 24px 120px;
 }
 
 @media (min-width: 900px) {
-  .impact-section { padding: 120px 64px; }
+  .impact-section { padding: 140px 48px 180px; }
 }
 
+/* Globe — centered, huge, overflowing */
+.impact-section__globe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(480px, 62vw, 900px);
+  height: clamp(480px, 62vw, 900px);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.impact-globe-canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 0;
+  transition: opacity 900ms ease;
+}
+
+/* Content grid — text left, stats right, globe center */
 .impact-section__inner {
-  max-width: 1280px;
+  position: relative;
+  z-index: 2;
+  max-width: 1440px;
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
@@ -975,9 +999,14 @@ select:focus-visible {
 
 @media (min-width: 1000px) {
   .impact-section__inner {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    gap: 72px;
+    grid-template-columns: minmax(0, 4fr) minmax(0, 4fr);
+    gap: 80px;
   }
+}
+
+/* Text column */
+.impact-section__text {
+  max-width: 460px;
 }
 
 .impact-eyebrow {
@@ -1000,130 +1029,168 @@ select:focus-visible {
 
 .impact-heading {
   font-family: var(--font-manrope), Manrope, system-ui, sans-serif;
-  font-size: 40px;
+  font-size: 42px;
   font-weight: 800;
-  line-height: 1.05;
+  line-height: 1.02;
   letter-spacing: -0.03em;
   color: #FFFFFF;
-  margin: 0 0 20px;
+  margin: 0 0 24px;
 }
 .impact-heading__accent { color: #F58220; }
 
 @media (min-width: 900px) {
   .impact-heading { font-size: 56px; }
 }
+@media (min-width: 1280px) {
+  .impact-heading { font-size: 64px; }
+}
 
 .impact-rule {
   width: 100%;
-  max-width: 560px;
+  max-width: 380px;
   height: 2px;
-  background: linear-gradient(90deg, #F58220 0%, #F58220 18%, #2A50E0 18%, #2A50E0 100%);
+  background: linear-gradient(90deg, #F58220 0%, #F58220 14%, #2A50E0 14%, #2A50E0 100%);
   margin-bottom: 28px;
 }
 
 .impact-body {
-  font-size: 16px;
+  font-size: 15.5px;
   line-height: 1.65;
   color: rgba(255,255,255,0.72);
-  max-width: 560px;
-  margin: 0 0 18px;
+  max-width: 440px;
+  margin: 0 0 16px;
 }
 
-.impact-tags {
-  list-style: none;
-  padding: 0;
-  margin: 28px 0 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.impact-tags li {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 12px;
-  border: 1px solid rgba(245,130,32,0.35);
+.impact-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 10px 20px 10px 20px;
+  border: 1px solid rgba(255,255,255,0.35);
   border-radius: 999px;
-  color: #F5A623;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color 200ms ease, background 200ms ease;
 }
-
-.impact-section__visual {
-  position: relative;
+.impact-cta:hover {
+  border-color: #F58220;
+  background: rgba(245,130,32,0.12);
 }
+.impact-cta span { color: #F58220; font-size: 16px; }
 
-.impact-globe-wrap {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  max-width: 560px;
-  margin: 0 auto 40px;
-}
-
-.impact-globe-placeholder {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 40% 35%, rgba(37,71,204,0.5), transparent 60%),
-    radial-gradient(circle at 65% 70%, rgba(245,130,32,0.25), transparent 55%);
+/* Stats column — right side */
+.impact-section__stats {
+  max-width: 440px;
+  margin-left: auto;
 }
 
 .impact-stats {
   list-style: none;
   padding: 0;
   margin: 0;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0;
-  max-width: 560px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .impact-stat {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 18px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.12);
+  gap: 20px;
+  padding: 26px 0;
+  border-top: 1px solid rgba(255,255,255,0.12);
 }
-.impact-stat:first-child { border-top: 1px solid rgba(255,255,255,0.12); }
+.impact-stat:last-child { border-bottom: 1px solid rgba(255,255,255,0.12); }
 
 .impact-stat__label {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  color: rgba(255,255,255,0.85);
-  max-width: 12rem;
+  color: #FFFFFF;
+  line-height: 1.3;
+  max-width: 11rem;
 }
 
 .impact-stat__value {
   font-family: var(--font-manrope), Manrope, system-ui, sans-serif;
   font-weight: 800;
-  font-size: 44px;
+  font-size: 52px;
   line-height: 1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.035em;
   color: #F58220;
   font-variant-numeric: tabular-nums;
 }
 
 @media (min-width: 900px) {
-  .impact-stat__value { font-size: 56px; }
+  .impact-stat__value { font-size: 68px; }
+}
+@media (min-width: 1280px) {
+  .impact-stat__value { font-size: 76px; }
 }
 
-
-/* ============ HOLOGRAPHIC GLOBE ============ */
-.impact-globe-wrap {
-  position: relative;
-  width: 100%;
-  max-width: 560px;
-  aspect-ratio: 1 / 1;
-  margin: 0 auto 40px;
+/* Mobile: stack text on top, stats below, globe behind */
+@media (max-width: 999px) {
+  .impact-section__globe {
+    width: 120vw;
+    height: 120vw;
+    opacity: 0.55;
+  }
+  .impact-section__text,
+  .impact-section__stats {
+    max-width: 100%;
+    margin-left: 0;
+  }
+}
+/* ============ IMPACT — text emphasis + left shift ============ */
+@media (min-width: 1000px) {
+  .impact-section {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+  .impact-section__inner {
+    max-width: 1560px;
+  }
+  .impact-section__text {
+    max-width: 560px;
+  }
 }
 
-.holographic-globe {
-  display: block;
-  width: 100% !important;
-  height: 100% !important;
-  opacity: 0;
-  transition: opacity 700ms ease;
+.impact-body {
+  font-size: 16.5px;
+  max-width: 500px;
+}
+
+.impact-cta {
+  font-size: 15px;
+  padding: 12px 22px;
+}
+
+@media (min-width: 1280px) {
+  .impact-section {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .impact-heading {
+    font-size: 64px;
+  }
+  .impact-body {
+    font-size: 17px;
+    max-width: 520px;
+  }
+  .impact-section__text {
+    max-width: 620px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .impact-heading {
+    font-size: 72px;
+  }
+  .impact-section__text {
+    max-width: 660px;
+  }
+  .impact-body {
+    font-size: 17.5px;
+    max-width: 540px;
+  }
 }

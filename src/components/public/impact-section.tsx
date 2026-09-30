@@ -11,7 +11,7 @@ type Stat = {
 };
 
 const STATS: Stat[] = [
-  { label: 'Operating Regions', value: 90, suffix: '+' },
+  { label: 'Operating Regions in Nigeria', value: 90, suffix: '+' },
   { label: 'Successful Projects', value: 5, suffix: '' },
   { label: 'Distribution Partners', value: 5000, suffix: '+' },
 ];
@@ -19,11 +19,15 @@ const STATS: Stat[] = [
 export function ImpactSection() {
   const { ref, inView } = useInView({
     triggerOnce: true,
-    threshold: 0.25,
+    threshold: 0.2,
   });
 
   return (
     <section className="impact-section" ref={ref}>
+      <div className="impact-section__globe" aria-hidden="true">
+        <HolographicGlobe className="impact-globe-canvas" />
+      </div>
+
       <div className="impact-section__inner">
         <div className="impact-section__text">
           <p className="impact-eyebrow">
@@ -50,19 +54,13 @@ export function ImpactSection() {
             energy.
           </p>
 
-          <ul className="impact-tags" aria-label="Focus areas">
-            <li>Operating Regions</li>
-            <li>Successful Projects</li>
-            <li>Distribution Partners</li>
-            <li>Growing Energy Network</li>
-          </ul>
+          <a className="impact-cta" href="/projects">
+            Learn more
+            <span aria-hidden="true">{'\u2192'}</span>
+          </a>
         </div>
 
-        <div className="impact-section__visual">
-          <div className="impact-globe-wrap">
-            <HolographicGlobe />
-          </div>
-
+        <div className="impact-section__stats">
           <ul className="impact-stats">
             {STATS.map((stat) => (
               <li className="impact-stat" key={stat.label}>
