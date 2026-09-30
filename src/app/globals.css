@@ -847,7 +847,6 @@ select:focus-visible {
   border-radius: var(--radius);
   padding: 32px 24px;
   text-align: center;
-  cursor: pointer;
   background: var(--surface);
   transition: border-color 150ms ease, background 150ms ease;
 }
@@ -868,3 +867,24 @@ select:focus-visible {
   margin: 0;
 }
 .dropzone__link { color: var(--blue-700); text-decoration: underline; }
+/* ============ DROPZONE BUTTON ============ */
+.dropzone__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--orange-500);
+  color: #FFFFFF;
+  border: 0;
+  border-radius: var(--radius);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 10px 20px;
+  min-height: 42px;
+  cursor: pointer;
+  margin: 12px 0 10px;
+  transition: background 150ms ease;
+}
+.dropzone__button:hover:not(:disabled) { background: var(--orange-400); }
+.dropzone__button:disabled { opacity: 0.5; cursor: not-allowed; }
+.dropzone__hint--warn { color: var(--orange-600); font-weight: 600; margin-top: 6px; }

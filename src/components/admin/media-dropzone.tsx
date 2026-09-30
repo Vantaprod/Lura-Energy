@@ -86,6 +86,10 @@ export function MediaDropzone({ productId, initial, onChanged }: Props) {
     push(items.filter((m) => m.id !== item.id));
   }
 
+  function openPicker() {
+    inputRef.current?.click();
+  }
+
   function onDrop(event: React.DragEvent<HTMLDivElement>) {
     event.preventDefault();
     setDragging(false);
@@ -93,6 +97,26 @@ export function MediaDropzone({ productId, initial, onChanged }: Props) {
       void upload(event.dataTransfer.files);
     }
   }
+
+  const buttonDisabled = uploading || !productId;
+
+  const buttonStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: buttonDisabled ? '#B8BEC7' : '#F58220',
+    color: '#FFFFFF',
+    border: 'none',
+    borderRadius: '4px',
+    fontFamily: 'inherit',
+    fontWeight: 700,
+    fontSize: '14px',
+    padding: '10px 22px',
+    minHeight: '42px',
+    cursor: buttonDisabled ? 'not-allowed' : 'pointer',
+    margin: '12px 0 10px',
+    lineHeight: 1.2,
+  };
 
   return (
     <div className="media-block">
@@ -122,25 +146,26 @@ export function MediaDropzone({ productId, initial, onChanged }: Props) {
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        onClick={() => inputRef.current?.click()}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            inputRef.current?.click();
-          }
-        }}
-        aria-label="Upload product images"
       >
         <p className="dropzone__title">
           {uploading ? 'Uploading...' : dragging ? 'Drop to upload' : 'Drag & drop images here'}
         </p>
+
+        <button
+          type="button"
+          style={buttonStyle}
+          onClick={openPicker}
+          disabled={buttonDisabled}
+        >
+          Choose files
+        </button>
+
         <p className="dropzone__hint">
-          or <span className="dropzone__link">browse files</span> — JPG, PNG, WEBP, GIF, AVIF · up to 8 MB each
+          JPG, PNG, WEBP, GIF, AVIF · up to 8 MB each
         </p>
+
         {!productId && (
-          <p className="dropzone__hint" style={{ color: 'var(--orange-500)', marginTop: '0.5rem' }}>
+          <p className="dropzone__hint" style={{ color: '#D96A0F', fontWeight: 600, marginTop: '6px' }}>
             Save the draft first, then return to this product to add images.
           </p>
         )}
