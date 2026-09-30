@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { ProductSpecifications } from '@/components/admin/product-specifications';
+import { MediaDropzone, type ProductMedia } from '@/components/admin/media-dropzone';
 
 type Specification = { id: string; label: string; value: string; unit: string | null };
 type Product = {
@@ -20,6 +21,7 @@ type Product = {
   categoryId: string | null;
   category: { name: string } | null;
   specifications: Specification[];
+  media: ProductMedia[];
 };
 type Category = { id: string; name: string; slug: string; published: boolean };
 type EditValues = {
@@ -201,6 +203,12 @@ export function ProductsManager() {
         <div className="field"><label htmlFor="categoryId">Category</label><select id="categoryId" name="categoryId"><option value="">No category selected</option>{categories.filter((item) => item.published).map((item) => (<option key={item.id} value={item.id}>{item.name}</option>))}</select><span className="form-note">Categories must be published before assignment.</span></div>
         <div className="field"><label htmlFor="summary">Summary</label><input name="summary" id="summary" maxLength={500} /></div>
         <div className="field field-wide"><label htmlFor="description">Description</label><textarea name="description" id="description" maxLength={10000} /></div>
+        <div className="field field-wide">
+          <label>Product images</label>
+          <p className="form-note" style={{ marginBottom: '0.5rem' }}>
+            Save the draft first. Then reopen it from Product records below to upload images.
+          </p>
+        </div>
         <div className="field-wide"><button className="button" disabled={busy}>{busy ? 'Saving...' : 'Add draft product'}</button></div>
       </form>
 
@@ -224,7 +232,7 @@ export function ProductsManager() {
         <div style={{ overflowX: 'auto' }}>
           <table className="admin-table">
             <thead>
-              <tr><th>Product</th><th>Brand</th><th>Category</th><th>State</th><th>Actions</th></tr>
+              <tr><th>Product</th><th>Brand</th><th>Category</th><th>Images</th><th>State</th><th>Actions</th></tr>
             </thead>
             <tbody>
               {items.map((item) => (
@@ -232,6 +240,7 @@ export function ProductsManager() {
                   <td>{item.name}<br /><span className="form-note">{item.slug}</span><br /><ProductSpecifications productId={item.id} initial={item.specifications} /></td>
                   <td>{item.brand ?? '-'}</td>
                   <td>{item.category?.name ?? '-'}</td>
+                  <td>{item.media?.filter((m) => m.kind === 'IMAGE').length ?? 0}</td>
                   <td>{item.published ? 'Published' : 'Draft'}</td>
                   <td>
                     <button className="admin-action" onClick={() => { setEditing(item); setValues(emptyEdit(item)); }} type="button">Edit</button>{' '}
@@ -272,6 +281,12 @@ export function ProductsManager() {
           {editField('status', 'Product status')}
           {editField('warranty', 'Warranty information')}
           {editField('description', 'Description', true)}
+
+          <div className="field-wide">
+            <label>Product images</label>
+            <MediaDropzone productId={editing.id} initial={editing.media ?? []} />
+          </div>
+
           {editField('seoTitle', 'SEO title')}
           {editField('seoDescription', 'SEO description')}
           <div className="field-wide">
