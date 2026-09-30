@@ -1475,3 +1475,21 @@ select:focus-visible {
   .impact-heading { font-size: 48px !important; }
   .impact-stat__value { font-size: 48px !important; }
 }
+/* Fades the top of the Impact section from the paper colour of the
+   preceding section into the deep navy background, so the two blend
+   rather than meeting at a hard edge. */
+
+.impact-section {
+  /* ensure pseudo-element anchors correctly */
+  position: relative;
+}
+
+
+
+@media (min-width: 900px) {
+  
+}
+
+@media (max-width: 999px) {
+  
+}

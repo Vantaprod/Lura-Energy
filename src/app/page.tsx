@@ -110,7 +110,7 @@ export default async function HomePage() {
     ),
     body2: pick(
       'impact.body2',
-      'Every project represents more than an installation â€” it represents a home, business, or organization gaining greater access to dependable energy.',
+      'Every project represents more than an installation \u2014 it represents a home, business, or organization gaining greater access to dependable energy.',
     ),
     ctaLabel: pick('impact.ctaLabel', 'Learn more'),
     ctaHref: pick('impact.ctaHref', '/projects'),
@@ -142,8 +142,6 @@ export default async function HomePage() {
       <section className="hero">
         <HeroCarousel slides={heroSlides} />
       </section>
-
-      <ImpactSection content={impactContent} />
 
       {intro && (
         <section className="section-generous">
@@ -206,7 +204,6 @@ export default async function HomePage() {
                       <img className="record-image" src={image.url} alt={image.alt ?? ''} loading="lazy" width="900" height="620" />
                     )}
                     {item.brand && <p className="eyebrow eyebrow-plain">{item.brand}</p>}
-                    {item.category?.name && <p className="eyebrow eyebrow-plain">{item.category.name}</p>}
                     <h3>{item.name}</h3>
                     {item.summary && <p>{item.summary}</p>}
                   </div>
@@ -222,6 +219,8 @@ export default async function HomePage() {
           </div>
         )}
       </section>
+
+      <ImpactSection content={impactContent} />
 
       <section className="section section-dark">
         <div className="section-heading">
