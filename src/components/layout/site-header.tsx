@@ -1,4 +1,4 @@
-import Image from 'next/image';
+﻿import Image from 'next/image';
 import Link from 'next/link';
 
 const NAV_ITEMS = [
@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { href: '/projects', label: 'Projects' },
   { href: '/services', label: 'Services' },
   { href: '/resources', label: 'Resources' },
+  { href: '/service-centres', label: 'Service Centres' },
   { href: '/about', label: 'About' },
 ] as const;
 
