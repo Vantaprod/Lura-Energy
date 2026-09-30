@@ -888,3 +888,242 @@ select:focus-visible {
 .dropzone__button:hover:not(:disabled) { background: var(--orange-400); }
 .dropzone__button:disabled { opacity: 0.5; cursor: not-allowed; }
 .dropzone__hint--warn { color: var(--orange-600); font-weight: 600; margin-top: 6px; }
+/* ============ ADMIN ACTION BUTTONS ============ */
+.admin-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1;
+  padding: 8px 14px;
+  min-height: 34px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+  background: #FFFFFF;
+  border: 1px solid #C9D0D9;
+  color: #2B3441;
+}
+.admin-action:hover {
+  border-color: #1428A0;
+  color: #1428A0;
+}
+.admin-action:focus-visible {
+  outline: 3px solid #F58220;
+  outline-offset: 2px;
+}
+
+.admin-action--edit {
+  background: #FFFFFF;
+  border: 1px solid #1428A0;
+  color: #1428A0;
+}
+.admin-action--edit:hover {
+  background: #1428A0;
+  color: #FFFFFF;
+}
+
+.admin-action--primary {
+  background: #F58220;
+  border: 1px solid #F58220;
+  color: #FFFFFF;
+}
+.admin-action--primary:hover {
+  background: #F5A623;
+  border-color: #F5A623;
+  color: #FFFFFF;
+}
+
+.admin-action--danger {
+  background: #FFFFFF;
+  border: 1px solid #E5B8B4;
+  color: #B3251E;
+}
+.admin-action--danger:hover {
+  background: #B3251E;
+  border-color: #B3251E;
+  color: #FFFFFF;
+}
+/* ============ IMPACT SECTION ============ */
+.impact-section {
+  position: relative;
+  background: #050E1F;
+  background-image:
+    radial-gradient(ellipse 60% 50% at 80% 40%, rgba(245,130,32,0.08), transparent 70%),
+    radial-gradient(ellipse 70% 60% at 20% 60%, rgba(37,71,204,0.18), transparent 70%),
+    linear-gradient(160deg, #050E1F 0%, #0A1550 60%, #050E1F 100%);
+  color: #FFFFFF;
+  overflow: hidden;
+  padding: 88px 24px;
+}
+
+@media (min-width: 900px) {
+  .impact-section { padding: 120px 64px; }
+}
+
+.impact-section__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 56px;
+  align-items: center;
+}
+
+@media (min-width: 1000px) {
+  .impact-section__inner {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 72px;
+  }
+}
+
+.impact-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 12px;
+  font-weight: 700;
+  color: #F58220;
+  margin: 0 0 16px;
+}
+.impact-eyebrow__bar {
+  display: inline-block;
+  width: 3px;
+  height: 16px;
+  background: #F58220;
+}
+
+.impact-heading {
+  font-family: var(--font-manrope), Manrope, system-ui, sans-serif;
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: #FFFFFF;
+  margin: 0 0 20px;
+}
+.impact-heading__accent { color: #F58220; }
+
+@media (min-width: 900px) {
+  .impact-heading { font-size: 56px; }
+}
+
+.impact-rule {
+  width: 100%;
+  max-width: 560px;
+  height: 2px;
+  background: linear-gradient(90deg, #F58220 0%, #F58220 18%, #2A50E0 18%, #2A50E0 100%);
+  margin-bottom: 28px;
+}
+
+.impact-body {
+  font-size: 16px;
+  line-height: 1.65;
+  color: rgba(255,255,255,0.72);
+  max-width: 560px;
+  margin: 0 0 18px;
+}
+
+.impact-tags {
+  list-style: none;
+  padding: 0;
+  margin: 28px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.impact-tags li {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border: 1px solid rgba(245,130,32,0.35);
+  border-radius: 999px;
+  color: #F5A623;
+}
+
+.impact-section__visual {
+  position: relative;
+}
+
+.impact-globe-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-width: 560px;
+  margin: 0 auto 40px;
+}
+
+.impact-globe-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 40% 35%, rgba(37,71,204,0.5), transparent 60%),
+    radial-gradient(circle at 65% 70%, rgba(245,130,32,0.25), transparent 55%);
+}
+
+.impact-stats {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.impact-stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+.impact-stat:first-child { border-top: 1px solid rgba(255,255,255,0.12); }
+
+.impact-stat__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  max-width: 12rem;
+}
+
+.impact-stat__value {
+  font-family: var(--font-manrope), Manrope, system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: #F58220;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 900px) {
+  .impact-stat__value { font-size: 56px; }
+}
+
+
+/* ============ HOLOGRAPHIC GLOBE ============ */
+.impact-globe-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto 40px;
+}
+
+.holographic-globe {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 0;
+  transition: opacity 700ms ease;
+}

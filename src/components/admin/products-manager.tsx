@@ -257,9 +257,29 @@ export function ProductsManager() {
                   <td>{item.media?.filter((m) => m.kind === 'IMAGE').length ?? 0}</td>
                   <td>{item.published ? 'Published' : 'Draft'}</td>
                   <td>
-                    <button className="admin-action" onClick={() => { setEditing(item); setValues(emptyEdit(item)); }} type="button">Edit</button>{' '}
-                    <button className="admin-action" onClick={() => void toggle(item)} type="button">{item.published ? 'Unpublish' : 'Publish'}</button>{' '}
-                    <button className="admin-action" onClick={() => void remove(item)} type="button">Delete</button>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        className="admin-action admin-action--edit"
+                        onClick={() => { setEditing(item); setValues(emptyEdit(item)); }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-action admin-action--primary"
+                        onClick={() => void toggle(item)}
+                      >
+                        {item.published ? 'Unpublish' : 'Publish'}
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-action admin-action--danger"
+                        onClick={() => void remove(item)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

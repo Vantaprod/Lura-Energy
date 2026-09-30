@@ -1,7 +1,8 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import { prisma } from '@/lib/db/prisma';
 import { loadHeroSlides } from '@/lib/hero-slides';
 import { HeroCarousel, type HeroSlide } from '@/components/public/hero-carousel';
+import { ImpactSection } from '@/components/public/impact-section';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,23 +88,7 @@ export default async function HomePage() {
         <HeroCarousel slides={heroSlides} />
       </section>
 
-      <section className="section-generous">
-        <div className="editorial">
-          <div>
-            <p className="eyebrow">Company</p>
-            <h2 className="display-2">About Lura</h2>
-          </div>
-          <div>
-            {intro ? (
-              <p className="lead">{intro}</p>
-            ) : (
-              <p className="form-note">
-                Company introduction pending publication. Lura administrators can add approved company information in site settings.
-              </p>
-            )}
-          </div>
-        </div>
-      </section>
+      <ImpactSection />
 
       <section className="section section-dark">
         <div className="section-heading">
