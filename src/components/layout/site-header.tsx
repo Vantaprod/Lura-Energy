@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { href: '/services', label: 'Services' },
   { href: '/resources', label: 'Resources' },
   { href: '/service-centres', label: 'Service Centres' },
+  { href: '/quote', label: 'Get a quote' },
   { href: '/about', label: 'About' },
 ] as const;
 
@@ -28,7 +29,7 @@ export function SiteHeader() {
           <Link key={item.href} href={item.href}>{item.label}</Link>
         ))}
       </nav>
-      <Link className="button button-small" href="/contact">Request a quote</Link>
+      <Link className="button button-small" href="/quote">Request a quote</Link>
     </header>
   );
 }

@@ -224,6 +224,8 @@ model Lead {
   message             String
   preferredContact    String?
   consent             Boolean    @default(false)
+  quoteItems          Json?
+  intent              String?
   status              LeadStatus @default(NEW)
   createdAt           DateTime   @default(now())
   updatedAt           DateTime   @updatedAt
