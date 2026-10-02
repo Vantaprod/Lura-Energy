@@ -1,4 +1,4 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/db/prisma';
 
@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Service Centres & Pickup Points',
   description:
-    'Find Lura Chain Store service centres and pickup points across Nigeria. Verified Lura installations, sales, and support.',
+    'Find Lura Chain Store service centres and pickup points across Nigeria. Installation services, Grade A solar lithium batteries, hybrid inverters, solar panels, and solar accessories.',
 };
 
 type Centre = {
@@ -27,9 +27,6 @@ type Centre = {
 };
 
 function directionsHref(c: Centre): string {
-  // If coordinates exist, use them. Otherwise use the full address string.
-  // `dir/?api=1` with only `destination` set opens Google Maps directions
-  // with the user's current location as the origin.
   if (c.latitude !== null && c.longitude !== null) {
     const dest = c.latitude + ',' + c.longitude;
     return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(dest);
@@ -120,8 +117,8 @@ export default async function ServiceCentresPage() {
         <p className="eyebrow">Lura Chain Store</p>
         <h1>Service Centres &amp; Pickup Points</h1>
         <p>
-          Verified Lura locations across Nigeria for installations, sales, spare
-          parts, and product pickup. Every LCS location is authorised and
+          Verified Lura locations across Nigeria for installation services,
+          product sales, and pickup. Every LCS location is authorised and
           supported directly by Lura.
         </p>
       </section>
@@ -144,8 +141,9 @@ export default async function ServiceCentresPage() {
               <h2>Service Centres</h2>
             </div>
             <p>
-              Authorised Lura locations offering installation, service, spare
-              parts, and warranty support.
+              Authorised Lura locations offering installation services, Grade A
+              solar lithium batteries, hybrid inverters, solar panels, and
+              solar accessories.
             </p>
           </div>
           <div className="grid grid--centres">
@@ -164,8 +162,8 @@ export default async function ServiceCentresPage() {
               <h2>Pickup Points</h2>
             </div>
             <p>
-              Pick up verified Lura products and accessories from these
-              authorised locations.
+              Pick up verified Lura solar batteries, inverters, panels, and
+              accessories from these authorised locations.
             </p>
           </div>
           <div className="grid grid--centres">
