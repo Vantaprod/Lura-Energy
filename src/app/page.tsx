@@ -13,10 +13,16 @@ function parseHeroImages(value: unknown): HeroSlide[] {
     if (!Array.isArray(parsed)) return [];
     return parsed
       .filter(
-        (item): item is { url: string; alt?: string } =>
+        (item): item is { url: string; alt?: string; mobileUrl?: string } =>
           item && typeof item === 'object' && typeof item.url === 'string',
       )
-      .map((item) => ({ url: item.url, alt: item.alt ?? '' }));
+      .map((item) => ({
+        url: item.url,
+        alt: item.alt ?? '',
+        mobileUrl: typeof item.mobileUrl === 'string' && item.mobileUrl.trim()
+          ? item.mobileUrl
+          : undefined,
+      }));
   } catch {
     return [];
   }

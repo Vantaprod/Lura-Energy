@@ -1,8 +1,8 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 
-type HeroImage = { url: string; alt: string };
+type HeroImage = { url: string; alt: string; mobileUrl: string };
 type MediaFile = { url: string; name: string };
 
 const IMPACT_FIELDS: [string, string, string][] = [
@@ -58,7 +58,7 @@ export function SettingsEditor() {
               setHeroImages(
                 parsed
                   .filter((x) => x && typeof x === 'object' && typeof x.url === 'string')
-                  .map((x) => ({ url: String(x.url), alt: String(x.alt ?? '') })),
+                  .map((x) => ({ url: String(x.url), alt: String(x.alt ?? ''), mobileUrl: String(x.mobileUrl ?? '') })),
               );
             }
           } catch {
@@ -70,7 +70,7 @@ export function SettingsEditor() {
   }, []);
 
   function addSlide() {
-    setHeroImages((prev) => [...prev, { url: '', alt: '' }]);
+    setHeroImages((prev) => [...prev, { url: '', alt: '', mobileUrl: '' }]);
   }
 
   function updateSlide(index: number, patch: Partial<HeroImage>) {
@@ -100,7 +100,7 @@ export function SettingsEditor() {
     const payload: Record<string, string> = { ...values };
     const cleanSlides = heroImages
       .filter((slide) => slide.url.trim().length > 0)
-      .map((slide) => ({ url: slide.url.trim(), alt: slide.alt.trim() }));
+      .map((slide) => ({ url: slide.url.trim(), alt: slide.alt.trim(), mobileUrl: slide.mobileUrl.trim() }));
     payload['home.heroImages'] = cleanSlides.length ? JSON.stringify(cleanSlides) : '';
 
     const res = await fetch('/api/admin/settings', {
@@ -182,6 +182,27 @@ export function SettingsEditor() {
               value={slide.url}
               onChange={(e) => updateSlide(index, { url: e.target.value })}
               placeholder="or paste a URL"
+            />
+
+            <label htmlFor={'hero-mobile-' + index} style={{ marginTop: '0.75rem', display: 'block' }}>
+              Mobile image (portrait — shown on phones)
+            </label>
+            <select
+              id={'hero-mobile-' + index}
+              value={media.some((m) => m.url === slide.mobileUrl) ? slide.mobileUrl : ''}
+              onChange={(e) => updateSlide(index, { mobileUrl: e.target.value })}
+              style={{ marginBottom: '0.5rem' }}
+            >
+              <option value="">-- use the same image as desktop --</option>
+              {media.map((m) => (
+                <option key={m.url} value={m.url}>{m.name}</option>
+              ))}
+            </select>
+            <input
+              type="text"
+              value={slide.mobileUrl}
+              onChange={(e) => updateSlide(index, { mobileUrl: e.target.value })}
+              placeholder="or paste a mobile image URL"
             />
 
             <label htmlFor={'hero-alt-' + index} style={{ marginTop: '0.75rem' }}>Alt text</label>

@@ -1,7 +1,11 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 import './globals.css';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteFooter } from '@/components/layout/site-footer';
+import { FloatingWhatsAppLoader } from '@/components/public/floating-whatsapp-loader';
 
 export const metadata: Metadata = {
   title: { default: 'Lura Energy', template: '%s | Lura Energy' },
@@ -24,6 +28,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <SiteHeader />
         <div id="main-content">{children}</div>
         <SiteFooter />
+        <FloatingWhatsAppLoader />
       </body>
     </html>
   );

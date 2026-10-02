@@ -1,10 +1,11 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type HeroSlide = {
   url: string;
   alt: string;
+  mobileUrl?: string;
 };
 
 type Props = {
@@ -29,8 +30,6 @@ export function HeroCarousel({ slides, interval = 6000 }: Props) {
   const next = useCallback(() => goTo(index + 1), [goTo, index]);
   const prev = useCallback(() => goTo(index - 1), [goTo, index]);
 
-  // Auto-advance. Restarts whenever index changes so manual navigation
-  // doesn't fight the timer.
   useEffect(() => {
     if (slides.length < 2) return;
     if (timerRef.current) window.clearInterval(timerRef.current);
@@ -42,7 +41,6 @@ export function HeroCarousel({ slides, interval = 6000 }: Props) {
     };
   }, [slides.length, interval, index]);
 
-  // Keyboard arrows navigate the carousel when the section is focused.
   function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if (e.key === 'ArrowRight') {
       e.preventDefault();
@@ -69,7 +67,12 @@ export function HeroCarousel({ slides, interval = 6000 }: Props) {
           className={'hero-slide' + (i === index ? ' is-active' : '')}
           aria-hidden={i !== index}
         >
-          <img src={slide.url} alt={slide.alt} />
+          <picture>
+            {slide.mobileUrl && (
+              <source media="(max-width: 700px)" srcSet={slide.mobileUrl} />
+            )}
+            <img src={slide.url} alt={slide.alt} />
+          </picture>
         </div>
       ))}
 

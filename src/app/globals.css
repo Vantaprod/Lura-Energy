@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --blue-950: #0A1550;
   --blue-900: #1428A0;
   --blue-800: #1A2FB8;
@@ -428,20 +428,9 @@ p { margin: 0; }
   font-size: 13px;
 }
 
-.skip-link {
-  position: absolute;
-  left: 16px;
-  top: -200px;
-  background: #FFFFFF;
-  color: #0B0F17;
-  padding: 12px 16px;
-  border-radius: 4px;
-  font-weight: 700;
-  font-size: 14px;
-  z-index: 100;
-}
 
-.skip-link:focus { top: 16px; outline: 3px solid #F58220; }
+
+
 
 .page-intro {
   background: #0A1550;
@@ -948,7 +937,7 @@ select:focus-visible {
   color: #FFFFFF;
 }
 
-/* ============ IMPACT SECTION — Fox ESS layout ============ */
+/* ============ IMPACT SECTION ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Fox ESS layout ============ */
 .impact-section {
   position: relative;
   isolation: isolate;
@@ -965,7 +954,7 @@ select:focus-visible {
   .impact-section { padding: 140px 48px 180px; }
 }
 
-/* Globe — centered, huge, overflowing */
+/* Globe ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â centered, huge, overflowing */
 .impact-section__globe {
   position: absolute;
   top: 50%;
@@ -985,7 +974,7 @@ select:focus-visible {
   transition: opacity 900ms ease;
 }
 
-/* Content grid — text left, stats right, globe center */
+/* Content grid ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â text left, stats right, globe center */
 .impact-section__inner {
   position: relative;
   z-index: 2;
@@ -1081,7 +1070,7 @@ select:focus-visible {
 }
 .impact-cta span { color: #F58220; font-size: 16px; }
 
-/* Stats column — right side */
+/* Stats column ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â right side */
 .impact-section__stats {
   max-width: 440px;
   margin-left: auto;
@@ -1141,7 +1130,7 @@ select:focus-visible {
     margin-left: 0;
   }
 }
-/* ============ IMPACT — text emphasis + left shift ============ */
+/* ============ IMPACT ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â text emphasis + left shift ============ */
 @media (min-width: 1000px) {
   .impact-section {
     padding-left: 32px;
@@ -1194,7 +1183,7 @@ select:focus-visible {
     max-width: 540px;
   }
 }
-/* ============ IMPACT — FORCE bigger, force left ============ */
+/* ============ IMPACT ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â FORCE bigger, force left ============ */
 .impact-section__inner {
   max-width: 100% !important;
   padding-left: 24px !important;
@@ -1240,7 +1229,7 @@ select:focus-visible {
    ============================================================ */
 
 @media (max-width: 999px) {
-  /* Global — prevent horizontal scroll */
+  /* Global ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â prevent horizontal scroll */
   html, body {
     overflow-x: hidden;
   }
@@ -1273,13 +1262,13 @@ select:focus-visible {
     min-height: 34px;
   }
 
-  /* Hero — shorter on mobile */
+  /* Hero ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â shorter on mobile */
   .hero {
     height: 380px !important;
     min-height: 380px !important;
   }
 
-  /* Impact section — stack and recompose */
+  /* Impact section ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â stack and recompose */
   .impact-section {
     padding: 64px 20px 72px !important;
   }
@@ -1359,7 +1348,7 @@ select:focus-visible {
     font-size: 32px;
   }
 
-  /* Sections — tighter padding */
+  /* Sections ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â tighter padding */
   .section { padding: 56px 20px; }
   .section-generous { padding: 64px 20px; }
   .section-tight { padding: 36px 20px; }
@@ -1372,7 +1361,7 @@ select:focus-visible {
   h2 { font-size: 24px; }
   h3 { font-size: 18px; }
 
-  /* Grid — full-width cards */
+  /* Grid ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â full-width cards */
   .grid {
     grid-template-columns: 1fr !important;
     gap: 12px;
@@ -1382,7 +1371,7 @@ select:focus-visible {
     min-height: auto;
   }
 
-  /* Buttons — full width in stacked areas */
+  /* Buttons ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â full width in stacked areas */
   .hero-actions {
     flex-direction: column;
     width: 100%;
@@ -1429,7 +1418,7 @@ select:focus-visible {
     padding: 8px 10px;
   }
 
-  /* Forms — full width */
+  /* Forms ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â full width */
   .form-grid {
     grid-template-columns: 1fr !important;
   }
@@ -1463,7 +1452,7 @@ select:focus-visible {
 }
 
 /* ============================================================
-   TABLET (600-999px) — two-column where it makes sense
+   TABLET (600-999px) ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â two-column where it makes sense
    ============================================================ */
 @media (min-width: 600px) and (max-width: 999px) {
   .grid {
@@ -2627,7 +2616,7 @@ select:focus-visible {
   .quote-section__title { font-size: 24px; }
 }
 
-/* Contact fields — 2 columns inside the left column */
+/* Contact fields ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â 2 columns inside the left column */
 .quote-contact {
   display: grid;
   grid-template-columns: 1fr;
@@ -2701,7 +2690,7 @@ select:focus-visible {
   line-height: 1.35;
 }
 
-/* Inputs — tinted */
+/* Inputs ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â tinted */
 .quote-form .field {
   display: flex;
   flex-direction: column;
@@ -2944,7 +2933,7 @@ select:focus-visible {
   color: #FFFFFF;
 }
 
-/* Submit — full width row below the grid */
+/* Submit ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â full width row below the grid */
 .quote-submit {
   display: flex;
   align-items: center;
@@ -3008,7 +2997,7 @@ select:focus-visible {
   font-size: 16px;
 }
 
-/* Mobile — single column stacking */
+/* Mobile ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â single column stacking */
 @media (max-width: 999px) {
   .quote-section {
     padding: 24px 20px 24px 20px;
@@ -3038,19 +3027,16 @@ select:focus-visible {
   .quote-submit { flex-direction: column; align-items: stretch; }
   .quote-submit .button { width: 100%; }
 }
-/* ============ HERO MOBILE FIX ============ */
+
+/* ============ HERO MOBILE ============ */
 @media (max-width: 700px) {
   .hero {
     aspect-ratio: auto !important;
-    height: 72vw !important;
-    min-height: 300px !important;
-    max-height: 460px !important;
-  }
-
-  .hero-carousel,
-  .hero-carousel--interactive {
-    position: absolute !important;
-    inset: 0 !important;
+    height: auto !important;
+    min-height: 480px !important;
+    max-height: 90vh !important;
+    background: #050E1F !important;
+    overflow: hidden !important;
   }
 
   .hero-slide img {
@@ -3060,17 +3046,26 @@ select:focus-visible {
     height: 100% !important;
   }
 
-  .hero-arrow {
-    width: 40px !important;
-    height: 40px !important;
-    opacity: 0.85 !important;
-    pointer-events: auto !important;
+  .hero-slide picture {
+    display: block;
+    width: 100%;
+    height: 100%;
   }
-  .hero-arrow--prev { left: 10px !important; }
-  .hero-arrow--next { right: 10px !important; }
+
+  .hero-arrow {
+    display: none !important;
+  }
 
   .hero-dots {
-    bottom: 14px !important;
+    bottom: 12px !important;
+    gap: 6px !important;
+  }
+  .hero-dot {
+    width: 20px !important;
+    height: 2px !important;
+  }
+  .hero-dot.is-active {
+    width: 32px !important;
   }
 }
 
@@ -3079,6 +3074,105 @@ select:focus-visible {
     aspect-ratio: auto !important;
     height: 52vw !important;
     min-height: 380px !important;
-    max-height: 540px !important;
+    max-height: 520px !important;
+    background: #050E1F !important;
+  }
+
+  .hero-slide img {
+    object-fit: cover !important;
+    object-position: center !important;
+  }
+
+  .hero-arrow {
+    display: none !important;
+  }
+}
+
+/* ============ FLOATING WHATSAPP BUTTON ============ */
+.floating-whatsapp {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 50;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #25D366;
+  color: #FFFFFF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-shadow:
+    0 8px 24px rgba(37, 211, 102, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.15);
+  transition: transform 200ms ease, box-shadow 200ms ease, background 200ms ease;
+}
+
+.floating-whatsapp::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #F58220;
+  z-index: -1;
+  animation: wa-pulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.floating-whatsapp:hover {
+  transform: scale(1.08);
+  background: #1FBE5C;
+  box-shadow:
+    0 12px 30px rgba(37, 211, 102, 0.45),
+    0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.floating-whatsapp:active {
+  transform: scale(1.02);
+}
+
+.floating-whatsapp:focus-visible {
+  outline: 3px solid #F58220;
+  outline-offset: 3px;
+}
+
+.floating-whatsapp svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes wa-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-whatsapp::before {
+    animation: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .floating-whatsapp {
+    right: 14px;
+    bottom: 14px;
+    width: 44px;
+    height: 44px;
+  }
+  .floating-whatsapp svg {
+    width: 22px;
+    height: 22px;
   }
 }
