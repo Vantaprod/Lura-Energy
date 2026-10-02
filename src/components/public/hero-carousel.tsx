@@ -67,12 +67,17 @@ export function HeroCarousel({ slides, interval = 6000 }: Props) {
           className={'hero-slide' + (i === index ? ' is-active' : '')}
           aria-hidden={i !== index}
         >
-          <picture>
-            {slide.mobileUrl && (
-              <source media="(max-width: 700px)" srcSet={slide.mobileUrl} />
-            )}
-            <img src={slide.url} alt={slide.alt} />
-          </picture>
+          <div
+            className="hero-slide__bg"
+            style={{ backgroundImage: 'url(' + slide.url + ')' }}
+            aria-hidden="true"
+          />
+          <img
+            src={slide.url}
+            alt={slide.alt}
+            className="hero-slide__img"
+            loading={i === 0 ? 'eager' : 'lazy'}
+          />
         </div>
       ))}
 
