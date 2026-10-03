@@ -124,10 +124,17 @@ export default async function ServiceCentresPage() {
     directions: t('cta.getDirections'),
   };
 
+  // A location shows in Service Centres if it is a Service Centre,
+  // a "Both" location, or has no type set.
   const serviceCentres = centres.filter(
     (c) => c.type === 'Service Centre' || c.type === 'Both' || !c.type,
   );
-  const pickupPoints = centres.filter((c) => c.type === 'Pickup Point');
+
+  // A location shows in Pickup Points if it is a Pickup Point
+  // OR a "Both" location.
+  const pickupPoints = centres.filter(
+    (c) => c.type === 'Pickup Point' || c.type === 'Both',
+  );
 
   return (
     <main>
