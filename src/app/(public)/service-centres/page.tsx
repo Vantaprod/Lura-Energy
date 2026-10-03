@@ -32,7 +32,22 @@ type Labels = {
   phone: string;
   email: string;
   directions: string;
+  badgeService: string;
+  badgePickup: string;
+  badgeBoth: string;
 };
+
+type Badge = { label: string; variant: 'service' | 'pickup' | 'both' };
+
+function badgeFor(type: string | null, labels: Labels): Badge {
+  if (type === 'Pickup Point') {
+    return { label: labels.badgePickup, variant: 'pickup' };
+  }
+  if (type === 'Both') {
+    return { label: labels.badgeBoth, variant: 'both' };
+  }
+  return { label: labels.badgeService, variant: 'service' };
+}
 
 function directionsHref(c: Centre): string {
   if (c.latitude !== null && c.longitude !== null) {
@@ -48,11 +63,17 @@ function directionsHref(c: Centre): string {
 
 function CentreCard({ centre, labels }: { centre: Centre; labels: Labels }) {
   const cityLine = [centre.city, centre.state ?? ''].filter(Boolean).join(', ');
+  const badge = badgeFor(centre.type, labels);
 
   return (
     <article className="centre-card">
       <header className="centre-card__head">
-        <p className="eyebrow eyebrow-plain">{centre.state ?? 'Nigeria'}</p>
+        <div className="centre-card__top">
+          <p className="eyebrow eyebrow-plain">{centre.state ?? 'Nigeria'}</p>
+          <span className={'centre-card__badge centre-card__badge--' + badge.variant}>
+            {badge.label}
+          </span>
+        </div>
         <h3 className="centre-card__name">{centre.name}</h3>
         <p className="centre-card__address">
           {centre.address}
@@ -122,19 +143,10 @@ export default async function ServiceCentresPage() {
     phone: t('lcs.phone'),
     email: t('lcs.email'),
     directions: t('cta.getDirections'),
+    badgeService: t('lcs.badgeService'),
+    badgePickup: t('lcs.badgePickup'),
+    badgeBoth: t('lcs.badgeBoth'),
   };
-
-  // A location shows in Service Centres if it is a Service Centre,
-  // a "Both" location, or has no type set.
-  const serviceCentres = centres.filter(
-    (c) => c.type === 'Service Centre' || c.type === 'Both' || !c.type,
-  );
-
-  // A location shows in Pickup Points if it is a Pickup Point
-  // OR a "Both" location.
-  const pickupPoints = centres.filter(
-    (c) => c.type === 'Pickup Point' || c.type === 'Both',
-  );
 
   return (
     <main>
@@ -144,48 +156,27 @@ export default async function ServiceCentresPage() {
         <p>{t('lcs.intro')}</p>
       </section>
 
-      {centres.length === 0 && (
-        <section className="section-generous">
+      <section className="section-generous">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">{t('lcs.serviceCentresEyebrow')}</p>
+            <h2>{t('lcs.serviceCentresHeading')}</h2>
+          </div>
+          <p>{t('lcs.serviceCentresDesc')}</p>
+        </div>
+        {centres.length > 0 ? (
+          <div className="grid grid--centres">
+            {centres.map((c) => (
+              <CentreCard key={c.id} centre={c} labels={labels} />
+            ))}
+          </div>
+        ) : (
           <div className="empty-panel">
             <strong>{t('lcs.emptyTitle')}</strong>
             {t('lcs.emptyBody')}
           </div>
-        </section>
-      )}
-
-      {serviceCentres.length > 0 && (
-        <section className="section-generous">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">{t('lcs.serviceCentresEyebrow')}</p>
-              <h2>{t('lcs.serviceCentresHeading')}</h2>
-            </div>
-            <p>{t('lcs.serviceCentresDesc')}</p>
-          </div>
-          <div className="grid grid--centres">
-            {serviceCentres.map((c) => (
-              <CentreCard key={c.id} centre={c} labels={labels} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {pickupPoints.length > 0 && (
-        <section className="section-generous section-tint">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">{t('lcs.pickupEyebrow')}</p>
-              <h2>{t('lcs.pickupHeading')}</h2>
-            </div>
-            <p>{t('lcs.pickupDesc')}</p>
-          </div>
-          <div className="grid grid--centres">
-            {pickupPoints.map((c) => (
-              <CentreCard key={c.id} centre={c} labels={labels} />
-            ))}
-          </div>
-        </section>
-      )}
+        )}
+      </section>
 
       <section className="split-cta">
         <div>
