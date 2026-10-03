@@ -1,8 +1,9 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 import { prisma } from '@/lib/db/prisma';
 import { loadHeroSlides } from '@/lib/hero-slides';
 import { HeroCarousel, type HeroSlide } from '@/components/public/hero-carousel';
 import { ImpactSection, type ImpactContent } from '@/components/public/impact-section';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,9 +20,10 @@ function parseHeroImages(value: unknown): HeroSlide[] {
       .map((item) => ({
         url: item.url,
         alt: item.alt ?? '',
-        mobileUrl: typeof item.mobileUrl === 'string' && item.mobileUrl.trim()
-          ? item.mobileUrl
-          : undefined,
+        mobileUrl:
+          typeof item.mobileUrl === 'string' && item.mobileUrl.trim()
+            ? item.mobileUrl
+            : undefined,
       }));
   } catch {
     return [];
@@ -94,6 +96,8 @@ export default async function HomePage() {
         }),
       ]);
 
+  const { t } = await getServerT();
+
   const content: Record<string, unknown> = Object.fromEntries(
     settings.map((x) => [x.key, x.value]),
   );
@@ -102,7 +106,7 @@ export default async function HomePage() {
     return typeof value === 'string' && value.trim() ? value : fallback;
   };
 
-  const ctaTitle = pick('home.ctaTitle', 'Talk to Lura.');
+  const ctaTitle = pick('home.ctaTitle', t('cta.talkToLura'));
   const ctaBody = pick('home.ctaBody', '');
   const intro = pick('company.intro', '');
 
@@ -118,7 +122,7 @@ export default async function HomePage() {
       'impact.body2',
       'Every project represents more than an installation \u2014 it represents a home, business, or organization gaining greater access to dependable energy.',
     ),
-    ctaLabel: pick('impact.ctaLabel', 'Learn more'),
+    ctaLabel: pick('impact.ctaLabel', t('cta.learnMore')),
     ctaHref: pick('impact.ctaHref', '/projects'),
     stats: [
       {
@@ -149,12 +153,14 @@ export default async function HomePage() {
         <HeroCarousel slides={heroSlides} />
       </section>
 
+      <ImpactSection content={impactContent} />
+
       {intro && (
         <section className="section-generous">
           <div className="editorial">
             <div>
-              <p className="eyebrow">Company</p>
-              <h2 className="display-2">About Lura</h2>
+              <p className="eyebrow">{t('home.aboutEyebrow')}</p>
+              <h2 className="display-2">{t('home.aboutHeading')}</h2>
             </div>
             <div>
               <p className="lead">{intro}</p>
@@ -166,10 +172,12 @@ export default async function HomePage() {
       <section className="section section-dark">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Solutions</p>
-            <h2>Solutions from Lura.</h2>
+            <p className="eyebrow">{t('home.solutionsEyebrow')}</p>
+            <h2>{t('home.solutionsHeading')}</h2>
           </div>
-          <Link className="button button-ghost button-small" href="/solutions">All solutions</Link>
+          <Link className="button button-ghost button-small" href="/solutions">
+            {t('cta.allSolutions')}
+          </Link>
         </div>
         {solutions.length ? (
           <div className="grid">
@@ -179,14 +187,14 @@ export default async function HomePage() {
                   <h3>{item.name}</h3>
                   {item.summary && <p>{item.summary}</p>}
                 </div>
-                <Link href={'/solutions/' + item.slug}>Discover</Link>
+                <Link href={'/solutions/' + item.slug}>{t('cta.discover')}</Link>
               </article>
             ))}
           </div>
         ) : (
           <div className="empty-panel">
-            <strong>Solutions are being prepared</strong>
-            Published Lura solutions will appear here.
+            <strong>{t('empty.solutionsTitle')}</strong>
+            {t('empty.solutionsBody')}
           </div>
         )}
       </section>
@@ -194,10 +202,12 @@ export default async function HomePage() {
       <section className="section-generous">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Products</p>
-            <h2>The Lura product line.</h2>
+            <p className="eyebrow">{t('home.productsEyebrow')}</p>
+            <h2>{t('home.productsHeading')}</h2>
           </div>
-          <Link className="button button-secondary button-small" href="/products">All products</Link>
+          <Link className="button button-secondary button-small" href="/products">
+            {t('cta.allProducts')}
+          </Link>
         </div>
         {products.length ? (
           <div className="grid">
@@ -213,28 +223,28 @@ export default async function HomePage() {
                     <h3>{item.name}</h3>
                     {item.summary && <p>{item.summary}</p>}
                   </div>
-                  <Link href={'/products/' + item.slug}>View product</Link>
+                  <Link href={'/products/' + item.slug}>{t('cta.viewProduct')}</Link>
                 </article>
               );
             })}
           </div>
         ) : (
           <div className="empty-panel">
-            <strong>Product information is being prepared</strong>
-            Approved Lura products will appear here as they are added to the catalog.
+            <strong>{t('empty.productsTitle')}</strong>
+            {t('empty.productsBody')}
           </div>
         )}
       </section>
 
-      <ImpactSection content={impactContent} />
-
       <section className="section section-dark">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Projects</p>
-            <h2>Selected installations.</h2>
+            <p className="eyebrow">{t('home.projectsEyebrow')}</p>
+            <h2>{t('home.projectsHeading')}</h2>
           </div>
-          <Link className="button button-ghost button-small" href="/projects">All projects</Link>
+          <Link className="button button-ghost button-small" href="/projects">
+            {t('cta.allProjects')}
+          </Link>
         </div>
         {projects.length ? (
           <div className="grid">
@@ -250,15 +260,15 @@ export default async function HomePage() {
                     <h3>{item.title}</h3>
                     {item.category && <p>{item.category}</p>}
                   </div>
-                  <Link href={'/projects/' + item.slug}>View project</Link>
+                  <Link href={'/projects/' + item.slug}>{t('cta.viewProject')}</Link>
                 </article>
               );
             })}
           </div>
         ) : (
           <div className="empty-panel">
-            <strong>Project stories are being prepared</strong>
-            Published installation projects will appear here.
+            <strong>{t('empty.projectsTitle')}</strong>
+            {t('empty.projectsBody')}
           </div>
         )}
       </section>
@@ -267,8 +277,8 @@ export default async function HomePage() {
         <section className="section-tight">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">Customers</p>
-              <h2>In their words.</h2>
+              <p className="eyebrow">{t('home.testimonialsEyebrow')}</p>
+              <h2>{t('home.testimonialsHeading')}</h2>
             </div>
           </div>
           <div className="grid">
@@ -285,13 +295,13 @@ export default async function HomePage() {
 
       <section className="split-cta">
         <div>
-          <p className="eyebrow">Start a project</p>
+          <p className="eyebrow">{t('home.ctaEyebrow')}</p>
           <h2 className="display-2">{ctaTitle}</h2>
           {ctaBody && <p className="lead">{ctaBody}</p>}
         </div>
         <div className="hero-actions">
-          <Link className="button" href="/contact">Request a quote</Link>
-          <Link className="button button-ghost" href="/products">Explore products</Link>
+          <Link className="button" href="/contact">{t('cta.quote')}</Link>
+          <Link className="button button-ghost" href="/products">{t('cta.exploreProducts')}</Link>
         </div>
       </section>
     </main>
