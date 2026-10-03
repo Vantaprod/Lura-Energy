@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n/context';
 
 const MESSAGE =
   "Hello Lura, I'd like to enquire about your solar products and services.";
@@ -79,7 +80,6 @@ function getBeepUrl(): string {
   return cachedBeepUrl;
 }
 
-/** Reusable audio element — pre-warmed so it can play without delay. */
 let sharedAudio: HTMLAudioElement | null = null;
 function getAudio(): HTMLAudioElement | null {
   if (typeof window === 'undefined') return null;
@@ -94,7 +94,6 @@ function getAudio(): HTMLAudioElement | null {
   }
 }
 
-/** Unlock the shared audio by playing silently on first user gesture. */
 function warmupAudio() {
   const audio = getAudio();
   if (!audio) return;
@@ -107,7 +106,6 @@ function warmupAudio() {
           audio.pause();
           audio.currentTime = 0;
           audio.volume = 0.75;
-          console.log('[whatsapp] audio unlocked');
         })
         .catch(() => {
           audio.volume = 0.75;
@@ -126,9 +124,7 @@ function playBeep() {
     audio.volume = 0.75;
     const p = audio.play();
     if (p && typeof p.catch === 'function') {
-      p.catch((err) => {
-        console.warn('[whatsapp] beep blocked:', err && err.message ? err.message : err);
-      });
+      p.catch(() => undefined);
     }
   } catch {
     // ignore
@@ -137,10 +133,10 @@ function playBeep() {
 
 export function FloatingWhatsApp() {
   const pathname = usePathname();
+  const { t } = useTranslation();
   const [phone, setPhone] = useState('');
   const [bubble, setBubble] = useState(false);
 
-  // Unlock audio on first user interaction of any kind.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     function onFirst() {
@@ -214,7 +210,7 @@ export function FloatingWhatsApp() {
           href={href}
           target="_blank"
           rel="noreferrer noopener"
-          aria-label="Message us on WhatsApp"
+          aria-label={t('wa.ariaLabel')}
           onClick={() => setBubble(false)}
         >
           <svg
@@ -238,7 +234,7 @@ export function FloatingWhatsApp() {
               y="36"
               textAnchor="middle"
             >
-              Message us now
+              {t('wa.bubble')}
             </text>
           </svg>
         </a>
@@ -249,7 +245,7 @@ export function FloatingWhatsApp() {
         href={href}
         target="_blank"
         rel="noreferrer noopener"
-        aria-label="Chat with Lura on WhatsApp"
+        aria-label={t('wa.ariaLabel')}
         onClick={() => setBubble(false)}
       >
         <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28" aria-hidden="true">

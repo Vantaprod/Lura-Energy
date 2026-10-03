@@ -1,13 +1,14 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/db/prisma';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Service Centres & Pickup Points',
   description:
-    'Find Lura Chain Store service centres and pickup points across Nigeria. Installation services, Grade A solar lithium batteries, hybrid inverters, solar panels, and solar accessories.',
+    'Find Lura Chain Store service centres and pickup points across Nigeria.',
 };
 
 type Centre = {
@@ -26,6 +27,13 @@ type Centre = {
   description: string | null;
 };
 
+type Labels = {
+  hours: string;
+  phone: string;
+  email: string;
+  directions: string;
+};
+
 function directionsHref(c: Centre): string {
   if (c.latitude !== null && c.longitude !== null) {
     const dest = c.latitude + ',' + c.longitude;
@@ -38,7 +46,7 @@ function directionsHref(c: Centre): string {
   );
 }
 
-function CentreCard({ centre }: { centre: Centre }) {
+function CentreCard({ centre, labels }: { centre: Centre; labels: Labels }) {
   const cityLine = [centre.city, centre.state ?? ''].filter(Boolean).join(', ');
 
   return (
@@ -56,13 +64,13 @@ function CentreCard({ centre }: { centre: Centre }) {
       <dl className="centre-card__meta">
         {centre.hours && (
           <>
-            <dt>Hours</dt>
+            <dt>{labels.hours}</dt>
             <dd>{centre.hours}</dd>
           </>
         )}
         {centre.phone && (
           <>
-            <dt>Phone</dt>
+            <dt>{labels.phone}</dt>
             <dd>
               <a href={'tel:' + centre.phone.replace(/[^+\d]/g, '')}>{centre.phone}</a>
             </dd>
@@ -70,7 +78,7 @@ function CentreCard({ centre }: { centre: Centre }) {
         )}
         {centre.email && (
           <>
-            <dt>Email</dt>
+            <dt>{labels.email}</dt>
             <dd>
               <a href={'mailto:' + centre.email}>{centre.email}</a>
             </dd>
@@ -84,9 +92,9 @@ function CentreCard({ centre }: { centre: Centre }) {
           href={directionsHref(centre)}
           target="_blank"
           rel="noreferrer"
-          aria-label={'Get directions to ' + centre.name}
+          aria-label={labels.directions + ' - ' + centre.name}
         >
-          Get Directions
+          {labels.directions}
           <span aria-hidden="true">{'\u2192'}</span>
         </a>
       </div>
@@ -99,12 +107,22 @@ export default async function ServiceCentresPage() {
     process.env.NODE_ENV === 'development' &&
     process.env.PREVIEW_WITHOUT_DATABASE === 'true';
 
-  const centres: Centre[] = isPreview
-    ? []
-    : await prisma.serviceCentre.findMany({
-        where: { published: true },
-        orderBy: [{ sortOrder: 'asc' }, { city: 'asc' }],
-      });
+  const [centres, { t }] = await Promise.all([
+    isPreview
+      ? Promise.resolve([] as Centre[])
+      : prisma.serviceCentre.findMany({
+          where: { published: true },
+          orderBy: [{ sortOrder: 'asc' }, { city: 'asc' }],
+        }),
+    getServerT(),
+  ]);
+
+  const labels: Labels = {
+    hours: t('lcs.hours'),
+    phone: t('lcs.phone'),
+    email: t('lcs.email'),
+    directions: t('cta.getDirections'),
+  };
 
   const serviceCentres = centres.filter(
     (c) => c.type === 'Service Centre' || c.type === 'Both' || !c.type,
@@ -114,21 +132,16 @@ export default async function ServiceCentresPage() {
   return (
     <main>
       <section className="page-intro">
-        <p className="eyebrow">Lura Chain Store</p>
-        <h1>Service Centres &amp; Pickup Points</h1>
-        <p>
-          Verified Lura locations across Nigeria for installation services,
-          product sales, and pickup. Every LCS location is authorised and
-          supported directly by Lura.
-        </p>
+        <p className="eyebrow">{t('lcs.eyebrow')}</p>
+        <h1>{t('lcs.title')}</h1>
+        <p>{t('lcs.intro')}</p>
       </section>
 
       {centres.length === 0 && (
         <section className="section-generous">
           <div className="empty-panel">
-            <strong>Locations are being added</strong>
-            Published Lura Chain Store locations will appear here as they are
-            approved.
+            <strong>{t('lcs.emptyTitle')}</strong>
+            {t('lcs.emptyBody')}
           </div>
         </section>
       )}
@@ -137,18 +150,14 @@ export default async function ServiceCentresPage() {
         <section className="section-generous">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">Full support</p>
-              <h2>Service Centres</h2>
+              <p className="eyebrow">{t('lcs.serviceCentresEyebrow')}</p>
+              <h2>{t('lcs.serviceCentresHeading')}</h2>
             </div>
-            <p>
-              Authorised Lura locations offering installation services, Grade A
-              solar lithium batteries, hybrid inverters, solar panels, and
-              solar accessories.
-            </p>
+            <p>{t('lcs.serviceCentresDesc')}</p>
           </div>
           <div className="grid grid--centres">
             {serviceCentres.map((c) => (
-              <CentreCard centre={c} key={c.id} />
+              <CentreCard key={c.id} centre={c} labels={labels} />
             ))}
           </div>
         </section>
@@ -158,17 +167,14 @@ export default async function ServiceCentresPage() {
         <section className="section-generous section-tint">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">Collect in person</p>
-              <h2>Pickup Points</h2>
+              <p className="eyebrow">{t('lcs.pickupEyebrow')}</p>
+              <h2>{t('lcs.pickupHeading')}</h2>
             </div>
-            <p>
-              Pick up verified Lura solar batteries, inverters, panels, and
-              accessories from these authorised locations.
-            </p>
+            <p>{t('lcs.pickupDesc')}</p>
           </div>
           <div className="grid grid--centres">
             {pickupPoints.map((c) => (
-              <CentreCard centre={c} key={c.id} />
+              <CentreCard key={c.id} centre={c} labels={labels} />
             ))}
           </div>
         </section>
@@ -176,15 +182,13 @@ export default async function ServiceCentresPage() {
 
       <section className="split-cta">
         <div>
-          <p className="eyebrow">Become a partner</p>
-          <h2 className="display-2">Want to open an LCS location?</h2>
-          <p className="lead">
-            Partner with Lura to bring service and pickup to your city.
-          </p>
+          <p className="eyebrow">{t('lcs.partnerEyebrow')}</p>
+          <h2 className="display-2">{t('lcs.partnerHeading')}</h2>
+          <p className="lead">{t('lcs.partnerBody')}</p>
         </div>
         <div className="hero-actions">
-          <Link className="button" href="/contact">Contact Lura</Link>
-          <Link className="button button-ghost" href="/about">About Lura</Link>
+          <Link className="button" href="/contact">{t('cta.contactLura')}</Link>
+          <Link className="button button-ghost" href="/about">{t('nav.about')}</Link>
         </div>
       </section>
     </main>

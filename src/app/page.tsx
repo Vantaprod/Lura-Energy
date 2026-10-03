@@ -96,49 +96,59 @@ export default async function HomePage() {
         }),
       ]);
 
-  const { t } = await getServerT();
+  const { lang, t } = await getServerT();
 
   const content: Record<string, unknown> = Object.fromEntries(
     settings.map((x) => [x.key, x.value]),
   );
-  const pick = (key: string, fallback: string): string => {
-    const value = content[key];
-    return typeof value === 'string' && value.trim() ? value : fallback;
+
+  /**
+   * Bilingual resolve:
+   * - English: use DB value if present, otherwise the English dictionary default.
+   * - Chinese / French: always use the dictionary so the language is fully translated.
+   */
+  const resolve = (dbKey: string, i18nKey: string): string => {
+    if (lang === 'en') {
+      const dbValue = content[dbKey];
+      if (typeof dbValue === 'string' && dbValue.trim()) return dbValue;
+    }
+    return t(i18nKey);
   };
 
-  const ctaTitle = pick('home.ctaTitle', t('cta.talkToLura'));
-  const ctaBody = pick('home.ctaBody', '');
-  const intro = pick('company.intro', '');
+  const intro = lang === 'en' && typeof content['company.intro'] === 'string'
+    ? String(content['company.intro'])
+    : '';
+  const ctaTitle = resolve('home.ctaTitle', 'cta.talkToLura');
+  const ctaBody = typeof content['home.ctaBody'] === 'string' && lang === 'en'
+    ? String(content['home.ctaBody'])
+    : '';
 
   const impactContent: ImpactContent = {
-    eyebrow: pick('impact.eyebrow', 'Our Impact'),
-    headingWhite: pick('impact.headingWhite', 'Powering'),
-    headingAccent: pick('impact.headingAccent', 'Possibility'),
-    body1: pick(
-      'impact.body1',
-      'What started with a vision for more accessible and reliable energy is becoming a growing presence across Nigeria. Lura continues to expand through successful solar projects, strategic distributor partnerships, and an increasing operational footprint across key regions.',
-    ),
-    body2: pick(
-      'impact.body2',
-      'Every project represents more than an installation \u2014 it represents a home, business, or organization gaining greater access to dependable energy.',
-    ),
-    ctaLabel: pick('impact.ctaLabel', t('cta.learnMore')),
-    ctaHref: pick('impact.ctaHref', '/projects'),
+    eyebrow: resolve('impact.eyebrow', 'impact.eyebrow'),
+    headingWhite: resolve('impact.headingWhite', 'impact.headingWhite'),
+    headingAccent: resolve('impact.headingAccent', 'impact.headingAccent'),
+    body1: resolve('impact.body1', 'impact.body1'),
+    body2: resolve('impact.body2', 'impact.body2'),
+    ctaLabel: resolve('impact.ctaLabel', 'impact.ctaLabel'),
+    ctaHref:
+      typeof content['impact.ctaHref'] === 'string' && String(content['impact.ctaHref']).trim()
+        ? String(content['impact.ctaHref'])
+        : '/projects',
     stats: [
       {
-        label: pick('impact.stat1Label', 'Operating Regions in Nigeria'),
-        value: parseNumber(pick('impact.stat1Value', '90'), 90),
-        suffix: pick('impact.stat1Suffix', '+'),
+        label: resolve('impact.stat1Label', 'impact.stat1Label'),
+        value: parseNumber(String(content['impact.stat1Value'] ?? '90'), 90),
+        suffix: String(content['impact.stat1Suffix'] ?? '+'),
       },
       {
-        label: pick('impact.stat2Label', 'Successful Projects'),
-        value: parseNumber(pick('impact.stat2Value', '5'), 5),
-        suffix: pick('impact.stat2Suffix', ''),
+        label: resolve('impact.stat2Label', 'impact.stat2Label'),
+        value: parseNumber(String(content['impact.stat2Value'] ?? '5'), 5),
+        suffix: String(content['impact.stat2Suffix'] ?? ''),
       },
       {
-        label: pick('impact.stat3Label', 'Distribution Partners'),
-        value: parseNumber(pick('impact.stat3Value', '5000'), 5000),
-        suffix: pick('impact.stat3Suffix', '+'),
+        label: resolve('impact.stat3Label', 'impact.stat3Label'),
+        value: parseNumber(String(content['impact.stat3Value'] ?? '5000'), 5000),
+        suffix: String(content['impact.stat3Suffix'] ?? '+'),
       },
     ],
   };

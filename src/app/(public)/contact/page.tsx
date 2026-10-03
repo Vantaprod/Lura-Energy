@@ -1,3 +1,41 @@
 import { QuoteForm } from '@/components/public/quote-form';
-export const metadata={title:'Contact'};
-export default async function ContactPage({searchParams}:{searchParams:Promise<{product?:string}>}){const params=await searchParams;return <main><section className="page-intro"><p className="eyebrow">Contact Lura</p><h1>Start a conversation.</h1><p>Share what you need. The Lura team can review your enquiry and follow up.</p></section><section className="section form-layout"><div><p className="eyebrow">Request information</p><h2>Tell us a little about your project.</h2><p className="form-note">Required fields are marked. Please avoid including sensitive personal or financial information.</p></div>{(process.env.NODE_ENV === 'development' && process.env.PREVIEW_WITHOUT_DATABASE)==='true'?<div className="empty-panel"><strong>Preview mode</strong>Quote submissions are disabled until the local database is connected.</div>:<QuoteForm initialProduct={params.product??''}/>}</section></main>;}
+import { getServerT } from '@/lib/i18n/server';
+
+export const metadata = { title: 'Contact' };
+
+export default async function ContactPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ product?: string }>;
+}) {
+  const params = await searchParams;
+  const { t } = await getServerT();
+  const isPreview =
+    process.env.NODE_ENV === 'development' &&
+    process.env.PREVIEW_WITHOUT_DATABASE === 'true';
+
+  return (
+    <main>
+      <section className="page-intro">
+        <p className="eyebrow">{t('contact.eyebrow')}</p>
+        <h1>{t('contact.heading')}</h1>
+        <p>{t('contact.intro')}</p>
+      </section>
+      <section className="section form-layout">
+        <div>
+          <p className="eyebrow">{t('contact.requestEyebrow')}</p>
+          <h2>{t('contact.requestHeading')}</h2>
+          <p className="form-note">{t('contact.requestNote')}</p>
+        </div>
+        {isPreview ? (
+          <div className="empty-panel">
+            <strong>{t('contact.previewTitle')}</strong>
+            {t('contact.previewBody')}
+          </div>
+        ) : (
+          <QuoteForm initialProduct={params.product ?? ''} />
+        )}
+      </section>
+    </main>
+  );
+}

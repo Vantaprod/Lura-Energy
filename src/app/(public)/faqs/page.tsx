@@ -1,1 +1,48 @@
-import { prisma } from '@/lib/db/prisma';export const dynamic='force-dynamic';export default async function FaqPage(){const items=(process.env.NODE_ENV === 'development' && process.env.PREVIEW_WITHOUT_DATABASE)==='true'?[]:await prisma.fAQ.findMany({where:{published:true},orderBy:{sortOrder:'asc'}});return <main><section className="page-intro"><p className="eyebrow">Questions and answers</p><h1>FAQs</h1><p>Answers published by Lura.</p></section><section className="content-section">{items.length?items.map(x=><details key={x.id} style={{padding:'1.2rem 0',borderBottom:'1px solid var(--line)'}}><summary style={{fontWeight:700,cursor:'pointer'}}>{x.question}</summary><p>{x.answer}</p></details>):<div className="empty-panel"><strong>Answers are being prepared</strong>There are no published questions yet.</div>}</section></main>;}
+import { prisma } from '@/lib/db/prisma';
+import { getServerT } from '@/lib/i18n/server';
+
+export const dynamic = 'force-dynamic';
+
+export default async function FaqPage() {
+  const isPreview =
+    process.env.NODE_ENV === 'development' &&
+    process.env.PREVIEW_WITHOUT_DATABASE === 'true';
+
+  const [items, { t }] = await Promise.all([
+    isPreview
+      ? Promise.resolve([])
+      : prisma.fAQ.findMany({
+          where: { published: true },
+          orderBy: { sortOrder: 'asc' },
+        }),
+    getServerT(),
+  ]);
+
+  return (
+    <main>
+      <section className="page-intro">
+        <p className="eyebrow">{t('faq.eyebrow')}</p>
+        <h1>{t('faq.title')}</h1>
+        <p>{t('faq.description')}</p>
+      </section>
+      <section className="content-section">
+        {items.length ? (
+          items.map((x) => (
+            <details
+              key={x.id}
+              style={{ padding: '1.2rem 0', borderBottom: '1px solid var(--line)' }}
+            >
+              <summary style={{ fontWeight: 700, cursor: 'pointer' }}>{x.question}</summary>
+              <p>{x.answer}</p>
+            </details>
+          ))
+        ) : (
+          <div className="empty-panel">
+            <strong>{t('faq.emptyTitle')}</strong>
+            {t('faq.emptyBody')}
+          </div>
+        )}
+      </section>
+    </main>
+  );
+}
