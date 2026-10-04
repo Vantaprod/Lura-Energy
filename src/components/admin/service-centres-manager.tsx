@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from '@/lib/i18n/context';
 
 type Centre = {
   id: string;
@@ -38,25 +39,6 @@ type EditValues = {
   sortOrder: string;
 };
 
-const TYPES = ['Service Centre', 'Pickup Point', 'Both'] as const;
-
-const emptyEdit = (c: Centre): EditValues => ({
-  name: c.name,
-  slug: c.slug,
-  type: c.type ?? 'Service Centre',
-  address: c.address,
-  city: c.city,
-  state: c.state ?? '',
-  phone: c.phone ?? '',
-  email: c.email ?? '',
-  hours: c.hours ?? '',
-  latitude: c.latitude !== null ? String(c.latitude) : '',
-  longitude: c.longitude !== null ? String(c.longitude) : '',
-  description: c.description ?? '',
-  published: c.published,
-  sortOrder: String(c.sortOrder),
-});
-
 function slugify(s: string): string {
   return s
     .toLowerCase()
@@ -68,6 +50,7 @@ function slugify(s: string): string {
 }
 
 export function ServiceCentresManager() {
+  const { t } = useTranslation();
   const [items, setItems] = useState<Centre[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -77,20 +60,45 @@ export function ServiceCentresManager() {
   const [values, setValues] = useState<EditValues | null>(null);
   const [query, setQuery] = useState('');
 
+  const TYPES = [
+    { value: 'Service Centre', label: t('admin.sc.type.service') },
+    { value: 'Pickup Point', label: t('admin.sc.type.pickup') },
+    { value: 'Both', label: t('admin.sc.type.both') },
+  ];
+
+  const emptyEdit = (c: Centre): EditValues => ({
+    name: c.name,
+    slug: c.slug,
+    type: c.type ?? 'Service Centre',
+    address: c.address,
+    city: c.city,
+    state: c.state ?? '',
+    phone: c.phone ?? '',
+    email: c.email ?? '',
+    hours: c.hours ?? '',
+    latitude: c.latitude !== null ? String(c.latitude) : '',
+    longitude: c.longitude !== null ? String(c.longitude) : '',
+    description: c.description ?? '',
+    published: c.published,
+    sortOrder: String(c.sortOrder),
+  });
+
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
       const res = await fetch('/api/admin/service-centres');
       const data = await res.json();
-      if (!res.ok) throw new Error((data as { error?: string }).error ?? 'Could not load locations.');
+      if (!res.ok) {
+        throw new Error((data as { error?: string }).error ?? t('admin.sc.error.load'));
+      }
       setItems(data as Centre[]);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Could not load locations.');
+      setError(reason instanceof Error ? reason.message : t('admin.sc.error.load'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void load();
@@ -127,12 +135,14 @@ export function ServiceCentresManager() {
         body: JSON.stringify(payload),
       });
       const body = await res.json();
-      if (!res.ok) throw new Error((body as { error?: string }).error ?? 'Could not save location.');
+      if (!res.ok) {
+        throw new Error((body as { error?: string }).error ?? t('admin.sc.error.save'));
+      }
       form.reset();
-      setMessage('Location saved as draft.');
+      setMessage(t('admin.sc.toast.saved'));
       await load();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Could not save location.');
+      setError(reason instanceof Error ? reason.message : t('admin.sc.error.save'));
     } finally {
       setBusy(false);
     }
@@ -168,13 +178,15 @@ export function ServiceCentresManager() {
         body: JSON.stringify(payload),
       });
       const body = await res.json();
-      if (!res.ok) throw new Error((body as { error?: string }).error ?? 'Could not update.');
+      if (!res.ok) {
+        throw new Error((body as { error?: string }).error ?? t('admin.sc.error.update'));
+      }
       setEditing(null);
       setValues(null);
-      setMessage('Location updated.');
+      setMessage(t('admin.sc.toast.updated'));
       await load();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Could not update.');
+      setError(reason instanceof Error ? reason.message : t('admin.sc.error.update'));
     }
   }
 
@@ -185,16 +197,18 @@ export function ServiceCentresManager() {
       body: JSON.stringify({ published: !item.published }),
     });
     if (res.ok) await load();
-    else setError('Could not change publish status.');
+    else setError(t('admin.sc.error.publish'));
   }
 
   async function remove(item: Centre) {
-    if (!window.confirm('Delete "' + item.name + '"? This cannot be undone.')) return;
-    const res = await fetch('/api/admin/service-centres/' + item.id, { method: 'DELETE' });
+    if (!window.confirm(t('admin.actions.confirmDelete'))) return;
+    const res = await fetch('/api/admin/service-centres/' + item.id, {
+      method: 'DELETE',
+    });
     if (res.ok) {
-      setMessage('Location deleted.');
+      setMessage(t('admin.sc.toast.deleted'));
       await load();
-    } else setError('Could not delete.');
+    } else setError(t('admin.sc.error.delete'));
   }
 
   function editField(
@@ -232,80 +246,115 @@ export function ServiceCentresManager() {
     <>
       <form className="form-grid" onSubmit={create}>
         <div className="field">
-          <label htmlFor="sc-name">Location name</label>
-          <input name="name" id="sc-name" required maxLength={160} placeholder="Lura Chain Store Ikeja" />
+          <label htmlFor="sc-name">{t('admin.sc.form.name')}</label>
+          <input
+            name="name"
+            id="sc-name"
+            required
+            maxLength={160}
+            placeholder={t('admin.sc.form.namePlaceholder')}
+          />
         </div>
         <div className="field">
-          <label htmlFor="sc-slug">URL slug</label>
-          <input name="slug" id="sc-slug" maxLength={180} placeholder="auto-generated if empty" />
-          <span className="form-note">Leave blank to auto-generate from the name.</span>
+          <label htmlFor="sc-slug">{t('admin.sc.form.slug')}</label>
+          <input
+            name="slug"
+            id="sc-slug"
+            maxLength={180}
+            placeholder={t('admin.sc.form.slugPlaceholder')}
+          />
+          <span className="form-note">{t('admin.sc.form.slugHint')}</span>
         </div>
         <div className="field">
-          <label htmlFor="sc-type">Type</label>
+          <label htmlFor="sc-type">{t('admin.sc.form.type')}</label>
           <select id="sc-type" name="type" defaultValue="Service Centre">
-            {TYPES.map((t) => (
-              <option key={t} value={t}>{t}</option>
+            {TYPES.map((ty) => (
+              <option key={ty.value} value={ty.value}>
+                {ty.label}
+              </option>
             ))}
           </select>
         </div>
         <div className="field">
-          <label htmlFor="sc-city">City</label>
+          <label htmlFor="sc-city">{t('admin.sc.form.city')}</label>
           <input name="city" id="sc-city" required maxLength={120} />
         </div>
         <div className="field">
-          <label htmlFor="sc-state">State</label>
-          <input name="state" id="sc-state" maxLength={120} placeholder="Lagos" />
+          <label htmlFor="sc-state">{t('admin.sc.form.state')}</label>
+          <input name="state" id="sc-state" maxLength={120} />
         </div>
         <div className="field">
-          <label htmlFor="sc-phone">Phone</label>
-          <input name="phone" id="sc-phone" maxLength={60} placeholder="+234..." />
+          <label htmlFor="sc-phone">{t('admin.sc.form.phone')}</label>
+          <input
+            name="phone"
+            id="sc-phone"
+            maxLength={60}
+            placeholder={t('admin.sc.form.phonePlaceholder')}
+          />
         </div>
         <div className="field field-wide">
-          <label htmlFor="sc-address">Street address</label>
+          <label htmlFor="sc-address">{t('admin.sc.form.address')}</label>
           <input name="address" id="sc-address" required maxLength={400} />
         </div>
         <div className="field">
-          <label htmlFor="sc-email">Email</label>
+          <label htmlFor="sc-email">{t('admin.sc.form.email')}</label>
           <input name="email" id="sc-email" type="email" maxLength={180} />
         </div>
         <div className="field">
-          <label htmlFor="sc-hours">Opening hours</label>
-          <input name="hours" id="sc-hours" maxLength={200} placeholder="Mon-Sat, 8am-6pm" />
+          <label htmlFor="sc-hours">{t('admin.sc.form.hours')}</label>
+          <input
+            name="hours"
+            id="sc-hours"
+            maxLength={200}
+            placeholder={t('admin.sc.form.hoursPlaceholder')}
+          />
         </div>
         <div className="field field-wide">
-          <label htmlFor="sc-description">Notes (optional)</label>
+          <label htmlFor="sc-description">{t('admin.sc.form.notes')}</label>
           <textarea name="description" id="sc-description" maxLength={2000} />
         </div>
         <div className="field-wide">
           <button className="button" disabled={busy}>
-            {busy ? 'Saving...' : 'Add draft location'}
+            {busy ? t('admin.actions.saving') : t('admin.sc.form.submit')}
           </button>
         </div>
       </form>
 
       {error && (
         <p className="form-error" role="alert">
-          {error} <button type="button" className="admin-action" onClick={() => void load()}>Retry</button>
+          {error}{' '}
+          <button type="button" className="admin-action" onClick={() => void load()}>
+            {t('admin.actions.retry')}
+          </button>
         </p>
       )}
-      {message && <p className="form-note" role="status">{message}</p>}
+      {message && (
+        <p className="form-note" role="status">
+          {message}
+        </p>
+      )}
 
-      <h2 style={{ fontSize: '1.6rem', margin: '3rem 0 1rem' }}>Locations</h2>
+      <h2 style={{ fontSize: '1.6rem', margin: '3rem 0 1rem' }}>
+        {t('admin.sc.list.heading')}
+      </h2>
 
       <div className="field" style={{ maxWidth: '420px', marginBottom: '1rem' }}>
-        <label htmlFor="sc-search">Search locations</label>
+        <label htmlFor="sc-search">{t('admin.sc.list.search')}</label>
         <input
           id="sc-search"
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Name, city, state..."
+          placeholder={t('admin.sc.list.searchPlaceholder')}
         />
       </div>
 
       <p className="form-note" aria-live="polite">
-        {visible.length} {visible.length === 1 ? 'location' : 'locations'}
-        {loading ? ' - Loading...' : ''}
+        {visible.length}{' '}
+        {visible.length === 1
+          ? t('admin.sc.list.countOne')
+          : t('admin.sc.list.countMany')}
+        {loading ? ' - ' + t('admin.actions.loading') : ''}
       </p>
 
       {visible.length > 0 ? (
@@ -313,12 +362,12 @@ export function ServiceCentresManager() {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Location</th>
-                <th>Contact</th>
-                <th>State</th>
-                <th>Actions</th>
+                <th>{t('admin.sc.list.colName')}</th>
+                <th>{t('admin.sc.list.colType')}</th>
+                <th>{t('admin.sc.list.colLocation')}</th>
+                <th>{t('admin.sc.list.colContact')}</th>
+                <th>{t('admin.sc.list.colState')}</th>
+                <th>{t('admin.sc.list.colActions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -329,7 +378,15 @@ export function ServiceCentresManager() {
                     <br />
                     <span className="form-note">{c.slug}</span>
                   </td>
-                  <td>{c.type ?? '-'}</td>
+                  <td>
+                    {c.type === 'Service Centre'
+                      ? t('admin.sc.type.service')
+                      : c.type === 'Pickup Point'
+                        ? t('admin.sc.type.pickup')
+                        : c.type === 'Both'
+                          ? t('admin.sc.type.both')
+                          : '-'}
+                  </td>
                   <td>
                     {c.address}
                     <br />
@@ -342,7 +399,11 @@ export function ServiceCentresManager() {
                     {c.phone && <div>{c.phone}</div>}
                     {c.email && <div className="form-note">{c.email}</div>}
                   </td>
-                  <td>{c.published ? 'Published' : 'Draft'}</td>
+                  <td>
+                    {c.published
+                      ? t('admin.sc.edit.published')
+                      : t('admin.sc.edit.draft')}
+                  </td>
                   <td>
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                       <button
@@ -357,21 +418,23 @@ export function ServiceCentresManager() {
                           }, 50);
                         }}
                       >
-                        Edit
+                        {t('admin.actions.edit')}
                       </button>
                       <button
                         type="button"
                         className="admin-action admin-action--primary"
                         onClick={() => void toggle(c)}
                       >
-                        {c.published ? 'Unpublish' : 'Publish'}
+                        {c.published
+                          ? t('admin.actions.unpublish')
+                          : t('admin.actions.publish')}
                       </button>
                       <button
                         type="button"
                         className="admin-action admin-action--danger"
                         onClick={() => void remove(c)}
                       >
-                        Delete
+                        {t('admin.actions.delete')}
                       </button>
                     </div>
                   </td>
@@ -383,47 +446,49 @@ export function ServiceCentresManager() {
       ) : (
         <p className="form-note">
           {loading
-            ? 'Loading locations...'
+            ? t('admin.sc.list.loading')
             : query
-              ? 'No locations match that search.'
-              : 'No locations have been entered yet.'}
+              ? t('admin.sc.list.noMatch')
+              : t('admin.sc.list.empty')}
         </p>
       )}
 
       {editing && values && (
         <form onSubmit={save} className="form-grid edit-panel">
           <div className="field-wide">
-            <p className="eyebrow">Edit location</p>
+            <p className="eyebrow">{t('admin.sc.edit.title')}</p>
             <h2 style={{ fontSize: '1.6rem' }}>{editing.name}</h2>
           </div>
 
-          {editField('name', 'Name')}
-          {editField('slug', 'Slug')}
+          {editField('name', t('admin.sc.form.name'))}
+          {editField('slug', t('admin.sc.form.slug'))}
 
           <div className="field">
-            <label htmlFor="edit-sc-type">Type</label>
+            <label htmlFor="edit-sc-type">{t('admin.sc.form.type')}</label>
             <select
               id="edit-sc-type"
               value={values.type}
               onChange={(e) => setValues({ ...values, type: e.target.value })}
             >
-              {TYPES.map((t) => (
-                <option key={t} value={t}>{t}</option>
+              {TYPES.map((ty) => (
+                <option key={ty.value} value={ty.value}>
+                  {ty.label}
+                </option>
               ))}
             </select>
           </div>
 
-          {editField('city', 'City')}
-          {editField('state', 'State')}
-          {editField('address', 'Street address', true)}
-          {editField('phone', 'Phone')}
-          {editField('email', 'Email')}
-          {editField('hours', 'Opening hours')}
-          {editField('latitude', 'Latitude', false, '6.5244')}
-          {editField('longitude', 'Longitude', false, '3.3792')}
+          {editField('city', t('admin.sc.form.city'))}
+          {editField('state', t('admin.sc.form.state'))}
+          {editField('address', t('admin.sc.form.address'), true)}
+          {editField('phone', t('admin.sc.form.phone'))}
+          {editField('email', t('admin.sc.form.email'))}
+          {editField('hours', t('admin.sc.form.hours'))}
+          {editField('latitude', t('admin.sc.edit.latitude'), false, '6.5244')}
+          {editField('longitude', t('admin.sc.edit.longitude'), false, '3.3792')}
 
           <div className="field field-wide">
-            <label htmlFor="edit-sc-description">Notes</label>
+            <label htmlFor="edit-sc-description">{t('admin.sc.form.notes')}</label>
             <textarea
               id="edit-sc-description"
               value={values.description}
@@ -433,7 +498,7 @@ export function ServiceCentresManager() {
           </div>
 
           <div className="field">
-            <label htmlFor="edit-sc-sortOrder">Sort order</label>
+            <label htmlFor="edit-sc-sortOrder">{t('admin.sc.edit.sortOrder')}</label>
             <input
               id="edit-sc-sortOrder"
               type="number"
@@ -443,25 +508,30 @@ export function ServiceCentresManager() {
           </div>
 
           <div className="field">
-            <label htmlFor="edit-sc-published">Publication</label>
+            <label htmlFor="edit-sc-published">{t('admin.sc.edit.publication')}</label>
             <select
               id="edit-sc-published"
               value={values.published ? 'true' : 'false'}
-              onChange={(e) => setValues({ ...values, published: e.target.value === 'true' })}
+              onChange={(e) =>
+                setValues({ ...values, published: e.target.value === 'true' })
+              }
             >
-              <option value="false">Draft</option>
-              <option value="true">Published</option>
+              <option value="false">{t('admin.sc.edit.draft')}</option>
+              <option value="true">{t('admin.sc.edit.published')}</option>
             </select>
           </div>
 
           <div className="field-wide">
-            <button className="button">Save changes</button>{' '}
+            <button className="button">{t('admin.sc.edit.save')}</button>{' '}
             <button
               type="button"
               className="admin-action"
-              onClick={() => { setEditing(null); setValues(null); }}
+              onClick={() => {
+                setEditing(null);
+                setValues(null);
+              }}
             >
-              Cancel
+              {t('admin.actions.cancel')}
             </button>
           </div>
         </form>
