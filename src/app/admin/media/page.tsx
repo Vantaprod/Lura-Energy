@@ -1,18 +1,24 @@
 import { MediaLibrary } from '@/components/admin/media-library';
+import { getServerT } from '@/lib/i18n/server';
 
-export const metadata = { title: 'Media' };
+export async function generateMetadata() {
+  const { t } = await getServerT('admin');
+  return { title: t('admin.media.title') };
+}
 
-export default function AdminMediaPage() {
+export default async function AdminMediaPage() {
+  const { t } = await getServerT('admin');
+
   return (
     <div className="admin-shell">
       <div className="admin-top">
         <div>
-          <p className="eyebrow">Library</p>
-          <h1 style={{ fontSize: '2rem' }}>Media</h1>
+          <p className="eyebrow">{t('admin.media.eyebrow')}</p>
+          <h1 style={{ fontSize: '2rem' }}>{t('admin.media.title')}</h1>
         </div>
       </div>
       <p className="form-note" style={{ marginBottom: '1.5rem' }}>
-        All images, videos, and documents used across the site. Upload once, reference anywhere.
+        {t('admin.media.intro')}
       </p>
       <MediaLibrary />
     </div>
