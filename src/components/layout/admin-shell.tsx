@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n/context';
 import { AdminLogout } from '@/components/admin/admin-logout';
@@ -9,7 +10,7 @@ import type { Lang } from '@/lib/i18n/dictionaries';
 
 type User = { name: string; role: string } | null;
 
-const POLL_MS = 2000;
+const POLL_MS = 1000;
 
 export function AdminShell({
   user,
@@ -18,29 +19,37 @@ export function AdminShell({
   user: User;
   children: React.ReactNode;
 }) {
-  const { t, applyServerLang } = useTranslation();
+  const router = useRouter();
+  const { t, lang, applyServerLang } = useTranslation();
 
-  // Poll the server for the shared admin language so changes by any admin
-  // propagate to every other admin without a page refresh.
+  const langRef = useRef<Lang>(lang);
+  useEffect(() => {
+    langRef.current = lang;
+  }, [lang]);
+
   useEffect(() => {
     let cancelled = false;
     let timer: number | null = null;
 
     async function poll() {
       if (cancelled) return;
+
       if (typeof document !== 'undefined' && document.hidden) {
-        // Skip when tab is not visible; resume on visibilitychange.
         schedule();
         return;
       }
+
       try {
         const res = await fetch('/api/admin/language', { cache: 'no-store' });
         if (res.ok) {
           const data = (await res.json()) as { lang?: Lang };
-          if (data.lang) applyServerLang(data.lang);
+          if (data.lang && data.lang !== langRef.current) {
+            applyServerLang(data.lang);
+            router.refresh();
+          }
         }
       } catch {
-        // Ignore; will retry next tick.
+        // next tick retries
       }
       schedule();
     }
@@ -52,7 +61,6 @@ export function AdminShell({
 
     function onVisibility() {
       if (!document.hidden) {
-        // Coming back from hidden — poll immediately.
         if (timer) window.clearTimeout(timer);
         void poll();
       }
@@ -66,7 +74,7 @@ export function AdminShell({
       if (timer) window.clearTimeout(timer);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [applyServerLang]);
+  }, [applyServerLang, router]);
 
   const NAV_LINKS = [
     { href: '/admin', label: t('admin.nav.overview') },

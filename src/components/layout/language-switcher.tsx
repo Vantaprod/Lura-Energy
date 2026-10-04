@@ -15,6 +15,7 @@ export function LanguageSwitcher({
   const router = useRouter();
   const { lang, scope, setLang } = useTranslation();
   const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -37,11 +38,34 @@ export function LanguageSwitcher({
 
   const current = LANGUAGES.find((l) => l.code === lang) ?? LANGUAGES[0];
 
-  function choose(code: Lang) {
+  async function choose(code: Lang) {
+    if (busy || code === lang) {
+      setOpen(false);
+      return;
+    }
+
+    // 1) Update client state immediately — nav, buttons, headings flip instantly.
     setLang(code);
     setOpen(false);
-    // Give the server a moment to persist admin scope changes.
-    window.setTimeout(() => router.refresh(), scope === 'admin' ? 250 : 0);
+
+    // 2) Admin scope: wait for the DB write, then re-render server content.
+    //    Front and login scopes only need the client-side cookie, which
+    //    setLang() already wrote. Nothing more to do.
+    if (scope === 'admin') {
+      setBusy(true);
+      try {
+        await fetch('/api/admin/language', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lang: code }),
+        });
+      } catch {
+        // Network blip — polling will retry the sync within 1s.
+      } finally {
+        setBusy(false);
+      }
+      router.refresh();
+    }
   }
 
   return (
@@ -51,6 +75,7 @@ export function LanguageSwitcher({
         onClick={() => setOpen((v) => !v)}
         aria-label="Change language"
         aria-expanded={open}
+        disabled={busy}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -58,7 +83,7 @@ export function LanguageSwitcher({
           gap: '5px',
           background: '#FFFFFF',
           border: '1px solid #E4E7EC',
-          cursor: 'pointer',
+          cursor: busy ? 'wait' : 'pointer',
           padding: compact ? '6px 8px' : '8px 12px',
           borderRadius: '6px',
           color: '#0A1550',
@@ -66,6 +91,7 @@ export function LanguageSwitcher({
           fontFamily: 'inherit',
           fontSize: '13px',
           lineHeight: 1,
+          opacity: busy ? 0.7 : 1,
         }}
       >
         <svg
@@ -105,7 +131,8 @@ export function LanguageSwitcher({
             <button
               key={l.code}
               type="button"
-              onClick={() => choose(l.code)}
+              onClick={() => void choose(l.code)}
+              disabled={busy}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -114,7 +141,7 @@ export function LanguageSwitcher({
                 padding: '11px 16px',
                 background: lang === l.code ? '#E8EEF9' : 'transparent',
                 border: 0,
-                cursor: 'pointer',
+                cursor: busy ? 'wait' : 'pointer',
                 fontFamily: 'inherit',
                 fontSize: '14px',
                 fontWeight: lang === l.code ? 700 : 500,
