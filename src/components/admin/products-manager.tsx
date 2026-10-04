@@ -1,6 +1,7 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from '@/lib/i18n/context';
 import { ProductSpecifications } from '@/components/admin/product-specifications';
 import { MediaDropzone, type ProductMedia } from '@/components/admin/media-dropzone';
 
@@ -52,6 +53,7 @@ const emptyEdit = (product: Product): EditValues => ({
 });
 
 export function ProductsManager() {
+  const { t } = useTranslation();
   const [items, setItems] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [total, setTotal] = useState(0);
@@ -75,12 +77,16 @@ export function ProductsManager() {
     if (stateFilter) params.set('state', stateFilter);
     try {
       const [productsResponse, categoriesResponse] = await Promise.all([
-        fetch('/api/admin/products?' + params, { signal }),
+        fetch(`/api/admin/products?${params}`, { signal }),
         fetch('/api/admin/content?collection=product-categories', { signal }),
       ]);
       const productResult = await productsResponse.json();
-      if (!productsResponse.ok) throw new Error(productResult.error ?? 'Could not load catalog records.');
-      if (!categoriesResponse.ok) throw new Error('Could not load product categories.');
+      if (!productsResponse.ok) {
+        throw new Error(productResult.error ?? t('admin.prod.error.load'));
+      }
+      if (!categoriesResponse.ok) {
+        throw new Error(t('admin.prod.error.categories'));
+      }
       const data: ProductResult = productResult;
       setItems(data.items);
       setTotal(data.total);
@@ -89,11 +95,11 @@ export function ProductsManager() {
       setCategories(await categoriesResponse.json());
     } catch (reason) {
       if (reason instanceof Error && reason.name === 'AbortError') return;
-      setError(reason instanceof Error ? reason.message : 'Could not load catalog records.');
+      setError(reason instanceof Error ? reason.message : t('admin.prod.error.load'));
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
-  }, [page, query, categoryFilter, stateFilter]);
+  }, [page, query, categoryFilter, stateFilter, t]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -114,11 +120,10 @@ export function ProductsManager() {
         body: JSON.stringify({ ...form, categoryId: form.categoryId || undefined }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? 'Could not save product.');
+      if (!response.ok) throw new Error(data.error ?? t('admin.prod.error.save'));
       formElement.reset();
       setPage(1);
       await load();
-      // Open edit form on the newly created product so images can be dropped right away.
       const created: Product = {
         ...(data as Omit<Product, 'media' | 'specifications' | 'category'>),
         media: [],
@@ -127,13 +132,12 @@ export function ProductsManager() {
       };
       setEditing(created);
       setValues(emptyEdit(created));
-      // Scroll to the edit panel so the user sees the dropzone.
-      window.setTimeout(() => {
+      setTimeout(() => {
         const panel = document.querySelector('.edit-panel');
         if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Could not save product.');
+      setError(reason instanceof Error ? reason.message : t('admin.prod.error.save'));
     } finally {
       setBusy(false);
     }
@@ -155,12 +159,12 @@ export function ProductsManager() {
         }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? 'Could not update product.');
+      if (!response.ok) throw new Error(data.error ?? t('admin.prod.error.update'));
       setEditing(null);
       setValues(null);
       await load();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Could not update product.');
+      setError(reason instanceof Error ? reason.message : t('admin.prod.error.update'));
     }
   }
 
@@ -171,14 +175,14 @@ export function ProductsManager() {
       body: JSON.stringify({ published: !item.published }),
     });
     if (response.ok) await load();
-    else setError('Could not change publish status.');
+    else setError(t('admin.prod.error.publish'));
   }
 
   async function remove(item: Product) {
-    if (!window.confirm('Delete ' + item.name + '?')) return;
+    if (!window.confirm(t('admin.actions.confirmDelete'))) return;
     const response = await fetch('/api/admin/products/' + item.id, { method: 'DELETE' });
     if (response.ok) await load();
-    else setError('Could not delete product.');
+    else setError(t('admin.prod.error.delete'));
   }
 
   function editField(key: keyof EditValues, label: string, wide = false) {
@@ -211,51 +215,147 @@ export function ProductsManager() {
   return (
     <>
       <form className="form-grid" onSubmit={create}>
-        <div className="field"><label htmlFor="name">Product name</label><input name="name" id="name" required maxLength={160} /></div>
-        <div className="field"><label htmlFor="slug">URL slug</label><input name="slug" id="slug" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required /></div>
-        <div className="field"><label htmlFor="brand">Brand</label><input name="brand" id="brand" maxLength={80} placeholder="e.g. Litharv, Huihang" /><span className="form-note">Partner brand this product belongs to. Leave empty if Lura-branded.</span></div>
-        <div className="field"><label htmlFor="categoryId">Category</label><select id="categoryId" name="categoryId"><option value="">No category selected</option>{categories.filter((item) => item.published).map((item) => (<option key={item.id} value={item.id}>{item.name}</option>))}</select><span className="form-note">Categories must be published before assignment.</span></div>
-        <div className="field"><label htmlFor="summary">Summary</label><input name="summary" id="summary" maxLength={500} /></div>
-        <div className="field field-wide"><label htmlFor="description">Description</label><textarea name="description" id="description" maxLength={10000} /></div>
+        <div className="field">
+          <label htmlFor="name">{t('admin.prod.form.name')}</label>
+          <input name="name" id="name" required maxLength={160} />
+        </div>
+        <div className="field">
+          <label htmlFor="slug">{t('admin.prod.form.slug')}</label>
+          <input name="slug" id="slug" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required />
+        </div>
+        <div className="field">
+          <label htmlFor="brand">{t('admin.prod.form.brand')}</label>
+          <input
+            name="brand"
+            id="brand"
+            maxLength={80}
+            placeholder={t('admin.prod.form.brandPlaceholder')}
+          />
+          <span className="form-note">{t('admin.prod.form.brandHint')}</span>
+        </div>
+        <div className="field">
+          <label htmlFor="categoryId">{t('admin.prod.form.category')}</label>
+          <select id="categoryId" name="categoryId">
+            <option value="">{t('admin.prod.form.categoryNone')}</option>
+            {categories.filter((item) => item.published).map((item) => (
+              <option key={item.id} value={item.id}>{item.name}</option>
+            ))}
+          </select>
+          <span className="form-note">{t('admin.prod.form.categoryHint')}</span>
+        </div>
+        <div className="field">
+          <label htmlFor="summary">{t('admin.prod.form.summary')}</label>
+          <input name="summary" id="summary" maxLength={500} />
+        </div>
         <div className="field field-wide">
-          <label>Product images</label>
+          <label htmlFor="description">{t('admin.prod.form.description')}</label>
+          <textarea name="description" id="description" maxLength={10000} />
+        </div>
+        <div className="field field-wide">
+          <label>{t('admin.prod.form.images')}</label>
           <p className="form-note" style={{ marginBottom: '0.5rem' }}>
-            Save the draft first. Then reopen it from Product records below to upload images.
+            {t('admin.prod.form.imagesHint')}
           </p>
         </div>
-        <div className="field-wide"><button className="button" disabled={busy}>{busy ? 'Saving...' : 'Add draft product'}</button></div>
+        <div className="field-wide">
+          <button className="button" disabled={busy}>
+            {busy ? t('admin.actions.saving') : t('admin.prod.form.submit')}
+          </button>
+        </div>
       </form>
 
       {error && (
         <p className="form-error" role="alert">
-          {error} <button type="button" className="admin-action" onClick={() => void load()}>Retry</button>
+          {error}{' '}
+          <button type="button" className="admin-action" onClick={() => void load()}>
+            {t('admin.actions.retry')}
+          </button>
         </p>
       )}
 
-      <h2 style={{ fontSize: '1.8rem', margin: '3rem 0 1rem' }}>Product records</h2>
+      <h2 style={{ fontSize: '1.8rem', margin: '3rem 0 1rem' }}>
+        {t('admin.prod.list.title')}
+      </h2>
 
-      <form role="search" className="lead-filters" onSubmit={(event) => { event.preventDefault(); setPage(1); }}>
-        <div className="field"><label htmlFor="product-search">Search products</label><input id="product-search" type="search" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} placeholder="Name, slug, brand, summary..." maxLength={120} /></div>
-        <div className="field"><label htmlFor="product-category-filter">Category</label><select id="product-category-filter" value={categoryFilter} onChange={(event) => { setCategoryFilter(event.target.value); setPage(1); }}><option value="">All categories</option>{categories.map((category) => (<option key={category.id} value={category.id}>{category.name}</option>))}</select></div>
-        <div className="field"><label htmlFor="product-state-filter">Publication</label><select id="product-state-filter" value={stateFilter} onChange={(event) => { setStateFilter(event.target.value); setPage(1); }}><option value="">All records</option><option value="PUBLISHED">Published</option><option value="DRAFT">Draft</option></select></div>
+      <form
+        role="search"
+        className="lead-filters"
+        onSubmit={(event) => { event.preventDefault(); setPage(1); }}
+      >
+        <div className="field">
+          <label htmlFor="product-search">{t('admin.prod.list.search')}</label>
+          <input
+            id="product-search"
+            type="search"
+            value={query}
+            onChange={(event) => { setQuery(event.target.value); setPage(1); }}
+            placeholder={t('admin.prod.list.searchPlaceholder')}
+            maxLength={120}
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="product-category-filter">{t('admin.prod.list.category')}</label>
+          <select
+            id="product-category-filter"
+            value={categoryFilter}
+            onChange={(event) => { setCategoryFilter(event.target.value); setPage(1); }}
+          >
+            <option value="">{t('admin.prod.list.allCategories')}</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>{category.name}</option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="product-state-filter">{t('admin.prod.list.publication')}</label>
+          <select
+            id="product-state-filter"
+            value={stateFilter}
+            onChange={(event) => { setStateFilter(event.target.value); setPage(1); }}
+          >
+            <option value="">{t('admin.prod.list.allRecords')}</option>
+            <option value="PUBLISHED">{t('admin.prod.list.published')}</option>
+            <option value="DRAFT">{t('admin.prod.list.draft')}</option>
+          </select>
+        </div>
       </form>
 
-      <p className="form-note" aria-live="polite">{total} {total === 1 ? 'product' : 'products'}{loading ? ' - Loading...' : ''}</p>
+      <p className="form-note" aria-live="polite">
+        {total} {total === 1 ? t('admin.prod.list.countOne') : t('admin.prod.list.countMany')}
+        {loading ? ' - ' + t('admin.actions.loading') : ''}
+      </p>
 
       {items.length ? (
         <div style={{ overflowX: 'auto' }}>
           <table className="admin-table">
             <thead>
-              <tr><th>Product</th><th>Brand</th><th>Category</th><th>Images</th><th>State</th><th>Actions</th></tr>
+              <tr>
+                <th>{t('admin.prod.list.colProduct')}</th>
+                <th>{t('admin.prod.list.colBrand')}</th>
+                <th>{t('admin.prod.list.colCategory')}</th>
+                <th>{t('admin.prod.list.colImages')}</th>
+                <th>{t('admin.prod.list.colState')}</th>
+                <th>{t('admin.prod.list.colActions')}</th>
+              </tr>
             </thead>
             <tbody>
               {items.map((item) => (
                 <tr key={item.id}>
-                  <td>{item.name}<br /><span className="form-note">{item.slug}</span><br /><ProductSpecifications productId={item.id} initial={item.specifications} /></td>
+                  <td>
+                    {item.name}
+                    <br />
+                    <span className="form-note">{item.slug}</span>
+                    <br />
+                    <ProductSpecifications productId={item.id} initial={item.specifications} />
+                  </td>
                   <td>{item.brand ?? '-'}</td>
                   <td>{item.category?.name ?? '-'}</td>
                   <td>{item.media?.filter((m) => m.kind === 'IMAGE').length ?? 0}</td>
-                  <td>{item.published ? 'Published' : 'Draft'}</td>
+                  <td>
+                    {item.published
+                      ? t('admin.prod.list.published')
+                      : t('admin.prod.list.draft')}
+                  </td>
                   <td>
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                       <button
@@ -263,21 +363,23 @@ export function ProductsManager() {
                         className="admin-action admin-action--edit"
                         onClick={() => { setEditing(item); setValues(emptyEdit(item)); }}
                       >
-                        Edit
+                        {t('admin.actions.edit')}
                       </button>
                       <button
                         type="button"
                         className="admin-action admin-action--primary"
                         onClick={() => void toggle(item)}
                       >
-                        {item.published ? 'Unpublish' : 'Publish'}
+                        {item.published
+                          ? t('admin.actions.unpublish')
+                          : t('admin.actions.publish')}
                       </button>
                       <button
                         type="button"
                         className="admin-action admin-action--danger"
                         onClick={() => void remove(item)}
                       >
-                        Delete
+                        {t('admin.actions.delete')}
                       </button>
                     </div>
                   </td>
@@ -287,45 +389,78 @@ export function ProductsManager() {
           </table>
         </div>
       ) : (
-        <p className="form-note">{loading ? 'Loading products...' : query || categoryFilter || stateFilter ? 'No products match these filters.' : 'No products have been entered yet.'}</p>
+        <p className="form-note">
+          {loading
+            ? t('admin.prod.list.loading')
+            : query || categoryFilter || stateFilter
+              ? t('admin.prod.list.noMatch')
+              : t('admin.prod.list.empty')}
+        </p>
       )}
 
       {pageCount > 1 && (
         <nav className="pagination" aria-label="Product pages">
-          <button className="admin-action" disabled={page <= 1 || loading} onClick={() => setPage((value) => Math.max(1, value - 1))}>Previous</button>
-          <span>Page {page} of {pageCount}</span>
-          <button className="admin-action" disabled={page >= pageCount || loading} onClick={() => setPage((value) => Math.min(pageCount, value + 1))}>Next</button>
+          <button
+            className="admin-action"
+            disabled={page <= 1 || loading}
+            onClick={() => setPage((value) => Math.max(1, value - 1))}
+          >
+            {t('admin.actions.cancel')}
+          </button>
+          <span>{page} / {pageCount}</span>
+          <button
+            className="admin-action"
+            disabled={page >= pageCount || loading}
+            onClick={() => setPage((value) => Math.min(pageCount, value + 1))}
+          >
+            {'\u2192'}
+          </button>
         </nav>
       )}
 
       {editing && values && (
         <form onSubmit={save} className="form-grid edit-panel">
-          <div className="field-wide"><p className="eyebrow">Edit product</p><h2 style={{ fontSize: '1.7rem' }}>{editing.name}</h2></div>
-          {editField('name', 'Product name')}
-          {editField('slug', 'URL slug')}
-          {editField('brand', 'Brand')}
+          <div className="field-wide">
+            <p className="eyebrow">{t('admin.prod.edit.title')}</p>
+            <h2 style={{ fontSize: '1.7rem' }}>{editing.name}</h2>
+          </div>
+          {editField('name', t('admin.prod.form.name'))}
+          {editField('slug', t('admin.prod.form.slug'))}
+          {editField('brand', t('admin.prod.form.brand'))}
           <div className="field">
-            <label htmlFor="edit-categoryId">Category</label>
-            <select id="edit-categoryId" value={values.categoryId} onChange={(event) => setValues({ ...values, categoryId: event.target.value })}>
-              <option value="">No category selected</option>
-              {categories.filter((item) => item.published).map((item) => (<option value={item.id} key={item.id}>{item.name}</option>))}
+            <label htmlFor="edit-categoryId">{t('admin.prod.form.category')}</label>
+            <select
+              id="edit-categoryId"
+              value={values.categoryId}
+              onChange={(event) => setValues({ ...values, categoryId: event.target.value })}
+            >
+              <option value="">{t('admin.prod.form.categoryNone')}</option>
+              {categories.filter((item) => item.published).map((item) => (
+                <option value={item.id} key={item.id}>{item.name}</option>
+              ))}
             </select>
           </div>
-          {editField('summary', 'Summary')}
-          {editField('status', 'Product status')}
-          {editField('warranty', 'Warranty information')}
-          {editField('description', 'Description', true)}
+          {editField('summary', t('admin.prod.form.summary'))}
+          {editField('status', t('admin.prod.edit.status'))}
+          {editField('warranty', t('admin.prod.edit.warranty'))}
+          {editField('description', t('admin.prod.form.description'), true)}
 
           <div className="field-wide">
-            <label>Product images</label>
+            <label>{t('admin.prod.form.images')}</label>
             <MediaDropzone productId={editing.id} initial={editing.media ?? []} />
           </div>
 
-          {editField('seoTitle', 'SEO title')}
-          {editField('seoDescription', 'SEO description')}
+          {editField('seoTitle', t('admin.prod.edit.seoTitle'))}
+          {editField('seoDescription', t('admin.prod.edit.seoDescription'))}
           <div className="field-wide">
-            <button className="button">Save product</button>{' '}
-            <button type="button" className="admin-action" onClick={() => { setEditing(null); setValues(null); }}>Cancel</button>
+            <button className="button">{t('admin.prod.edit.save')}</button>{' '}
+            <button
+              type="button"
+              className="admin-action"
+              onClick={() => { setEditing(null); setValues(null); }}
+            >
+              {t('admin.actions.cancel')}
+            </button>
           </div>
         </form>
       )}
