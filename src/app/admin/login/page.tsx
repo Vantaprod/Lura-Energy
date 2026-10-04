@@ -2,18 +2,22 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n/context';
+import { LanguageSwitcher } from '@/components/layout/language-switcher';
 
 export default function AdminLoginPage() {
+  const router = useRouter();
+  const { t } = useTranslation();
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const router = useRouter();
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
     setError('');
     const form = new FormData(e.currentTarget);
+
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -24,26 +28,49 @@ export default function AdminLoginPage() {
       router.push('/admin');
       router.refresh();
     } catch {
-      setError('Sign-in failed. Check your details and try again.');
+      setError(t('admin.login.error'));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <main className="admin-shell">
-      <form className="admin-login" onSubmit={submit}>
-        <p className="eyebrow">Lura administration</p>
-        <h1 style={{ fontSize: '2.6rem' }}>Staff sign in</h1>
-        <p className="form-note">Administrator access only.</p>
+    <div
+      className="admin-shell"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          padding: '16px 0',
+        }}
+      >
+        <LanguageSwitcher />
+      </div>
 
-        <div className="field">
-          <label htmlFor="email">Email</label>
-          <input id="email" name="email" type="email" autoComplete="username" required />
+      <form className="admin-login" onSubmit={submit}>
+        <p className="eyebrow">{t('admin.login.eyebrow')}</p>
+        <h1 style={{ fontSize: '2.6rem' }}>{t('admin.login.heading')}</h1>
+        <p className="form-note">{t('admin.login.subtitle')}</p>
+
+        <div className="field" style={{ marginTop: '1rem' }}>
+          <label htmlFor="email">{t('admin.login.email')}</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="username"
+            required
+          />
         </div>
 
         <div className="field" style={{ marginTop: '1rem' }}>
-          <label htmlFor="password">Password</label>
+          <label htmlFor="password">{t('admin.login.password')}</label>
           <div className="password-field">
             <input
               id="password"
@@ -56,7 +83,11 @@ export default function AdminLoginPage() {
               type="button"
               className="password-toggle"
               onClick={() => setShowPassword((v) => !v)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-label={
+                showPassword
+                  ? t('admin.login.hidePassword')
+                  : t('admin.login.showPassword')
+              }
               aria-pressed={showPassword}
             >
               {showPassword ? (
@@ -74,12 +105,20 @@ export default function AdminLoginPage() {
           </div>
         </div>
 
-        {error && <p className="form-error" role="alert">{error}</p>}
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
 
-        <button className="button" style={{ marginTop: '1.2rem' }} disabled={busy}>
-          {busy ? 'Signing in...' : 'Sign in'}
+        <button
+          className="button"
+          style={{ marginTop: '1.2rem' }}
+          disabled={busy}
+        >
+          {busy ? t('admin.login.signingIn') : t('admin.login.signIn')}
         </button>
       </form>
-    </main>
+    </div>
   );
 }

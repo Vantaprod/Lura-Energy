@@ -1,19 +1,21 @@
 import { ServiceCentresManager } from '@/components/admin/service-centres-manager';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata = { title: 'Service Centres' };
 
-export default function AdminServiceCentresPage() {
+export default async function AdminServiceCentresPage() {
+  const { t } = await getServerT('admin');
+
   return (
     <div className="admin-shell">
       <div className="admin-top">
         <div>
-          <p className="eyebrow">Lura Chain Store</p>
-          <h1 style={{ fontSize: '2rem' }}>Service Centres</h1>
+          <p className="eyebrow">{t('admin.sc.eyebrow')}</p>
+          <h1 style={{ fontSize: '2rem' }}>{t('admin.sc.title')}</h1>
         </div>
       </div>
       <p className="form-note" style={{ marginBottom: '1.5rem' }}>
-        Locations that appear on the public Service Centres page. Only published
-        locations are visible to visitors.
+        {t('admin.sc.intro')}
       </p>
       <ServiceCentresManager />
     </div>
