@@ -1,6 +1,7 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from '@/lib/i18n/context';
 
 type MediaKind = 'IMAGE' | 'VIDEO' | 'DOCUMENT';
 
@@ -17,11 +18,11 @@ type MediaItem = {
 
 type Filter = 'ALL' | MediaKind;
 
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'ALL', label: 'All' },
-  { key: 'IMAGE', label: 'Images' },
-  { key: 'VIDEO', label: 'Videos' },
-  { key: 'DOCUMENT', label: 'Documents' },
+const FILTERS: { key: Filter; labelKey: string }[] = [
+  { key: 'ALL', labelKey: 'admin.mediaLib.filter.all' },
+  { key: 'IMAGE', labelKey: 'admin.mediaLib.filter.images' },
+  { key: 'VIDEO', labelKey: 'admin.mediaLib.filter.videos' },
+  { key: 'DOCUMENT', labelKey: 'admin.mediaLib.filter.documents' },
 ];
 
 function formatBytes(n: number | null): string {
@@ -32,6 +33,7 @@ function formatBytes(n: number | null): string {
 }
 
 export function MediaLibrary() {
+  const { t } = useTranslation();
   const [items, setItems] = useState<MediaItem[]>([]);
   const [filter, setFilter] = useState<Filter>('ALL');
   const [query, setQuery] = useState('');
@@ -47,8 +49,9 @@ export function MediaLibrary() {
       const data = await res.json();
       setItems(data.items ?? []);
     } catch {
-      setError('Could not load media.');
+      setError(t('admin.mediaLib.error.load'));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -74,7 +77,7 @@ export function MediaLibrary() {
           if (res.ok) succeeded++;
           else {
             const body = await res.json().catch(() => ({}));
-            setError((body as { error?: string }).error ?? 'One file failed.');
+            setError((body as { error?: string }).error ?? t('admin.mediaLib.error.oneFailed'));
             failed++;
           }
         } catch {
@@ -84,17 +87,21 @@ export function MediaLibrary() {
 
       setUploading(false);
       if (inputRef.current) inputRef.current.value = '';
-      setMessage(succeeded + ' uploaded.' + (failed ? ' ' + failed + ' failed.' : ''));
+      setMessage(
+        `${succeeded} ${t('admin.mediaLib.status.uploaded')}${
+          failed ? ' ' + failed + ' ' + t('admin.mediaLib.status.failed') : ''
+        }`,
+      );
       await load();
     },
-    [load],
+    [load, t],
   );
 
   async function remove(item: MediaItem) {
-    if (!window.confirm('Delete this file permanently?')) return;
+    if (!window.confirm(t('admin.mediaLib.confirm.delete'))) return;
     const res = await fetch('/api/admin/media/' + item.id, { method: 'DELETE' });
     if (!res.ok) {
-      setError('Could not delete file.');
+      setError(t('admin.mediaLib.error.delete'));
       return;
     }
     setItems((prev) => prev.filter((m) => m.id !== item.id));
@@ -104,10 +111,10 @@ export function MediaLibrary() {
     const absolute = typeof window !== 'undefined' ? window.location.origin + url : url;
     try {
       await navigator.clipboard.writeText(absolute);
-      setMessage('URL copied.');
+      setMessage(t('admin.mediaLib.status.copied'));
       setTimeout(() => setMessage(''), 1800);
     } catch {
-      setError('Could not copy.');
+      setError(t('admin.mediaLib.error.copy'));
     }
   }
 
@@ -128,6 +135,12 @@ export function MediaLibrary() {
     );
   });
 
+  const dropTitle = uploading
+    ? t('admin.mediaLib.drop.titleUploading')
+    : dragging
+    ? t('admin.mediaLib.drop.titleDragging')
+    : t('admin.mediaLib.drop.title');
+
   return (
     <div className="media-library">
       <div
@@ -136,9 +149,7 @@ export function MediaLibrary() {
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
       >
-        <p className="dropzone__title">
-          {uploading ? 'Uploading...' : dragging ? 'Drop files to upload' : 'Drag & drop files here'}
-        </p>
+        <p className="dropzone__title">{dropTitle}</p>
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
@@ -161,11 +172,9 @@ export function MediaLibrary() {
             lineHeight: 1.2,
           }}
         >
-          {uploading ? 'Uploading...' : 'Choose files'}
+          {uploading ? t('admin.mediaLib.drop.titleUploading') : t('admin.mediaLib.drop.choose')}
         </button>
-        <p className="dropzone__hint">
-          Images (8 MB) | Videos MP4/WEBM/MOV (100 MB) | PDF (25 MB)
-        </p>
+        <p className="dropzone__hint">{t('admin.mediaLib.drop.hint')}</p>
       </div>
 
       <input
@@ -212,7 +221,7 @@ export function MediaLibrary() {
                   transition: 'background 150ms ease, color 150ms ease',
                 }}
               >
-                {f.label}
+                {t(f.labelKey)}
               </button>
             );
           })}
@@ -220,7 +229,7 @@ export function MediaLibrary() {
         <input
           type="search"
           className="media-library__search"
-          placeholder="Search by name..."
+          placeholder={t('admin.mediaLib.search.placeholder')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -228,9 +237,8 @@ export function MediaLibrary() {
 
       {visible.length === 0 ? (
         <div className="empty-panel" style={{ marginTop: '24px' }}>
-          <strong>No files yet</strong>
-          Upload images, videos, or documents above. They will appear here and can
-          be reused across the site.
+          <strong>{t('admin.mediaLib.empty.title')}</strong>
+          {t('admin.mediaLib.empty.body')}
         </div>
       ) : (
         <div className="media-library__grid">
@@ -245,7 +253,7 @@ export function MediaLibrary() {
                     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
                       <polygon points="6 4 20 12 6 20 6 4" fill="currentColor" />
                     </svg>
-                    <span>Video</span>
+                    <span>{t('admin.mediaLib.filter.videos')}</span>
                   </div>
                 )}
                 {m.kind === 'DOCUMENT' && (
@@ -267,14 +275,14 @@ export function MediaLibrary() {
               </div>
               <div className="media-tile__actions">
                 <button type="button" className="admin-action" onClick={() => void copyUrl(m.url)}>
-                  Copy URL
+                  {t('admin.mediaLib.action.copyUrl')}
                 </button>
                 <button
                   type="button"
                   className="admin-action admin-action--danger"
                   onClick={() => void remove(m)}
                 >
-                  Delete
+                  {t('admin.mediaLib.action.delete')}
                 </button>
               </div>
             </div>
