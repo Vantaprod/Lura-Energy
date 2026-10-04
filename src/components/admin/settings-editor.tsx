@@ -1,40 +1,49 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from '@/lib/i18n/context';
 
 type HeroImage = { url: string; alt: string; mobileUrl: string };
 type MediaFile = { url: string; name: string };
 
 const IMPACT_FIELDS: [string, string, string][] = [
-  ['impact.eyebrow', 'Eyebrow label', 'Small orange text above the heading.'],
-  ['impact.headingWhite', 'Heading (white part)', 'The first part of the heading.'],
-  ['impact.headingAccent', 'Heading (orange part)', 'The second part, shown in orange.'],
-  ['impact.body1', 'Body paragraph 1', 'First description paragraph.'],
-  ['impact.body2', 'Body paragraph 2', 'Second description paragraph.'],
-  ['impact.ctaLabel', 'CTA label', 'Text on the pill button, e.g. "Learn more".'],
-  ['impact.ctaHref', 'CTA link', 'Where the button points.'],
-  ['impact.stat1Label', 'Stat 1 label', 'Text shown next to the first number.'],
-  ['impact.stat1Value', 'Stat 1 value', 'Digits only, e.g. 90.'],
-  ['impact.stat1Suffix', 'Stat 1 suffix', 'Text after the number, e.g. +'],
-  ['impact.stat2Label', 'Stat 2 label', 'Text shown next to the second number.'],
-  ['impact.stat2Value', 'Stat 2 value', 'Digits only, e.g. 5.'],
-  ['impact.stat2Suffix', 'Stat 2 suffix', 'Text after the number.'],
-  ['impact.stat3Label', 'Stat 3 label', 'Text shown next to the third number.'],
-  ['impact.stat3Value', 'Stat 3 value', 'Digits only, e.g. 5000.'],
-  ['impact.stat3Suffix', 'Stat 3 suffix', 'Text after the number, e.g. +'],
+  ['impact.eyebrow', 'admin.settings.field.impact.eyebrow.label', 'admin.settings.field.impact.eyebrow.hint'],
+  ['impact.headingWhite', 'admin.settings.field.impact.headingWhite.label', 'admin.settings.field.impact.headingWhite.hint'],
+  ['impact.headingAccent', 'admin.settings.field.impact.headingAccent.label', 'admin.settings.field.impact.headingAccent.hint'],
+  ['impact.body1', 'admin.settings.field.impact.body1.label', 'admin.settings.field.impact.body1.hint'],
+  ['impact.body2', 'admin.settings.field.impact.body2.label', 'admin.settings.field.impact.body2.hint'],
+  ['impact.ctaLabel', 'admin.settings.field.impact.ctaLabel.label', 'admin.settings.field.impact.ctaLabel.hint'],
+  ['impact.ctaHref', 'admin.settings.field.impact.ctaHref.label', 'admin.settings.field.impact.ctaHref.hint'],
+  ['impact.stat1Label', 'admin.settings.field.impact.stat1Label.label', 'admin.settings.field.impact.stat1Label.hint'],
+  ['impact.stat1Value', 'admin.settings.field.impact.stat1Value.label', 'admin.settings.field.impact.stat1Value.hint'],
+  ['impact.stat1Suffix', 'admin.settings.field.impact.stat1Suffix.label', 'admin.settings.field.impact.stat1Suffix.hint'],
+  ['impact.stat2Label', 'admin.settings.field.impact.stat2Label.label', 'admin.settings.field.impact.stat2Label.hint'],
+  ['impact.stat2Value', 'admin.settings.field.impact.stat2Value.label', 'admin.settings.field.impact.stat2Value.hint'],
+  ['impact.stat2Suffix', 'admin.settings.field.impact.stat2Suffix.label', 'admin.settings.field.impact.stat2Suffix.hint'],
+  ['impact.stat3Label', 'admin.settings.field.impact.stat3Label.label', 'admin.settings.field.impact.stat3Label.hint'],
+  ['impact.stat3Value', 'admin.settings.field.impact.stat3Value.label', 'admin.settings.field.impact.stat3Value.hint'],
+  ['impact.stat3Suffix', 'admin.settings.field.impact.stat3Suffix.label', 'admin.settings.field.impact.stat3Suffix.hint'],
 ];
 
 const TEXT_FIELDS: [string, string, string][] = [
-  ['home.ctaTitle', 'Closing CTA title', 'Big text in the final call-to-action band.'],
-  ['home.ctaBody', 'Closing CTA body', 'Optional sentence in the final call-to-action.'],
-  ['company.intro', 'Company introduction', 'Approved company description.'],
-  ['contact.email', 'Public email', 'Official Lura contact email.'],
-  ['contact.phone', 'Public phone', 'Official Lura phone number.'],
-  ['contact.whatsapp', 'WhatsApp number', 'International format, digits only.'],
-  ['legal.privacyNotice', 'Privacy notice', 'Approved legal notice. Legal review recommended.'],
+  ['home.ctaTitle', 'admin.settings.field.home.ctaTitle.label', 'admin.settings.field.home.ctaTitle.hint'],
+  ['home.ctaBody', 'admin.settings.field.home.ctaBody.label', 'admin.settings.field.home.ctaBody.hint'],
+  ['company.intro', 'admin.settings.field.company.intro.label', 'admin.settings.field.company.intro.hint'],
+  ['contact.email', 'admin.settings.field.contact.email.label', 'admin.settings.field.contact.email.hint'],
+  ['contact.phone', 'admin.settings.field.contact.phone.label', 'admin.settings.field.contact.phone.hint'],
+  ['contact.whatsapp', 'admin.settings.field.contact.whatsapp.label', 'admin.settings.field.contact.whatsapp.hint'],
+  ['legal.privacyNotice', 'admin.settings.field.legal.privacyNotice.label', 'admin.settings.field.legal.privacyNotice.hint'],
 ];
 
+function fill(template: string, vars: Record<string, string | number>): string {
+  return Object.entries(vars).reduce(
+    (acc, [key, value]) => acc.replaceAll(`{${key}}`, String(value)),
+    template,
+  );
+}
+
 export function SettingsEditor() {
+  const { t } = useTranslation();
   const [values, setValues] = useState<Record<string, string>>({});
   const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
   const [media, setMedia] = useState<MediaFile[]>([]);
@@ -58,7 +67,11 @@ export function SettingsEditor() {
               setHeroImages(
                 parsed
                   .filter((x) => x && typeof x === 'object' && typeof x.url === 'string')
-                  .map((x) => ({ url: String(x.url), alt: String(x.alt ?? ''), mobileUrl: String(x.mobileUrl ?? '') })),
+                  .map((x) => ({
+                    url: String(x.url),
+                    alt: String(x.alt ?? ''),
+                    mobileUrl: String(x.mobileUrl ?? ''),
+                  })),
               );
             }
           } catch {
@@ -95,12 +108,16 @@ export function SettingsEditor() {
 
   async function save(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setMessage('Saving...');
+    setMessage(t('admin.settings.state.saving'));
 
     const payload: Record<string, string> = { ...values };
     const cleanSlides = heroImages
       .filter((slide) => slide.url.trim().length > 0)
-      .map((slide) => ({ url: slide.url.trim(), alt: slide.alt.trim(), mobileUrl: slide.mobileUrl.trim() }));
+      .map((slide) => ({
+        url: slide.url.trim(),
+        alt: slide.alt.trim(),
+        mobileUrl: slide.mobileUrl.trim(),
+      }));
     payload['home.heroImages'] = cleanSlides.length ? JSON.stringify(cleanSlides) : '';
 
     const res = await fetch('/api/admin/settings', {
@@ -109,30 +126,29 @@ export function SettingsEditor() {
       body: JSON.stringify(payload),
     });
     if (res.ok) {
-      setMessage('Settings saved.');
+      setMessage(t('admin.settings.notice.saved'));
     } else {
       const body = await res.json().catch(() => ({}));
-      setMessage((body as { error?: string }).error ?? 'Save failed.');
+      setMessage((body as { error?: string }).error ?? t('admin.settings.error.saveFailed'));
     }
   }
 
   if (loading) {
-    return <p className="form-note">Loading settings...</p>;
+    return <p className="form-note">{t('admin.settings.state.loading')}</p>;
   }
 
   return (
     <form onSubmit={save}>
       <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{ marginBottom: '0.5rem' }}>Hero slides</h2>
+        <h2 style={{ marginBottom: '0.5rem' }}>{t('admin.settings.hero.title')}</h2>
         <p className="form-note" style={{ marginBottom: '1.5rem' }}>
-          Images that cycle on the homepage hero. Leave empty to fall back to
-          whatever is in public/hero/.
+          {t('admin.settings.hero.intro')}
         </p>
 
         {heroImages.length === 0 && (
           <div className="empty-panel" style={{ marginBottom: '1rem' }}>
-            <strong>No slides yet</strong>
-            Add one below, or drop files into public/hero/ and leave this empty.
+            <strong>{t('admin.settings.hero.empty.title')}</strong>
+            {t('admin.settings.hero.empty.body')}
           </div>
         )}
 
@@ -155,15 +171,37 @@ export function SettingsEditor() {
                 marginBottom: '0.5rem',
               }}
             >
-              <strong>Slide {index + 1}</strong>
+              <strong>{fill(t('admin.settings.hero.slide'), { n: index + 1 })}</strong>
               <div style={{ display: 'flex', gap: '0.4rem' }}>
-                <button type="button" className="admin-action" onClick={() => moveSlide(index, -1)} disabled={index === 0}>Up</button>
-                <button type="button" className="admin-action" onClick={() => moveSlide(index, 1)} disabled={index === heroImages.length - 1}>Down</button>
-                <button type="button" className="admin-action" onClick={() => removeSlide(index)}>Remove</button>
+                <button
+                  type="button"
+                  className="admin-action"
+                  onClick={() => moveSlide(index, -1)}
+                  disabled={index === 0}
+                >
+                  {t('admin.settings.hero.action.up')}
+                </button>
+                <button
+                  type="button"
+                  className="admin-action"
+                  onClick={() => moveSlide(index, 1)}
+                  disabled={index === heroImages.length - 1}
+                >
+                  {t('admin.settings.hero.action.down')}
+                </button>
+                <button
+                  type="button"
+                  className="admin-action"
+                  onClick={() => removeSlide(index)}
+                >
+                  {t('admin.settings.hero.action.remove')}
+                </button>
               </div>
             </div>
 
-            <label htmlFor={'hero-url-' + index}>Image</label>
+            <label htmlFor={'hero-url-' + index}>
+              {t('admin.settings.hero.field.image')}
+            </label>
             <select
               id={'hero-url-' + index}
               value={media.some((m) => m.url === slide.url) ? slide.url : ''}
@@ -172,20 +210,25 @@ export function SettingsEditor() {
               }}
               style={{ marginBottom: '0.5rem' }}
             >
-              <option value="">-- pick from public/hero/ --</option>
+              <option value="">{t('admin.settings.hero.field.imagePick')}</option>
               {media.map((m) => (
-                <option key={m.url} value={m.url}>{m.name}</option>
+                <option key={m.url} value={m.url}>
+                  {m.name}
+                </option>
               ))}
             </select>
             <input
               type="text"
               value={slide.url}
               onChange={(e) => updateSlide(index, { url: e.target.value })}
-              placeholder="or paste a URL"
+              placeholder={t('admin.settings.hero.field.imagePlaceholder')}
             />
 
-            <label htmlFor={'hero-mobile-' + index} style={{ marginTop: '0.75rem', display: 'block' }}>
-              Mobile image (portrait — shown on phones)
+            <label
+              htmlFor={'hero-mobile-' + index}
+              style={{ marginTop: '0.75rem', display: 'block' }}
+            >
+              {t('admin.settings.hero.field.mobile')}
             </label>
             <select
               id={'hero-mobile-' + index}
@@ -193,19 +236,26 @@ export function SettingsEditor() {
               onChange={(e) => updateSlide(index, { mobileUrl: e.target.value })}
               style={{ marginBottom: '0.5rem' }}
             >
-              <option value="">-- use the same image as desktop --</option>
+              <option value="">{t('admin.settings.hero.field.mobilePick')}</option>
               {media.map((m) => (
-                <option key={m.url} value={m.url}>{m.name}</option>
+                <option key={m.url} value={m.url}>
+                  {m.name}
+                </option>
               ))}
             </select>
             <input
               type="text"
               value={slide.mobileUrl}
               onChange={(e) => updateSlide(index, { mobileUrl: e.target.value })}
-              placeholder="or paste a mobile image URL"
+              placeholder={t('admin.settings.hero.field.mobilePlaceholder')}
             />
 
-            <label htmlFor={'hero-alt-' + index} style={{ marginTop: '0.75rem' }}>Alt text</label>
+            <label
+              htmlFor={'hero-alt-' + index}
+              style={{ marginTop: '0.75rem' }}
+            >
+              {t('admin.settings.hero.field.alt')}
+            </label>
             <input
               id={'hero-alt-' + index}
               type="text"
@@ -216,36 +266,19 @@ export function SettingsEditor() {
           </div>
         ))}
 
-        <button type="button" className="admin-action" onClick={addSlide}>Add slide</button>
+        <button type="button" className="admin-action" onClick={addSlide}>
+          {t('admin.settings.hero.action.add')}
+        </button>
       </section>
 
       <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{ marginBottom: '0.5rem' }}>Our Impact section</h2>
+        <h2 style={{ marginBottom: '0.5rem' }}>{t('admin.settings.impact.title')}</h2>
         <p className="form-note" style={{ marginBottom: '1.5rem' }}>
-          Text and numbers for the homepage Impact band. Numbers animate up from zero when the section scrolls into view.
+          {t('admin.settings.impact.intro')}
         </p>
-        {IMPACT_FIELDS.map(([key, label, hint]) => (
+        {IMPACT_FIELDS.map(([key, labelKey, hintKey]) => (
           <div className="field" key={key} style={{ margin: '1.25rem 0' }}>
-            <label htmlFor={key}>{label}</label>
-            <textarea
-              id={key}
-              value={values[key] ?? ''}
-              onChange={(e) => setValues({ ...values, [key]: e.target.value })}
-              maxLength={20000}
-              style={{
-                minHeight: key === 'impact.body1' || key === 'impact.body2' ? 120 : 52,
-              }}
-            />
-            <span className="form-note">{hint}</span>
-          </div>
-        ))}
-      </section>
-
-      <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{ marginBottom: '0.5rem' }}>Page content</h2>
-        {TEXT_FIELDS.map(([key, label, hint]) => (
-          <div className="field" key={key} style={{ margin: '1.25rem 0' }}>
-            <label htmlFor={key}>{label}</label>
+            <label htmlFor={key}>{t(labelKey)}</label>
             <textarea
               id={key}
               value={values[key] ?? ''}
@@ -253,18 +286,44 @@ export function SettingsEditor() {
               maxLength={20000}
               style={{
                 minHeight:
-                  key === 'company.intro' || key === 'legal.privacyNotice' || key === 'home.ctaBody'
-                    ? 120
-                    : 52,
+                  key === 'impact.body1' || key === 'impact.body2' ? 120 : 52,
               }}
             />
-            <span className="form-note">{hint}</span>
+            <span className="form-note">{t(hintKey)}</span>
           </div>
         ))}
       </section>
 
-      <button className="button" type="submit">Save site settings</button>
-      <p role="status" className="form-note" style={{ marginTop: '0.75rem' }}>{message}</p>
+      <section style={{ marginBottom: '3rem' }}>
+        <h2 style={{ marginBottom: '0.5rem' }}>{t('admin.settings.page.title')}</h2>
+        {TEXT_FIELDS.map(([key, labelKey, hintKey]) => (
+          <div className="field" key={key} style={{ margin: '1.25rem 0' }}>
+            <label htmlFor={key}>{t(labelKey)}</label>
+            <textarea
+              id={key}
+              value={values[key] ?? ''}
+              onChange={(e) => setValues({ ...values, [key]: e.target.value })}
+              maxLength={20000}
+              style={{
+                minHeight:
+                  key === 'company.intro' ||
+                  key === 'legal.privacyNotice' ||
+                  key === 'home.ctaBody'
+                    ? 120
+                    : 52,
+              }}
+            />
+            <span className="form-note">{t(hintKey)}</span>
+          </div>
+        ))}
+      </section>
+
+      <button className="button" type="submit">
+        {t('admin.settings.action.save')}
+      </button>
+      <p role="status" className="form-note" style={{ marginTop: '0.75rem' }}>
+        {message}
+      </p>
     </form>
   );
 }
