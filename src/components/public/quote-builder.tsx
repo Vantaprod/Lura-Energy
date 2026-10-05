@@ -1,6 +1,7 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from '@/lib/i18n/context';
 
 type CatalogueProduct = {
   id: string;
@@ -28,6 +29,7 @@ type LineItem = {
 type Intent = 'install' | 'purchase' | 'both';
 
 export function QuoteBuilder({ initialProduct }: { initialProduct?: string }) {
+  const { t } = useTranslation();
   const [catalogue, setCatalogue] = useState<CatalogueCategory[]>([]);
   const [loadingCatalogue, setLoadingCatalogue] = useState(true);
   const [items, setItems] = useState<LineItem[]>([]);
@@ -115,10 +117,12 @@ export function QuoteBuilder({ initialProduct }: { initialProduct?: string }) {
         body: JSON.stringify(payload),
       });
       const body = await res.json();
-      if (!res.ok) throw new Error((body as { error?: string }).error || 'Could not submit.');
+      if (!res.ok) {
+        throw new Error((body as { error?: string }).error || t('quote.error.submit'));
+      }
       setDone(true);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Could not submit.');
+      setError(reason instanceof Error ? reason.message : t('quote.error.submit'));
     } finally {
       setSubmitting(false);
     }
@@ -132,11 +136,8 @@ export function QuoteBuilder({ initialProduct }: { initialProduct?: string }) {
             <polyline points="20 6 9 17 4 12" />
           </svg>
         </div>
-        <h2>Request received</h2>
-        <p>
-          Thank you. A Lura representative will review your request and contact
-          you within 1 business day.
-        </p>
+        <h2>{t('quote.success.title')}</h2>
+        <p>{t('quote.success.body')}</p>
       </div>
     );
   }
@@ -144,37 +145,36 @@ export function QuoteBuilder({ initialProduct }: { initialProduct?: string }) {
   return (
     <form onSubmit={submit} className="quote-form">
       <div className="quote-grid">
-        {/* LEFT COLUMN */}
         <div className="quote-grid__left">
           <section className="quote-section" data-step="1">
-            <h3 className="quote-section__title">Your contact information</h3>
+            <h3 className="quote-section__title">{t('quote.section.contact')}</h3>
             <div className="quote-contact">
               <div className="field">
-                <label htmlFor="q-name">Full name *</label>
+                <label htmlFor="q-name">{t('quote.field.name')} *</label>
                 <input id="q-name" name="name" required maxLength={160} autoComplete="name" style={{ backgroundColor: "#F4F6F9", border: "2px solid transparent", borderRadius: "6px", padding: "13px 15px", width: "100%", fontFamily: "inherit", fontSize: "15px", color: "#0A1550" }} />
               </div>
               <div className="field">
-                <label htmlFor="q-phone">Phone number *</label>
+                <label htmlFor="q-phone">{t('quote.field.phone')} *</label>
                 <input id="q-phone" name="phone" type="tel" required maxLength={40} autoComplete="tel" placeholder="+234..." style={{ backgroundColor: "#F4F6F9", border: "2px solid transparent", borderRadius: "6px", padding: "13px 15px", width: "100%", fontFamily: "inherit", fontSize: "15px", color: "#0A1550" }} />
               </div>
               <div className="field">
-                <label htmlFor="q-email">Email address *</label>
+                <label htmlFor="q-email">{t('quote.field.email')} *</label>
                 <input id="q-email" name="email" type="email" required maxLength={200} autoComplete="email" style={{ backgroundColor: "#F4F6F9", border: "2px solid transparent", borderRadius: "6px", padding: "13px 15px", width: "100%", fontFamily: "inherit", fontSize: "15px", color: "#0A1550" }} />
               </div>
               <div className="field">
-                <label htmlFor="q-location">City / State</label>
+                <label htmlFor="q-location">{t('quote.field.location')}</label>
                 <input id="q-location" name="location" maxLength={200} autoComplete="address-level2" style={{ backgroundColor: "#F4F6F9", border: "2px solid transparent", borderRadius: "6px", padding: "13px 15px", width: "100%", fontFamily: "inherit", fontSize: "15px", color: "#0A1550" }} />
               </div>
             </div>
           </section>
 
           <section className="quote-section" data-step="2">
-            <h3 className="quote-section__title">What do you need?</h3>
+            <h3 className="quote-section__title">{t('quote.section.need')}</h3>
             <div className="quote-intent quote-intent--stack">
               {([
-                { key: 'install', label: 'Installation', hint: 'Lura team will install at my site' },
-                { key: 'purchase', label: 'Purchase only', hint: 'I want to buy products' },
-                { key: 'both', label: 'Both', hint: 'Purchase and install' },
+                { key: 'install', labelKey: 'quote.intent.install', hintKey: 'quote.intent.installHint' },
+                { key: 'purchase', labelKey: 'quote.intent.purchase', hintKey: 'quote.intent.purchaseHint' },
+                { key: 'both', labelKey: 'quote.intent.both', hintKey: 'quote.intent.bothHint' },
               ] as const).map((opt) => (
                 <label
                   key={opt.key}
@@ -187,44 +187,40 @@ export function QuoteBuilder({ initialProduct }: { initialProduct?: string }) {
                     checked={intent === opt.key}
                     onChange={() => setIntent(opt.key)}
                   />
-                  <span className="quote-intent__label">{opt.label}</span>
-                  <span className="quote-intent__hint">{opt.hint}</span>
+                  <span className="quote-intent__label">{t(opt.labelKey)}</span>
+                  <span className="quote-intent__hint">{t(opt.hintKey)}</span>
                 </label>
               ))}
             </div>
           </section>
 
           <section className="quote-section" data-step="3">
-            <h3 className="quote-section__title">Tell us about your project</h3>
+            <h3 className="quote-section__title">{t('quote.section.project')}</h3>
             <div className="field">
-              <label htmlFor="q-message">
-                Site details, energy needs, timing, or any other information
-              </label>
+              <label htmlFor="q-message">{t('quote.field.message')}</label>
               <textarea
                 id="q-message"
                 name="message"
                 maxLength={4000}
-                placeholder="e.g. Three-bedroom home in Ikeja. Want backup power for fridge, lights, and AC. Prefer 8kWh battery and 5kW inverter."
+                placeholder={t('quote.field.messagePlaceholder')}
               />
             </div>
           </section>
         </div>
 
-        {/* RIGHT COLUMN */}
         <div className="quote-grid__right">
           <section className="quote-section quote-section--products" data-step="4">
-            <h3 className="quote-section__title">Products you are interested in</h3>
+            <h3 className="quote-section__title">{t('quote.section.products')}</h3>
             <p className="form-note" style={{ marginBottom: '1rem' }}>
-              Pick from any category. You can add multiple products.
+              {t('quote.products.intro')}
             </p>
 
             {loadingCatalogue ? (
-              <p className="form-note">Loading catalogue...</p>
+              <p className="form-note">{t('quote.products.loading')}</p>
             ) : catalogue.length === 0 ? (
               <div className="empty-panel">
-                <strong>Catalogue is being prepared</strong>
-                Product selection will be available soon. You can still describe
-                your needs in the project notes.
+                <strong>{t('quote.products.emptyTitle')}</strong>
+                {t('quote.products.emptyBody')}
               </div>
             ) : (
               <>
@@ -264,7 +260,9 @@ export function QuoteBuilder({ initialProduct }: { initialProduct?: string }) {
                         }}
                       >
                         <option value="">
-                          {cat.products.length === 0 ? 'No products yet' : 'Select a product...'}
+                          {cat.products.length === 0
+                            ? t('quote.products.noProducts')
+                            : t('quote.products.selectPlaceholder')}
                         </option>
                         {cat.products.map((p) => (
                           <option key={p.id} value={p.id}>
@@ -278,7 +276,7 @@ export function QuoteBuilder({ initialProduct }: { initialProduct?: string }) {
 
                 {items.length > 0 && (
                   <div className="quote-items">
-                    <h4 className="quote-items__title">Selected items</h4>
+                    <h4 className="quote-items__title">{t('quote.items.title')}</h4>
                     {items.map((it, i) => (
                       <div className="quote-item" key={i}>
                         <div className="quote-item__main">
@@ -286,7 +284,7 @@ export function QuoteBuilder({ initialProduct }: { initialProduct?: string }) {
                           <p className="quote-item__name">{it.productName}</p>
                         </div>
                         <div className="quote-item__qty">
-                          <label htmlFor={'qty-' + i}>Qty</label>
+                          <label htmlFor={'qty-' + i}>{t('quote.items.qty')}</label>
                           <input
                             id={'qty-' + i}
                             type="number"
@@ -300,9 +298,9 @@ export function QuoteBuilder({ initialProduct }: { initialProduct?: string }) {
                           type="button"
                           className="quote-item__remove"
                           onClick={() => removeItem(i)}
-                          aria-label="Remove item"
+                          aria-label={t('quote.items.remove')}
                         >
-                          Ã—
+                          {'\u00D7'}
                         </button>
                       </div>
                     ))}
@@ -318,11 +316,9 @@ export function QuoteBuilder({ initialProduct }: { initialProduct?: string }) {
 
       <div className="quote-submit">
         <button className="button" disabled={submitting} type="submit">
-          {submitting ? 'Sending...' : 'Request quote'}
+          {submitting ? t('quote.action.sending') : t('quote.action.submit')}
         </button>
-        <p className="form-note">
-          By submitting you agree to be contacted about this request.
-        </p>
+        <p className="form-note">{t('quote.consent')}</p>
       </div>
     </form>
   );

@@ -306,21 +306,53 @@ export function ContentManager({ collection }: { collection: string }) {
 
   return (
     <>
-      <form onSubmit={create} className="form-grid">
+      <form onSubmit={create} className="form-grid" style={{ marginBottom: 0 }}>
         {fields[collection].map((field) => renderField(field))}
-        <div className="field-wide">
-          <button className="button">{t(addKeys[collection])}</button>
+        <div className="field-wide" style={{ marginBottom: 0 }}>
+          <button className="button" type="submit">{t(addKeys[collection])}</button>
         </div>
       </form>
 
-      {notice && <p role="status">{notice}</p>}
+      {notice && (
+        <p
+          role="status"
+          className="form-note"
+          style={{
+            display: 'block',
+            marginTop: '1rem',
+            marginBottom: 0,
+            position: 'static',
+          }}
+        >
+          {notice}
+        </p>
+      )}
+
       {error && (
-        <p role="alert" className="form-error">
-          {error}{' '}
-          <button type="button" className="admin-action" onClick={() => void load()}>
+        <div
+          role="alert"
+          className="form-error"
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: '0.75rem',
+            marginTop: '1rem',
+            marginBottom: 0,
+            position: 'static',
+            clear: 'both',
+          }}
+        >
+          <span style={{ flex: '1 1 auto' }}>{error}</span>
+          <button
+            type="button"
+            className="admin-action"
+            onClick={() => void load()}
+            style={{ flex: '0 0 auto' }}
+          >
             {t('admin.cms.action.retry')}
           </button>
-        </p>
+        </div>
       )}
 
       <h2 style={{ fontSize: '1.8rem', marginTop: '3rem' }}>
