@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n/context';
 
 type Entry = {
   id: string;
@@ -29,10 +32,15 @@ export function ContentIndex({
   description,
   items,
   path,
-  viewLabel = 'Explore',
-  emptyTitle = 'Information pending',
-  emptyBody = 'There is no published information in this section yet.',
+  viewLabel,
+  emptyTitle,
+  emptyBody,
 }: Props) {
+  const { t } = useTranslation();
+  const finalViewLabel = viewLabel ?? t('content.view');
+  const finalEmptyTitle = emptyTitle ?? t('content.emptyTitle');
+  const finalEmptyBody = emptyBody ?? t('content.emptyBody');
+
   return (
     <main>
       <section className="page-intro">
@@ -62,10 +70,12 @@ export function ContentIndex({
                       <p className="eyebrow eyebrow-plain">{item.category ?? item.location}</p>
                     )}
                     <h3>{item.name ?? item.title}</h3>
-                    {(item.summary || item.description) && <p>{item.summary ?? item.description}</p>}
+                    {(item.summary || item.description) && (
+                      <p>{item.summary ?? item.description}</p>
+                    )}
                   </div>
                   <Link href={path + '/' + item.slug}>
-                    {viewLabel} {'\u2192'}
+                    {finalViewLabel} {'\u2192'}
                   </Link>
                 </article>
               );
@@ -73,8 +83,8 @@ export function ContentIndex({
           </div>
         ) : (
           <div className="empty-panel">
-            <strong>{emptyTitle}</strong>
-            {emptyBody}
+            <strong>{finalEmptyTitle}</strong>
+            {finalEmptyBody}
           </div>
         )}
       </section>

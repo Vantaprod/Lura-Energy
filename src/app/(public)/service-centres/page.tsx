@@ -5,11 +5,13 @@ import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: 'Service Centres & Pickup Points',
-  description:
-    'Find Lura Chain Store service centres and pickup points across Nigeria.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerT('front');
+  return {
+    title: t('lcs.page.metaTitle'),
+    description: t('lcs.page.metaDescription'),
+  };
+}
 
 type Centre = {
   id: string;
@@ -135,7 +137,7 @@ export default async function ServiceCentresPage() {
           where: { published: true },
           orderBy: [{ sortOrder: 'asc' }, { city: 'asc' }],
         }),
-    getServerT(),
+    getServerT('front'),
   ]);
 
   const labels: Labels = {
