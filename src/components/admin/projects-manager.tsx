@@ -343,7 +343,7 @@ export function ProjectsManager() {
         )
       )}
 
-      <nav aria-label="Project pages" className="pagination">
+      <nav aria-label={t('aria.pagination.projects')} className="pagination">
         <button
           type="button"
           className="admin-action"

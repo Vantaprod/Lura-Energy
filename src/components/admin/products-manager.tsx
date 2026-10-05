@@ -399,7 +399,7 @@ export function ProductsManager() {
       )}
 
       {pageCount > 1 && (
-        <nav className="pagination" aria-label="Product pages">
+        <nav className="pagination" aria-label={t('aria.pagination.products')}>
           <button
             className="admin-action"
             disabled={page <= 1 || loading}

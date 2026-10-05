@@ -230,7 +230,7 @@ export function LeadsManager() {
       )}
 
       {result && result.pageCount > 1 && (
-        <nav className="pagination" aria-label="Lead pages">
+       <nav className="pagination" aria-label={t('aria.pagination.leads')}>
           <button
             className="admin-action"
             disabled={page <= 1 || loading}

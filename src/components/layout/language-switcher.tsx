@@ -13,7 +13,7 @@ export function LanguageSwitcher({
   showCode?: boolean;
 }) {
   const router = useRouter();
-  const { lang, scope, setLang } = useTranslation();
+  const { t, lang, scope, setLang } = useTranslation();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -45,15 +45,9 @@ export function LanguageSwitcher({
     }
 
     setBusy(true);
-
-    // 1) Persist the choice client-side and flip nav/buttons/headings instantly.
-    //    setLang() writes the cookie synchronously for front/login, and fires
-    //    the DB write for admin scope.
     setLang(code);
     setOpen(false);
 
-    // 2) Admin scope: wait for the DB write to land so server components read
-    //    a consistent value when we refresh.
     if (scope === 'admin') {
       try {
         await fetch('/api/admin/language', {
@@ -66,10 +60,6 @@ export function LanguageSwitcher({
       }
     }
 
-    // 3) Re-render server components for the current route so `getServerT(scope)`
-    //    picks up the new cookie. Required for every scope, not just admin -
-    //    without this, page headers and metadata stay in the old language until
-    //    a hard refresh.
     router.refresh();
     setBusy(false);
   }
@@ -79,7 +69,7 @@ export function LanguageSwitcher({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        aria-label="Change language"
+        aria-label={t('aria.changeLanguage')}
         aria-expanded={open}
         disabled={busy}
         style={{

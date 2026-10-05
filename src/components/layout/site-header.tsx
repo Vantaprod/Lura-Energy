@@ -53,7 +53,6 @@ export function SiteHeader() {
     };
   }, [open]);
 
-  // Hide the public header on any admin route.
   if (pathname?.startsWith('/admin')) return null;
 
   return (
@@ -75,7 +74,7 @@ export function SiteHeader() {
       >
         <Link
           href="/"
-          aria-label="Lura Energy, home"
+          aria-label={t('aria.siteHome')}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -99,7 +98,7 @@ export function SiteHeader() {
 
         {!isMobile && (
           <nav
-            aria-label="Main navigation"
+            aria-label={t('aria.mainNav')}
             style={{
               display: 'flex',
               gap: '22px',
@@ -159,7 +158,7 @@ export function SiteHeader() {
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
-              aria-label={open ? 'Close menu' : 'Open menu'}
+              aria-label={open ? t('aria.closeMenu') : t('aria.openMenu')}
               aria-expanded={open}
               style={{
                 display: 'flex',
@@ -225,7 +224,7 @@ export function SiteHeader() {
             <button
               type="button"
               onClick={() => setOpen(false)}
-              aria-label="Close menu"
+              aria-label={t('aria.closeMenu')}
               style={{
                 position: 'absolute',
                 top: '10px',
@@ -248,7 +247,7 @@ export function SiteHeader() {
               </svg>
             </button>
 
-            <nav aria-label="Mobile navigation" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <nav aria-label={t('aria.mobileNav')} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
               {NAV_ITEMS.map((item) => (
                 <Link
                   key={item.href}

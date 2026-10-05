@@ -71,9 +71,16 @@ function signatureMatches(buffer: Buffer, mime: Mime): boolean {
   return false;
 }
 
+/**
+ * Server-side media save result.
+ *
+ * - `errorKey` is a translation key the client should resolve via `t()`.
+ * - `error` remains as an English fallback for callers that haven't yet
+ *   been updated to translate (or for server-side logs).
+ */
 export type SaveMediaResult =
   | { ok: true; url: string; mimeType: string; sizeBytes: number; storageKey: string; kind: MediaKind }
-  | { ok: false; error: string };
+  | { ok: false; errorKey: string; error: string };
 
 export async function saveMediaUpload(
   file: File,
@@ -84,20 +91,37 @@ export async function saveMediaUpload(
   if (!kind) {
     return {
       ok: false,
-      error: 'Unsupported type. Images: JPG/PNG/WEBP/GIF/AVIF. Videos: MP4/WEBM/MOV. Documents: PDF.',
+      errorKey: 'upload.error.unsupportedType',
+      error:
+        'Unsupported type. Images: JPG/PNG/WEBP/GIF/AVIF. Videos: MP4/WEBM/MOV. Documents: PDF.',
     };
   }
 
-  if (file.size <= 0) return { ok: false, error: 'Empty file.' };
+  if (file.size <= 0) {
+    return {
+      ok: false,
+      errorKey: 'upload.error.empty',
+      error: 'Empty file.',
+    };
+  }
+
   const limit = maxBytesFor(kind);
   if (file.size > limit) {
     const mb = Math.round(limit / 1024 / 1024);
-    return { ok: false, error: 'File too large. Maximum for this type is ' + mb + ' MB.' };
+    return {
+      ok: false,
+      errorKey: 'upload.error.tooLarge',
+      error: 'File too large. Maximum for this type is ' + mb + ' MB.',
+    };
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
   if (!signatureMatches(buffer, mime)) {
-    return { ok: false, error: 'File content does not match its declared type.' };
+    return {
+      ok: false,
+      errorKey: 'upload.error.signatureMismatch',
+      error: 'File content does not match its declared type.',
+    };
   }
 
   const ext = EXT_BY_MIME[mime] ?? 'bin';

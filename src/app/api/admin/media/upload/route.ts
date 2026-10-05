@@ -10,17 +10,26 @@ export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user || !can(user.role, 'content.manage')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json(
+      { errorKey: 'upload.error.unauthorized', error: 'Unauthorized' },
+      { status: 401 },
+    );
   }
   if (!sameOrigin(request)) {
-    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+    return NextResponse.json(
+      { errorKey: 'upload.error.invalidOrigin', error: 'Invalid origin' },
+      { status: 403 },
+    );
   }
 
   let formData: FormData;
   try {
     formData = await request.formData();
   } catch {
-    return NextResponse.json({ error: 'Invalid upload payload.' }, { status: 400 });
+    return NextResponse.json(
+      { errorKey: 'upload.error.invalidPayload', error: 'Invalid upload payload.' },
+      { status: 400 },
+    );
   }
 
   const file = formData.get('file');
@@ -29,18 +38,25 @@ export async function POST(request: NextRequest) {
   const subfolder = formData.get('subfolder');
 
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: 'No file provided.' }, { status: 400 });
+    return NextResponse.json(
+      { errorKey: 'upload.error.noFile', error: 'No file provided.' },
+      { status: 400 },
+    );
   }
 
-  const folder = typeof subfolder === 'string' && subfolder.trim()
-    ? subfolder.trim()
-    : productId && typeof productId === 'string'
-      ? 'products'
-      : 'library';
+  const folder =
+    typeof subfolder === 'string' && subfolder.trim()
+      ? subfolder.trim()
+      : productId && typeof productId === 'string'
+        ? 'products'
+        : 'library';
 
   const result = await saveMediaUpload(file, folder);
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: 400 });
+    return NextResponse.json(
+      { errorKey: result.errorKey, error: result.error },
+      { status: 400 },
+    );
   }
 
   let linkedProductId: string | null = null;

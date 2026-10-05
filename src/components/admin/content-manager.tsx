@@ -459,7 +459,7 @@ export function ContentManager({ collection }: { collection: string }) {
       )}
 
       {collection === 'resources' && pageCount > 1 && (
-        <nav className="pagination" aria-label="Resource pages">
+        <nav className="pagination" aria-label={t('aria.pagination.resources')}>
           <button
             className="admin-action"
             disabled={page <= 1 || loading}

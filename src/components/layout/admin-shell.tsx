@@ -127,7 +127,7 @@ export function AdminShell({
       </div>
 
       {user && (
-        <nav className="admin-nav" aria-label="Admin navigation">
+        <nav className="admin-nav" aria-label={t('aria.adminNav')}>
           {NAV_LINKS.map((item) => (
             <Link key={item.href} href={item.href}>
               {item.label}

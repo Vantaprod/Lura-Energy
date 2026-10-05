@@ -35,7 +35,7 @@ async function loadContactSettings(): Promise<ContactSettings> {
 export async function SiteFooter() {
   const [{ email, phone, whatsapp }, { t }] = await Promise.all([
     loadContactSettings(),
-    getServerT(),
+    getServerT('front'),
   ]);
   const year = new Date().getFullYear();
 
@@ -43,7 +43,7 @@ export async function SiteFooter() {
     <footer className="site-footer">
       <div className="footer-grid">
         <div>
-          <Link href="/" className="footer-logo" aria-label="Lura Energy, home">
+          <Link href="/" className="footer-logo" aria-label={t('aria.siteHome')}>
             <Image src="/brand/lura-logo.png" alt="Lura Energy" width={110} height={32} />
           </Link>
           <p style={{ marginTop: '16px' }}>{t('footer.tagline')}</p>

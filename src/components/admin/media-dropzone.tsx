@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
+import { useTranslation } from '@/lib/i18n/context';
 
 export type ProductMedia = {
   id: string;
@@ -18,6 +19,7 @@ type Props = {
 const MAX_BYTES = 8 * 1024 * 1024;
 
 export function MediaDropzone({ productId, initial, onChanged }: Props) {
+  const { t } = useTranslation();
   const [items, setItems] = useState<ProductMedia[]>(initial);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -38,7 +40,7 @@ export function MediaDropzone({ productId, initial, onChanged }: Props) {
       if (!list.length) return;
 
       if (!productId) {
-        setError('Save the draft first, then add images.');
+        setError(t('mediaDropzone.error.saveFirst'));
         return;
       }
 
@@ -47,7 +49,9 @@ export function MediaDropzone({ productId, initial, onChanged }: Props) {
 
       for (const file of list) {
         if (file.size > MAX_BYTES) {
-          setError(file.name + ' is larger than 8 MB.');
+          setError(
+            t('mediaDropzone.error.tooLarge').replace('{name}', file.name),
+          );
           continue;
         }
         const form = new FormData();
@@ -60,27 +64,36 @@ export function MediaDropzone({ productId, initial, onChanged }: Props) {
           });
           const data = await res.json();
           if (!res.ok) {
-            setError(data.error ?? 'Upload failed.');
+            // Server may return an error key; fall back to its message.
+            const serverError =
+              (data as { errorKey?: string; error?: string }).errorKey
+                ? t((data as { errorKey: string }).errorKey)
+                : (data as { error?: string }).error ?? t('mediaDropzone.error.uploadFailed');
+            setError(serverError);
             continue;
           }
           push([...items, data as ProductMedia]);
         } catch {
-          setError('Upload failed.');
+          setError(t('mediaDropzone.error.uploadFailed'));
         }
       }
 
       setUploading(false);
       if (inputRef.current) inputRef.current.value = '';
     },
-    [items, productId, push],
+    [items, productId, push, t],
   );
 
   async function remove(item: ProductMedia) {
-    if (!window.confirm('Remove this image?')) return;
+    if (!window.confirm(t('mediaDropzone.confirm.remove'))) return;
     const res = await fetch('/api/admin/media/' + item.id, { method: 'DELETE' });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setError((body as { error?: string }).error ?? 'Could not remove image.');
+      const serverError =
+        (body as { errorKey?: string; error?: string }).errorKey
+          ? t((body as { errorKey: string }).errorKey)
+          : (body as { error?: string }).error ?? t('mediaDropzone.error.remove');
+      setError(serverError);
       return;
     }
     push(items.filter((m) => m.id !== item.id));
@@ -118,6 +131,12 @@ export function MediaDropzone({ productId, initial, onChanged }: Props) {
     lineHeight: 1.2,
   };
 
+  const dropTitle = uploading
+    ? t('mediaDropzone.drop.uploading')
+    : dragging
+    ? t('mediaDropzone.drop.dragging')
+    : t('mediaDropzone.drop.title');
+
   return (
     <div className="media-block">
       {items.length > 0 && (
@@ -129,9 +148,9 @@ export function MediaDropzone({ productId, initial, onChanged }: Props) {
                 type="button"
                 className="media-thumb__remove"
                 onClick={() => void remove(item)}
-                aria-label="Remove image"
+                aria-label={t('aria.removeImage')}
               >
-                ×
+                {'\u00D7'}
               </button>
             </figure>
           ))}
@@ -147,9 +166,7 @@ export function MediaDropzone({ productId, initial, onChanged }: Props) {
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
       >
-        <p className="dropzone__title">
-          {uploading ? 'Uploading...' : dragging ? 'Drop to upload' : 'Drag & drop images here'}
-        </p>
+        <p className="dropzone__title">{dropTitle}</p>
 
         <button
           type="button"
@@ -157,16 +174,17 @@ export function MediaDropzone({ productId, initial, onChanged }: Props) {
           onClick={openPicker}
           disabled={buttonDisabled}
         >
-          Choose files
+          {t('mediaDropzone.choose')}
         </button>
 
-        <p className="dropzone__hint">
-          JPG, PNG, WEBP, GIF, AVIF · up to 8 MB each
-        </p>
+        <p className="dropzone__hint">{t('mediaDropzone.hint')}</p>
 
         {!productId && (
-          <p className="dropzone__hint" style={{ color: '#D96A0F', fontWeight: 600, marginTop: '6px' }}>
-            Save the draft first, then return to this product to add images.
+          <p
+            className="dropzone__hint"
+            style={{ color: '#D96A0F', fontWeight: 600, marginTop: '6px' }}
+          >
+            {t('mediaDropzone.hint.saveFirst')}
           </p>
         )}
       </div>
@@ -182,7 +200,11 @@ export function MediaDropzone({ productId, initial, onChanged }: Props) {
         style={{ display: 'none' }}
       />
 
-      {error && <p className="form-error" role="alert">{error}</p>}
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
