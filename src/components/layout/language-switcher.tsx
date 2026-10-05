@@ -44,15 +44,17 @@ export function LanguageSwitcher({
       return;
     }
 
-    // 1) Update client state immediately — nav, buttons, headings flip instantly.
+    setBusy(true);
+
+    // 1) Persist the choice client-side and flip nav/buttons/headings instantly.
+    //    setLang() writes the cookie synchronously for front/login, and fires
+    //    the DB write for admin scope.
     setLang(code);
     setOpen(false);
 
-    // 2) Admin scope: wait for the DB write, then re-render server content.
-    //    Front and login scopes only need the client-side cookie, which
-    //    setLang() already wrote. Nothing more to do.
+    // 2) Admin scope: wait for the DB write to land so server components read
+    //    a consistent value when we refresh.
     if (scope === 'admin') {
-      setBusy(true);
       try {
         await fetch('/api/admin/language', {
           method: 'POST',
@@ -60,12 +62,16 @@ export function LanguageSwitcher({
           body: JSON.stringify({ lang: code }),
         });
       } catch {
-        // Network blip — polling will retry the sync within 1s.
-      } finally {
-        setBusy(false);
+        // Network blip - the AdminShell polling will retry the sync within 1s.
       }
-      router.refresh();
     }
+
+    // 3) Re-render server components for the current route so `getServerT(scope)`
+    //    picks up the new cookie. Required for every scope, not just admin -
+    //    without this, page headers and metadata stay in the old language until
+    //    a hard refresh.
+    router.refresh();
+    setBusy(false);
   }
 
   return (
