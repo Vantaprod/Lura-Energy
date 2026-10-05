@@ -117,10 +117,12 @@ export function QuoteForm({ initialProduct }: { initialProduct?: string }) {
         body: JSON.stringify(payload),
       });
       const body = await res.json();
-      if (!res.ok) throw new Error((body as { error?: string }).error || 'Could not submit.');
+      if (!res.ok) {
+        throw new Error((body as { error?: string }).error || t('quote.error.submit'));
+      }
       setDone(true);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Could not submit.');
+      setError(reason instanceof Error ? reason.message : t('quote.error.submit'));
     } finally {
       setSubmitting(false);
     }
@@ -276,9 +278,9 @@ export function QuoteForm({ initialProduct }: { initialProduct?: string }) {
                           type="button"
                           className="quote-item__remove"
                           onClick={() => removeItem(i)}
-                          aria-label="Remove item"
+                          aria-label={t('quote.items.remove')}
                         >
-                          ×
+                          {'\u00D7'}
                         </button>
                       </div>
                     ))}

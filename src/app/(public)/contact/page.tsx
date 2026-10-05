@@ -1,7 +1,11 @@
+import type { Metadata } from 'next';
 import { QuoteForm } from '@/components/public/quote-form';
 import { getServerT } from '@/lib/i18n/server';
 
-export const metadata = { title: 'Contact' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerT('front');
+  return { title: t('contact.page.metaTitle') };
+}
 
 export default async function ContactPage({
   searchParams,
@@ -9,7 +13,7 @@ export default async function ContactPage({
   searchParams: Promise<{ product?: string }>;
 }) {
   const params = await searchParams;
-  const { t } = await getServerT();
+  const { t } = await getServerT('front');
   const isPreview =
     process.env.NODE_ENV === 'development' &&
     process.env.PREVIEW_WITHOUT_DATABASE === 'true';

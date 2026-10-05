@@ -609,7 +609,9 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.audit.loading': 'Loading audit log...',
     'admin.audit.error': 'Could not load the audit log.',
     'wa.bubble': 'Message us now',
+        'contact.page.metaTitle': 'Contact',
     'wa.ariaLabel': 'Chat with Lura on WhatsApp',
+        'globe.ariaLabel': 'Rotating globe highlighting Lura operating regions in Nigeria',
   },
   zh: {
     'nav.home': '首页',
@@ -1258,7 +1260,9 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.audit.loading': '正在加载审计日志...',
     'admin.audit.error': '无法加载审计日志。',
     'wa.bubble': '立即联系我们',
+        'contact.page.metaTitle': '联系我们',
     'wa.ariaLabel': '通过 WhatsApp 联系 Lura',
+        'globe.ariaLabel': '旋转地球，突出显示 Lura 在尼日利亚的运营区域',
   },
   fr: {
     'nav.home': 'Accueil',
@@ -1907,6 +1911,8 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.audit.loading': 'Chargement du journal d\u2019audit...',
     'admin.audit.error': 'Impossible de charger le journal d\u2019audit.',
     'wa.bubble': 'Écrivez-nous',
+        'contact.page.metaTitle': 'Contact',
     'wa.ariaLabel': 'Discuter avec Lura sur WhatsApp',
+        'globe.ariaLabel': 'Globe rotatif mettant en évidence les régions d’exploitation de Lura au Nigeria',
   },
 };

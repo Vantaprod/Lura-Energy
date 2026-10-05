@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from '@/lib/i18n/context';
 
 export type HeroSlide = {
   url: string;
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export function HeroCarousel({ slides, interval = 6000 }: Props) {
+  const { t } = useTranslation();
   const [index, setIndex] = useState(0);
   const [hovering, setHovering] = useState(false);
   const timerRef = useRef<number | null>(null);
@@ -87,7 +89,7 @@ export function HeroCarousel({ slides, interval = 6000 }: Props) {
             type="button"
             className={'hero-arrow hero-arrow--prev' + (hovering ? ' is-visible' : '')}
             onClick={prev}
-            aria-label="Previous slide"
+            aria-label={t('hero.prevSlide')}
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <polyline points="15 18 9 12 15 6" />
@@ -98,7 +100,7 @@ export function HeroCarousel({ slides, interval = 6000 }: Props) {
             type="button"
             className={'hero-arrow hero-arrow--next' + (hovering ? ' is-visible' : '')}
             onClick={next}
-            aria-label="Next slide"
+            aria-label={t('hero.nextSlide')}
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <polyline points="9 18 15 12 9 6" />
@@ -111,7 +113,7 @@ export function HeroCarousel({ slides, interval = 6000 }: Props) {
                 key={slide.url}
                 type="button"
                 role="tab"
-                aria-label={'Show slide ' + (i + 1)}
+                aria-label={t('hero.showSlide').replace('{n}', String(i + 1))}
                 aria-selected={i === index}
                 className={'hero-dot' + (i === index ? ' is-active' : '')}
                 onClick={() => goTo(i)}

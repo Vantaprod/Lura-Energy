@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { useTranslation } from '@/lib/i18n/context';
 
 const RADIUS = 1.0;
 const LAND_SAMPLES = 38000;
@@ -93,6 +94,7 @@ function slerp(a: THREE.Vector3, b: THREE.Vector3, t: number, out: THREE.Vector3
 }
 
 export function HolographicGlobe({ className }: { className?: string }) {
+  const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -600,7 +602,7 @@ export function HolographicGlobe({ className }: { className?: string }) {
       ref={canvasRef}
       className={className ?? 'holographic-globe'}
       role="img"
-      aria-label="Rotating globe highlighting Lura operating regions in Nigeria"
+      aria-label={t('globe.ariaLabel')}
     />
   );
 }
