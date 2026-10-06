@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from '@/lib/i18n/context';
+import { Select } from '@/components/ui/select';
 
 type Centre = {
   id: string;
@@ -59,11 +60,17 @@ export function ServiceCentresManager() {
   const [editing, setEditing] = useState<Centre | null>(null);
   const [values, setValues] = useState<EditValues | null>(null);
   const [query, setQuery] = useState('');
+  const [createType, setCreateType] = useState('Service Centre');
 
   const TYPES = [
     { value: 'Service Centre', label: t('admin.sc.type.service') },
     { value: 'Pickup Point', label: t('admin.sc.type.pickup') },
     { value: 'Both', label: t('admin.sc.type.both') },
+  ];
+
+  const PUBLISH_OPTIONS = [
+    { value: 'false', label: t('admin.sc.edit.draft') },
+    { value: 'true', label: t('admin.sc.edit.published') },
   ];
 
   const emptyEdit = (c: Centre): EditValues => ({
@@ -118,7 +125,7 @@ export function ServiceCentresManager() {
     const payload: Record<string, unknown> = {
       name,
       slug,
-      type: String(data.get('type') ?? 'Service Centre'),
+      type: createType,
       address: String(data.get('address') ?? '').trim(),
       city: String(data.get('city') ?? '').trim(),
       state: String(data.get('state') ?? '').trim() || undefined,
@@ -139,6 +146,7 @@ export function ServiceCentresManager() {
         throw new Error((body as { error?: string }).error ?? t('admin.sc.error.save'));
       }
       form.reset();
+      setCreateType('Service Centre');
       setMessage(t('admin.sc.toast.saved'));
       await load();
     } catch (reason) {
@@ -267,13 +275,14 @@ export function ServiceCentresManager() {
         </div>
         <div className="field">
           <label htmlFor="sc-type">{t('admin.sc.form.type')}</label>
-          <select id="sc-type" name="type" defaultValue="Service Centre">
-            {TYPES.map((ty) => (
-              <option key={ty.value} value={ty.value}>
-                {ty.label}
-              </option>
-            ))}
-          </select>
+          <Select
+            id="sc-type"
+            name="type"
+            value={createType}
+            onChange={setCreateType}
+            options={TYPES}
+            fullWidth
+          />
         </div>
         <div className="field">
           <label htmlFor="sc-city">{t('admin.sc.form.city')}</label>
@@ -465,17 +474,13 @@ export function ServiceCentresManager() {
 
           <div className="field">
             <label htmlFor="edit-sc-type">{t('admin.sc.form.type')}</label>
-            <select
+            <Select
               id="edit-sc-type"
               value={values.type}
-              onChange={(e) => setValues({ ...values, type: e.target.value })}
-            >
-              {TYPES.map((ty) => (
-                <option key={ty.value} value={ty.value}>
-                  {ty.label}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setValues({ ...values, type: v })}
+              options={TYPES}
+              fullWidth
+            />
           </div>
 
           {editField('city', t('admin.sc.form.city'))}
@@ -509,16 +514,13 @@ export function ServiceCentresManager() {
 
           <div className="field">
             <label htmlFor="edit-sc-published">{t('admin.sc.edit.publication')}</label>
-            <select
+            <Select
               id="edit-sc-published"
               value={values.published ? 'true' : 'false'}
-              onChange={(e) =>
-                setValues({ ...values, published: e.target.value === 'true' })
-              }
-            >
-              <option value="false">{t('admin.sc.edit.draft')}</option>
-              <option value="true">{t('admin.sc.edit.published')}</option>
-            </select>
+              onChange={(v) => setValues({ ...values, published: v === 'true' })}
+              options={PUBLISH_OPTIONS}
+              fullWidth
+            />
           </div>
 
           <div className="field-wide">

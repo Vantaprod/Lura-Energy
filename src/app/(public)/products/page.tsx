@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/db/prisma';
-import { ContentIndex } from '@/components/public/content-index';
 import { getServerT } from '@/lib/i18n/server';
+import { SeriesCard } from '@/components/public/series-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,27 +9,51 @@ export default async function ProductsPage() {
     process.env.NODE_ENV === 'development' &&
     process.env.PREVIEW_WITHOUT_DATABASE === 'true';
 
-  const [items, { t }] = await Promise.all([
+  const [categories, { t }] = await Promise.all([
     isPreview
       ? Promise.resolve([])
-      : prisma.product.findMany({
+      : prisma.productCategory.findMany({
           where: { published: true },
-          include: { category: true, media: true },
-          orderBy: { sortOrder: 'asc' },
+          orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+          include: {
+            _count: {
+              select: { products: { where: { published: true } } },
+            },
+          },
         }),
-    getServerT(),
+    getServerT('front'),
   ]);
 
+  const [featured, ...rest] = categories;
+
   return (
-    <ContentIndex
-      title={t('products.title')}
-      eyebrow={t('products.eyebrow')}
-      description={t('products.description')}
-      items={items.map((item) => ({ ...item, category: item.category?.name ?? null }))}
-      path="/products"
-      viewLabel={t('cta.viewProduct')}
-      emptyTitle={t('empty.productsTitle')}
-      emptyBody={t('empty.productsBody')}
-    />
+    <main>
+      <section className="page-intro">
+        <p className="eyebrow">{t('products.eyebrow')}</p>
+        <h1>{t('products.title')}</h1>
+        <p>{t('products.description')}</p>
+      </section>
+
+      <section className="section-generous">
+        {categories.length === 0 ? (
+          <div className="empty-panel">
+            <strong>{t('products.emptyTitle')}</strong>
+            {t('products.emptyBody')}
+          </div>
+        ) : (
+          <div className="series-grid">
+            <SeriesCard category={featured} featured t={t} />
+            {rest.map((cat, idx) => (
+              <SeriesCard
+                key={cat.id}
+                category={cat}
+                wide={idx === 0 && rest.length > 2}
+                t={t}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
   );
 }
