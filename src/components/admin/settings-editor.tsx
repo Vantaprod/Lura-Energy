@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from '@/lib/i18n/context';
+import { Select } from '@/components/ui/select';
 
 type HeroImage = { url: string; alt: string; mobileUrl: string };
 type MediaFile = { url: string; name: string };
@@ -82,6 +83,11 @@ export function SettingsEditor() {
       .finally(() => setLoading(false));
   }, []);
 
+  const imageOptions = useMemo(
+    () => media.map((m) => ({ value: m.url, label: m.name })),
+    [media],
+  );
+
   function addSlide() {
     setHeroImages((prev) => [...prev, { url: '', alt: '', mobileUrl: '' }]);
   }
@@ -152,119 +158,125 @@ export function SettingsEditor() {
           </div>
         )}
 
-        {heroImages.map((slide, index) => (
-          <div
-            key={index}
-            className="field"
-            style={{
-              margin: '1rem 0',
-              padding: '1rem',
-              border: '1px solid var(--line)',
-              borderRadius: 'var(--radius)',
-            }}
-          >
+        {heroImages.map((slide, index) => {
+          const imageSelectValue = media.some((m) => m.url === slide.url)
+            ? slide.url
+            : '';
+          const mobileSelectValue = media.some((m) => m.url === slide.mobileUrl)
+            ? slide.mobileUrl
+            : '';
+
+          return (
             <div
+              key={index}
+              className="field"
               style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '0.5rem',
+                margin: '1rem 0',
+                padding: '1rem',
+                border: '1px solid var(--line)',
+                borderRadius: 'var(--radius)',
               }}
             >
-              <strong>{fill(t('admin.settings.hero.slide'), { n: index + 1 })}</strong>
-              <div style={{ display: 'flex', gap: '0.4rem' }}>
-                <button
-                  type="button"
-                  className="admin-action"
-                  onClick={() => moveSlide(index, -1)}
-                  disabled={index === 0}
-                >
-                  {t('admin.settings.hero.action.up')}
-                </button>
-                <button
-                  type="button"
-                  className="admin-action"
-                  onClick={() => moveSlide(index, 1)}
-                  disabled={index === heroImages.length - 1}
-                >
-                  {t('admin.settings.hero.action.down')}
-                </button>
-                <button
-                  type="button"
-                  className="admin-action"
-                  onClick={() => removeSlide(index)}
-                >
-                  {t('admin.settings.hero.action.remove')}
-                </button>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '0.5rem',
+                }}
+              >
+                <strong>{fill(t('admin.settings.hero.slide'), { n: index + 1 })}</strong>
+                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                  <button
+                    type="button"
+                    className="admin-action"
+                    onClick={() => moveSlide(index, -1)}
+                    disabled={index === 0}
+                  >
+                    {t('admin.settings.hero.action.up')}
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-action"
+                    onClick={() => moveSlide(index, 1)}
+                    disabled={index === heroImages.length - 1}
+                  >
+                    {t('admin.settings.hero.action.down')}
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-action"
+                    onClick={() => removeSlide(index)}
+                  >
+                    {t('admin.settings.hero.action.remove')}
+                  </button>
+                </div>
               </div>
+
+              <label
+                htmlFor={'hero-url-' + index}
+                style={{ display: 'block', marginBottom: '0.5rem' }}
+              >
+                {t('admin.settings.hero.field.image')}
+              </label>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <Select
+                  id={'hero-url-' + index}
+                  value={imageSelectValue}
+                  onChange={(v) => {
+                    if (v) updateSlide(index, { url: v });
+                  }}
+                  options={imageOptions}
+                  placeholder={t('admin.settings.hero.field.imagePick')}
+                  fullWidth
+                />
+              </div>
+              <input
+                type="text"
+                value={slide.url}
+                onChange={(e) => updateSlide(index, { url: e.target.value })}
+                placeholder={t('admin.settings.hero.field.imagePlaceholder')}
+              />
+
+              <label
+                htmlFor={'hero-mobile-' + index}
+                style={{ marginTop: '0.75rem', display: 'block', marginBottom: '0.5rem' }}
+              >
+                {t('admin.settings.hero.field.mobile')}
+              </label>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <Select
+                  id={'hero-mobile-' + index}
+                  value={mobileSelectValue}
+                  onChange={(v) => updateSlide(index, { mobileUrl: v })}
+                  options={imageOptions}
+                  placeholder={t('admin.settings.hero.field.mobilePick')}
+                  fullWidth
+                />
+              </div>
+              <input
+                type="text"
+                value={slide.mobileUrl}
+                onChange={(e) => updateSlide(index, { mobileUrl: e.target.value })}
+                placeholder={t('admin.settings.hero.field.mobilePlaceholder')}
+              />
+
+              <label
+                htmlFor={'hero-alt-' + index}
+                style={{ marginTop: '0.75rem', display: 'block' }}
+              >
+                {t('admin.settings.hero.field.alt')}
+              </label>
+              <input
+                id={'hero-alt-' + index}
+                type="text"
+                value={slide.alt}
+                onChange={(e) => updateSlide(index, { alt: e.target.value })}
+                maxLength={200}
+              />
             </div>
-
-            <label htmlFor={'hero-url-' + index}>
-              {t('admin.settings.hero.field.image')}
-            </label>
-            <select
-              id={'hero-url-' + index}
-              value={media.some((m) => m.url === slide.url) ? slide.url : ''}
-              onChange={(e) => {
-                if (e.target.value) updateSlide(index, { url: e.target.value });
-              }}
-              style={{ marginBottom: '0.5rem' }}
-            >
-              <option value="">{t('admin.settings.hero.field.imagePick')}</option>
-              {media.map((m) => (
-                <option key={m.url} value={m.url}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-            <input
-              type="text"
-              value={slide.url}
-              onChange={(e) => updateSlide(index, { url: e.target.value })}
-              placeholder={t('admin.settings.hero.field.imagePlaceholder')}
-            />
-
-            <label
-              htmlFor={'hero-mobile-' + index}
-              style={{ marginTop: '0.75rem', display: 'block' }}
-            >
-              {t('admin.settings.hero.field.mobile')}
-            </label>
-            <select
-              id={'hero-mobile-' + index}
-              value={media.some((m) => m.url === slide.mobileUrl) ? slide.mobileUrl : ''}
-              onChange={(e) => updateSlide(index, { mobileUrl: e.target.value })}
-              style={{ marginBottom: '0.5rem' }}
-            >
-              <option value="">{t('admin.settings.hero.field.mobilePick')}</option>
-              {media.map((m) => (
-                <option key={m.url} value={m.url}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-            <input
-              type="text"
-              value={slide.mobileUrl}
-              onChange={(e) => updateSlide(index, { mobileUrl: e.target.value })}
-              placeholder={t('admin.settings.hero.field.mobilePlaceholder')}
-            />
-
-            <label
-              htmlFor={'hero-alt-' + index}
-              style={{ marginTop: '0.75rem' }}
-            >
-              {t('admin.settings.hero.field.alt')}
-            </label>
-            <input
-              id={'hero-alt-' + index}
-              type="text"
-              value={slide.alt}
-              onChange={(e) => updateSlide(index, { alt: e.target.value })}
-              maxLength={200}
-            />
-          </div>
-        ))}
+          );
+        })}
 
         <button type="button" className="admin-action" onClick={addSlide}>
           {t('admin.settings.hero.action.add')}
