@@ -1,6 +1,7 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from '@/lib/i18n/context';
+import { Select } from '@/components/ui/select';
 
 type Row = Record<string, unknown>;
 
@@ -75,6 +76,7 @@ export function ContentManager({ collection }: { collection: string }) {
   const [notice, setNotice] = useState('');
   const [editing, setEditing] = useState<Row | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
+  const [createSelects, setCreateSelects] = useState<Record<string, string>>({});
   const [links, setLinks] = useState<LinkOption[]>([]);
   const [query, setQuery] = useState('');
   const [stateFilter, setStateFilter] = useState('');
@@ -83,75 +85,88 @@ export function ContentManager({ collection }: { collection: string }) {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async (signal?: AbortSignal) => {
-    setLoading(true);
-    setError('');
-    const params = new URLSearchParams({ collection });
-    if (collection === 'resources') {
-      params.set('page', String(page));
-      if (query.trim()) params.set('q', query.trim());
-      if (stateFilter) params.set('state', stateFilter);
-    }
-    try {
-      const response = await fetch(`/api/admin/content?${params}`, { signal });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? t('admin.cms.error.load'));
+  const load = useCallback(
+    async (signal?: AbortSignal) => {
+      setLoading(true);
+      setError('');
+      const params = new URLSearchParams({ collection });
       if (collection === 'resources') {
-        const result = data as ResourceResult;
-        setItems(result.items);
-        setTotal(result.total);
-        setPage(result.page);
-        setPageCount(result.pageCount);
-      } else {
-        setItems(data);
+        params.set('page', String(page));
+        if (query.trim()) params.set('q', query.trim());
+        if (stateFilter) params.set('state', stateFilter);
       }
-      if (collection === 'media') {
-        const [productsResponse, projectsResponse] = await Promise.all([
-          fetch('/api/admin/products', { signal }),
-          fetch('/api/admin/projects', { signal }),
-        ]);
-        if (!productsResponse.ok || !projectsResponse.ok) {
-          throw new Error(t('admin.cms.error.loadLinks'));
+      try {
+        const response = await fetch(`/api/admin/content?${params}`, { signal });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error ?? t('admin.cms.error.load'));
+        if (collection === 'resources') {
+          const result = data as ResourceResult;
+          setItems(result.items);
+          setTotal(result.total);
+          setPage(result.page);
+          setPageCount(result.pageCount);
+        } else {
+          setItems(data);
         }
-        const [products, projects] = await Promise.all([
-          productsResponse.json(),
-          projectsResponse.json(),
-        ]);
-        setLinks([
-          ...products.map((item: Row) => ({
-            value: `product:${String(item.id)}`,
-            label: `${t('admin.cms.label.product')} \u00B7 ${String(item.name)}`,
-          })),
-          ...projects.map((item: Row) => ({
-            value: `project:${String(item.id)}`,
-            label: `${t('admin.cms.label.project')} \u00B7 ${String(item.title)}`,
-          })),
-        ]);
+        if (collection === 'media') {
+          const [productsResponse, projectsResponse] = await Promise.all([
+            fetch('/api/admin/products', { signal }),
+            fetch('/api/admin/projects', { signal }),
+          ]);
+          if (!productsResponse.ok || !projectsResponse.ok) {
+            throw new Error(t('admin.cms.error.loadLinks'));
+          }
+          const [products, projects] = await Promise.all([
+            productsResponse.json(),
+            projectsResponse.json(),
+          ]);
+          setLinks([
+            ...products.map((item: Row) => ({
+              value: `product:${String(item.id)}`,
+              label: `${t('admin.cms.label.product')} \u00B7 ${String(item.name)}`,
+            })),
+            ...projects.map((item: Row) => ({
+              value: `project:${String(item.id)}`,
+              label: `${t('admin.cms.label.project')} \u00B7 ${String(item.title)}`,
+            })),
+          ]);
+        }
+      } catch (reason) {
+        if (reason instanceof Error && reason.name === 'AbortError') return;
+        setError(reason instanceof Error ? reason.message : t('admin.cms.error.load'));
+      } finally {
+        if (!signal?.aborted) setLoading(false);
       }
-    } catch (reason) {
-      if (reason instanceof Error && reason.name === 'AbortError') return;
-      setError(reason instanceof Error ? reason.message : t('admin.cms.error.load'));
-    } finally {
-      if (!signal?.aborted) setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [collection, page, query, stateFilter]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [collection, page, query, stateFilter],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(
-      () => { void load(controller.signal); },
+      () => {
+        void load(controller.signal);
+      },
       collection === 'resources' && query ? 250 : 0,
     );
-    return () => { clearTimeout(timer); controller.abort(); };
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [load, collection, query]);
 
   function mapLinkedRecord(value: string) {
     return value.startsWith('product:')
       ? { productId: value.slice(8), projectId: null }
       : value.startsWith('project:')
-      ? { productId: null, projectId: value.slice(8) }
-      : { productId: null, projectId: null };
+        ? { productId: null, projectId: value.slice(8) }
+        : { productId: null, projectId: null };
+  }
+
+  function defaultSelectValue(field: FieldDef): string {
+    if (field.key === 'linkedRecord') return '';
+    return field.options?.[0] ?? '';
   }
 
   async function create(event: React.FormEvent<HTMLFormElement>) {
@@ -174,6 +189,7 @@ export function ContentManager({ collection }: { collection: string }) {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error ?? t('admin.cms.error.save'));
       formElement.reset();
+      setCreateSelects({});
       setNotice(t('admin.cms.notice.saved'));
       setPage(1);
       await load();
@@ -191,8 +207,8 @@ export function ContentManager({ collection }: { collection: string }) {
       next.linkedRecord = row.productId
         ? `product:${String(row.productId)}`
         : row.projectId
-        ? `project:${String(row.projectId)}`
-        : '';
+          ? `project:${String(row.projectId)}`
+          : '';
     }
     setValues(next);
     setError('');
@@ -237,7 +253,9 @@ export function ContentManager({ collection }: { collection: string }) {
   }
 
   async function remove(row: Row) {
-    const label = String(row.name ?? row.title ?? row.question ?? row.url ?? 'this record');
+    const label = String(
+      row.name ?? row.title ?? row.question ?? row.url ?? 'this record',
+    );
     if (!window.confirm(`${t('admin.cms.confirm.delete')} ${label}?`)) return;
     const response = await fetch('/api/admin/content', {
       method: 'DELETE',
@@ -248,14 +266,35 @@ export function ContentManager({ collection }: { collection: string }) {
     else setError((await response.json()).error ?? t('admin.cms.error.delete'));
   }
 
+  const linkedRecordOptions = useMemo<LinkOption[]>(
+    () => [
+      { value: '', label: t('admin.cms.option.notAttached') },
+      ...links,
+    ],
+    [links, t],
+  );
+
+  const stateOptions = useMemo(
+    () => [
+      { value: '', label: t('admin.cms.option.allRecords') },
+      { value: 'PUBLISHED', label: t('admin.cms.option.published') },
+      { value: 'DRAFT', label: t('admin.cms.option.draft') },
+    ],
+    [t],
+  );
+
   function renderField(
     field: FieldDef,
     value?: string,
     onChange?: (value: string) => void,
+    mode: 'create' | 'edit' = 'create',
   ) {
-    const id = `${editing ? 'edit-' : ''}${field.key}`;
+    const id = `${mode === 'edit' ? 'edit-' : ''}${field.key}`;
     return (
-      <div className={`field ${field.type === 'textarea' ? 'field-wide' : ''}`} key={id}>
+      <div
+        className={`field ${field.type === 'textarea' ? 'field-wide' : ''}`}
+        key={id}
+      >
         <label htmlFor={id}>
           {t(field.labelKey)}
           {field.required ? ' *' : ''}
@@ -266,30 +305,30 @@ export function ContentManager({ collection }: { collection: string }) {
             name={field.key}
             required={field.required}
             value={value}
-            onChange={onChange ? (event) => onChange(event.target.value) : undefined}
+            onChange={
+              onChange ? (event) => onChange(event.target.value) : undefined
+            }
           />
         ) : field.type === 'select' ? (
-          <select
-            id={id}
-            name={field.key}
-            required={field.required}
-            value={value ?? ''}
-            onChange={onChange ? (event) => onChange(event.target.value) : undefined}
-          >
-            {field.options?.map((option) => (
-              <option key={option}>{option}</option>
-            ))}
-            {field.key === 'linkedRecord' && (
-              <>
-                <option value="">{t('admin.cms.option.notAttached')}</option>
-                {links.map((link) => (
-                  <option key={link.value} value={link.value}>
-                    {link.label}
-                  </option>
-                ))}
-              </>
-            )}
-          </select>
+          field.key === 'linkedRecord' ? (
+            <Select
+              id={id}
+              name={field.key}
+              value={value ?? ''}
+              onChange={onChange ?? (() => undefined)}
+              options={linkedRecordOptions}
+              fullWidth
+            />
+          ) : (
+            <Select
+              id={id}
+              name={field.key}
+              value={value ?? field.options?.[0] ?? ''}
+              onChange={onChange ?? (() => undefined)}
+              options={(field.options ?? []).map((o) => ({ value: o, label: o }))}
+              fullWidth
+            />
+          )
         ) : (
           <input
             id={id}
@@ -297,7 +336,9 @@ export function ContentManager({ collection }: { collection: string }) {
             maxLength={field.key === 'url' ? 2000 : 500}
             required={field.required}
             value={value}
-            onChange={onChange ? (event) => onChange(event.target.value) : undefined}
+            onChange={
+              onChange ? (event) => onChange(event.target.value) : undefined
+            }
           />
         )}
       </div>
@@ -307,9 +348,20 @@ export function ContentManager({ collection }: { collection: string }) {
   return (
     <>
       <form onSubmit={create} className="form-grid" style={{ marginBottom: 0 }}>
-        {fields[collection].map((field) => renderField(field))}
+        {fields[collection].map((field) => {
+          if (field.type === 'select') {
+            const v =
+              createSelects[field.key] ?? defaultSelectValue(field);
+            return renderField(field, v, (next) =>
+              setCreateSelects((prev) => ({ ...prev, [field.key]: next })),
+            );
+          }
+          return renderField(field);
+        })}
         <div className="field-wide" style={{ marginBottom: 0 }}>
-          <button className="button" type="submit">{t(addKeys[collection])}</button>
+          <button className="button" type="submit">
+            {t(addKeys[collection])}
+          </button>
         </div>
       </form>
 
@@ -360,41 +412,51 @@ export function ContentManager({ collection }: { collection: string }) {
       </h2>
 
       {collection === 'resources' && (
-        <form
-          role="search"
-          className="lead-filters"
-          onSubmit={(event) => { event.preventDefault(); setPage(1); }}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(240px, 1fr) minmax(180px, 220px)',
+            gap: '16px',
+            alignItems: 'end',
+            marginBottom: '1.25rem',
+          }}
         >
-          <div className="field">
+          <div className="field" style={{ marginBottom: 0 }}>
             <label htmlFor="resource-search">{t('admin.cms.search.title')}</label>
             <input
               id="resource-search"
               type="search"
               value={query}
-              onChange={(event) => { setQuery(event.target.value); setPage(1); }}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setPage(1);
+              }}
               placeholder={t('admin.cms.search.placeholder')}
               maxLength={120}
             />
           </div>
-          <div className="field">
+          <div className="field" style={{ marginBottom: 0 }}>
             <label htmlFor="resource-state">{t('admin.cms.filter.publication')}</label>
-            <select
+            <Select
               id="resource-state"
               value={stateFilter}
-              onChange={(event) => { setStateFilter(event.target.value); setPage(1); }}
-            >
-              <option value="">{t('admin.cms.option.allRecords')}</option>
-              <option value="PUBLISHED">{t('admin.cms.option.published')}</option>
-              <option value="DRAFT">{t('admin.cms.option.draft')}</option>
-            </select>
+              onChange={(v) => {
+                setStateFilter(v);
+                setPage(1);
+              }}
+              options={stateOptions}
+              fullWidth
+            />
           </div>
-        </form>
+        </div>
       )}
 
       {collection === 'resources' && (
         <p className="form-note" aria-live="polite">
           {total}{' '}
-          {total === 1 ? t('admin.cms.count.resource') : t('admin.cms.count.resources')}
+          {total === 1
+            ? t('admin.cms.count.resource')
+            : t('admin.cms.count.resources')}
           {loading ? ` \u00B7 ${t('admin.cms.state.loading')}` : ''}
         </p>
       )}
@@ -425,21 +487,30 @@ export function ContentManager({ collection }: { collection: string }) {
                     {collection === 'media'
                       ? t('admin.cms.state.mediaLibrary')
                       : row.published
-                      ? t('admin.cms.option.published')
-                      : t('admin.cms.option.draft')}
+                        ? t('admin.cms.option.published')
+                        : t('admin.cms.option.draft')}
                   </td>
                   <td>
                     {collection !== 'media' && (
-                      <button className="admin-action" onClick={() => void publish(row)}>
+                      <button
+                        className="admin-action"
+                        onClick={() => void publish(row)}
+                      >
                         {row.published
                           ? t('admin.cms.action.unpublish')
                           : t('admin.cms.action.publish')}
                       </button>
                     )}{' '}
-                    <button className="admin-action" onClick={() => startEdit(row)}>
+                    <button
+                      className="admin-action"
+                      onClick={() => startEdit(row)}
+                    >
                       {t('admin.cms.action.edit')}
                     </button>{' '}
-                    <button className="admin-action" onClick={() => void remove(row)}>
+                    <button
+                      className="admin-action"
+                      onClick={() => void remove(row)}
+                    >
                       {t('admin.cms.action.delete')}
                     </button>
                   </td>
@@ -453,13 +524,23 @@ export function ContentManager({ collection }: { collection: string }) {
           {loading
             ? t('admin.cms.state.loadingRecords')
             : collection === 'resources' && (query || stateFilter)
-            ? t('admin.cms.empty.filteredResources')
-            : t('admin.cms.empty.noRecords')}
+              ? t('admin.cms.empty.filteredResources')
+              : t('admin.cms.empty.noRecords')}
         </p>
       )}
 
       {collection === 'resources' && pageCount > 1 && (
-        <nav className="pagination" aria-label={t('aria.pagination.resources')}>
+        <nav
+          className="pagination"
+          aria-label={t('aria.pagination.resources')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px',
+            marginTop: '1.5rem',
+          }}
+        >
           <button
             className="admin-action"
             disabled={page <= 1 || loading}
@@ -467,7 +548,7 @@ export function ContentManager({ collection }: { collection: string }) {
           >
             {t('admin.cms.pagination.previous')}
           </button>
-          <span>
+          <span className="form-note">
             {page} / {pageCount}
           </span>
           <button
@@ -485,12 +566,18 @@ export function ContentManager({ collection }: { collection: string }) {
           <div className="field-wide">
             <p className="eyebrow">{t('admin.cms.header.editRecord')}</p>
             <h2 style={{ fontSize: '1.7rem' }}>
-              {String(editing.name ?? editing.title ?? editing.question ?? editing.url ?? '')}
+              {String(
+                editing.name ?? editing.title ?? editing.question ?? editing.url ?? '',
+              )}
             </h2>
           </div>
           {fields[collection].map((field) =>
-            renderField(field, values[field.key], (value) =>
-              setValues((current) => ({ ...current, [field.key]: value })),
+            renderField(
+              field,
+              values[field.key],
+              (value) =>
+                setValues((current) => ({ ...current, [field.key]: value })),
+              'edit',
             ),
           )}
           <div className="field-wide">
