@@ -27,7 +27,7 @@ const MIME_TO_KIND: Record<string, 'IMAGE' | 'VIDEO' | 'DOCUMENT'> = {
   'application/pdf': 'DOCUMENT',
 };
 
-const WATCHED_FOLDERS = ['hero'];
+const WATCHED_FOLDERS = ['hero', 'series', 'projects', 'services', 'solutions'];
 
 function prettyName(filename: string): string {
   return filename
@@ -38,7 +38,7 @@ function prettyName(filename: string): string {
 
 /**
  * Scans watched public folders and imports any files not yet in the Media table.
- * Safe to call repeatedly — existing URLs are skipped.
+ * Safe to call repeatedly - existing URLs are skipped.
  */
 export async function syncPublicMedia(): Promise<{ imported: number; scanned: number }> {
   let imported = 0;

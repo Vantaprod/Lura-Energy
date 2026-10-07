@@ -11,20 +11,32 @@ export type ProductMedia = {
 };
 
 type Props = {
-  productId: string | null;
+  productId?: string | null;
+  projectId?: string | null;
+  serviceId?: string | null;
+  solutionId?: string | null;
   initial: ProductMedia[];
   onChanged?: (media: ProductMedia[]) => void;
 };
 
 const MAX_BYTES = 8 * 1024 * 1024;
 
-export function MediaDropzone({ productId, initial, onChanged }: Props) {
+export function MediaDropzone({
+  productId,
+  projectId,
+  serviceId,
+  solutionId,
+  initial,
+  onChanged,
+}: Props) {
   const { t } = useTranslation();
   const [items, setItems] = useState<ProductMedia[]>(initial);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const linkedId = productId ?? projectId ?? serviceId ?? solutionId ?? null;
 
   const push = useCallback(
     (next: ProductMedia[]) => {
@@ -39,7 +51,7 @@ export function MediaDropzone({ productId, initial, onChanged }: Props) {
       const list = Array.from(files);
       if (!list.length) return;
 
-      if (!productId) {
+      if (!linkedId) {
         setError(t('mediaDropzone.error.saveFirst'));
         return;
       }
@@ -56,7 +68,10 @@ export function MediaDropzone({ productId, initial, onChanged }: Props) {
         }
         const form = new FormData();
         form.append('file', file);
-        form.append('productId', productId);
+        if (productId) form.append('productId', productId);
+        else if (projectId) form.append('projectId', projectId);
+        else if (serviceId) form.append('serviceId', serviceId);
+        else if (solutionId) form.append('solutionId', solutionId);
         try {
           const res = await fetch('/api/admin/media/upload', {
             method: 'POST',
@@ -64,7 +79,6 @@ export function MediaDropzone({ productId, initial, onChanged }: Props) {
           });
           const data = await res.json();
           if (!res.ok) {
-            // Server may return an error key; fall back to its message.
             const serverError =
               (data as { errorKey?: string; error?: string }).errorKey
                 ? t((data as { errorKey: string }).errorKey)
@@ -81,7 +95,7 @@ export function MediaDropzone({ productId, initial, onChanged }: Props) {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = '';
     },
-    [items, productId, push, t],
+    [items, productId, projectId, serviceId, solutionId, linkedId, push, t],
   );
 
   async function remove(item: ProductMedia) {
@@ -111,7 +125,7 @@ export function MediaDropzone({ productId, initial, onChanged }: Props) {
     }
   }
 
-  const buttonDisabled = uploading || !productId;
+  const buttonDisabled = uploading || !linkedId;
 
   const buttonStyle: React.CSSProperties = {
     display: 'inline-flex',
@@ -179,7 +193,7 @@ export function MediaDropzone({ productId, initial, onChanged }: Props) {
 
         <p className="dropzone__hint">{t('mediaDropzone.hint')}</p>
 
-        {!productId && (
+        {!linkedId && (
           <p
             className="dropzone__hint"
             style={{ color: '#D96A0F', fontWeight: 600, marginTop: '6px' }}

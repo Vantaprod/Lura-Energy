@@ -147,6 +147,7 @@ model Solution {
   description String?
   published   Boolean  @default(false)
   sortOrder   Int      @default(0)
+  media       Media[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -161,23 +162,28 @@ model Service {
   process     Json?
   published   Boolean  @default(false)
   sortOrder   Int      @default(0)
+  media       Media[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
 model Media {
-  id        String    @id @default(cuid())
-  kind      MediaKind
-  url       String
-  alt       String?
-  title     String?
-  mimeType  String?
-  sizeBytes Int?
-  productId String?
-  product   Product?  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  projectId String?
-  project   Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now())
+  id         String    @id @default(cuid())
+  kind       MediaKind
+  url        String
+  alt        String?
+  title      String?
+  mimeType   String?
+  sizeBytes  Int?
+  productId  String?
+  product    Product?  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  projectId  String?
+  project    Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  serviceId  String?
+  service    Service?  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  solutionId String?
+  solution   Solution? @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
 }
 
 model Testimonial {

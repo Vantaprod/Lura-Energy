@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/db/prisma';
 import { getServerT } from '@/lib/i18n/server';
-import { SeriesCard } from '@/components/public/series-card';
+import { SeriesCard, SeriesFeaturedCard } from '@/components/public/series-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,17 +41,16 @@ export default async function ProductsPage() {
             {t('products.emptyBody')}
           </div>
         ) : (
-          <div className="series-grid">
-            <SeriesCard category={featured} featured t={t} />
-            {rest.map((cat, idx) => (
-              <SeriesCard
-                key={cat.id}
-                category={cat}
-                wide={idx === 0 && rest.length > 2}
-                t={t}
-              />
-            ))}
-          </div>
+          <>
+            {featured && <SeriesFeaturedCard category={featured} t={t} />}
+            {rest.length > 0 && (
+              <div className="series-tiles">
+                {rest.map((cat) => (
+                  <SeriesCard key={cat.id} category={cat} t={t} />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </section>
     </main>

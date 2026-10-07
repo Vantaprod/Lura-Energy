@@ -41,6 +41,24 @@ export default async function ProjectPage({
   ]);
   if (!item) notFound();
 
+  const meta: { label: string; value: string }[] = [];
+  if (item.systemCapacity) {
+    meta.push({ label: t('detail.systemCapacity'), value: item.systemCapacity });
+  }
+  if (item.clientName) {
+    meta.push({ label: t('detail.clientName'), value: item.clientName });
+  }
+  if (item.completionDate) {
+    meta.push({
+      label: t('detail.completionDate'),
+      value: new Intl.DateTimeFormat('en-GB', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }).format(item.completionDate),
+    });
+  }
+
   return (
     <main>
       <section className="page-intro">
@@ -48,10 +66,24 @@ export default async function ProjectPage({
           {[item.category, item.location].filter(Boolean).join(' \u00B7 ')}
         </p>
         <h1>{item.title}</h1>
-        {item.systemCapacity && (
-          <p>
-            {t('detail.systemCapacity')}: {item.systemCapacity}
-          </p>
+        {meta.length > 0 && (
+          <ul
+            style={{
+              listStyle: 'none',
+              padding: 0,
+              margin: '1rem 0 0',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '1.5rem',
+            }}
+          >
+            {meta.map((row) => (
+              <li key={row.label}>
+                <span className="eyebrow eyebrow-plain">{row.label}</span>
+                <div>{row.value}</div>
+              </li>
+            ))}
+          </ul>
         )}
       </section>
       <section className="content-section">

@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from '@/lib/i18n/context';
 import { Select } from '@/components/ui/select';
+import { MediaDropzone, type ProductMedia } from '@/components/admin/media-dropzone';
 
 type Row = Record<string, unknown>;
 
@@ -66,6 +67,8 @@ const addKeys: Record<string, string> = {
   media: 'admin.cms.action.addMedia',
 };
 
+const MEDIA_COLLECTIONS = new Set(['services', 'solutions']);
+
 type LinkOption = { value: string; label: string };
 type ResourceResult = { items: Row[]; total: number; page: number; pageCount: number };
 
@@ -75,6 +78,7 @@ export function ContentManager({ collection }: { collection: string }) {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [editing, setEditing] = useState<Row | null>(null);
+  const [editingMedia, setEditingMedia] = useState<ProductMedia[]>([]);
   const [values, setValues] = useState<Record<string, string>>({});
   const [createSelects, setCreateSelects] = useState<Record<string, string>>({});
   const [links, setLinks] = useState<LinkOption[]>([]);
@@ -109,16 +113,26 @@ export function ContentManager({ collection }: { collection: string }) {
           setItems(data);
         }
         if (collection === 'media') {
-          const [productsResponse, projectsResponse] = await Promise.all([
-            fetch('/api/admin/products', { signal }),
-            fetch('/api/admin/projects', { signal }),
-          ]);
-          if (!productsResponse.ok || !projectsResponse.ok) {
+          const [productsResponse, projectsResponse, servicesResponse, solutionsResponse] =
+            await Promise.all([
+              fetch('/api/admin/products', { signal }),
+              fetch('/api/admin/projects', { signal }),
+              fetch('/api/admin/content?collection=services', { signal }),
+              fetch('/api/admin/content?collection=solutions', { signal }),
+            ]);
+          if (
+            !productsResponse.ok ||
+            !projectsResponse.ok ||
+            !servicesResponse.ok ||
+            !solutionsResponse.ok
+          ) {
             throw new Error(t('admin.cms.error.loadLinks'));
           }
-          const [products, projects] = await Promise.all([
+          const [products, projects, services, solutions] = await Promise.all([
             productsResponse.json(),
             projectsResponse.json(),
+            servicesResponse.json(),
+            solutionsResponse.json(),
           ]);
           setLinks([
             ...products.map((item: Row) => ({
@@ -128,6 +142,14 @@ export function ContentManager({ collection }: { collection: string }) {
             ...projects.map((item: Row) => ({
               value: `project:${String(item.id)}`,
               label: `${t('admin.cms.label.project')} \u00B7 ${String(item.title)}`,
+            })),
+            ...services.map((item: Row) => ({
+              value: `service:${String(item.id)}`,
+              label: `${t('admin.cms.label.service')} \u00B7 ${String(item.name)}`,
+            })),
+            ...solutions.map((item: Row) => ({
+              value: `solution:${String(item.id)}`,
+              label: `${t('admin.cms.label.solution')} \u00B7 ${String(item.name)}`,
             })),
           ]);
         }
@@ -157,11 +179,15 @@ export function ContentManager({ collection }: { collection: string }) {
   }, [load, collection, query]);
 
   function mapLinkedRecord(value: string) {
-    return value.startsWith('product:')
-      ? { productId: value.slice(8), projectId: null }
-      : value.startsWith('project:')
-        ? { productId: null, projectId: value.slice(8) }
-        : { productId: null, projectId: null };
+    if (value.startsWith('product:'))
+      return { productId: value.slice(8), projectId: null, serviceId: null, solutionId: null };
+    if (value.startsWith('project:'))
+      return { productId: null, projectId: value.slice(8), serviceId: null, solutionId: null };
+    if (value.startsWith('service:'))
+      return { productId: null, projectId: null, serviceId: value.slice(8), solutionId: null };
+    if (value.startsWith('solution:'))
+      return { productId: null, projectId: null, serviceId: null, solutionId: value.slice(8) };
+    return { productId: null, projectId: null, serviceId: null, solutionId: null };
   }
 
   function defaultSelectValue(field: FieldDef): string {
@@ -208,9 +234,14 @@ export function ContentManager({ collection }: { collection: string }) {
         ? `product:${String(row.productId)}`
         : row.projectId
           ? `project:${String(row.projectId)}`
-          : '';
+          : row.serviceId
+            ? `service:${String(row.serviceId)}`
+            : row.solutionId
+              ? `solution:${String(row.solutionId)}`
+              : '';
     }
     setValues(next);
+    setEditingMedia((row.media as ProductMedia[] | undefined) ?? []);
     setError('');
   }
 
@@ -235,6 +266,7 @@ export function ContentManager({ collection }: { collection: string }) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? t('admin.cms.error.update'));
       setEditing(null);
+      setEditingMedia([]);
       setNotice(t('admin.cms.notice.updated'));
       await load();
     } catch (reason) {
@@ -344,6 +376,9 @@ export function ContentManager({ collection }: { collection: string }) {
       </div>
     );
   }
+
+  const showDropzone =
+    editing !== null && MEDIA_COLLECTIONS.has(collection);
 
   return (
     <>
@@ -580,12 +615,27 @@ export function ContentManager({ collection }: { collection: string }) {
               'edit',
             ),
           )}
+          {showDropzone && (
+            <div className="field-wide">
+              <label>{t('admin.cms.form.images')}</label>
+              <MediaDropzone
+                {...(collection === 'services'
+                  ? { serviceId: String(editing.id) }
+                  : { solutionId: String(editing.id) })}
+                initial={editingMedia}
+                onChanged={setEditingMedia}
+              />
+            </div>
+          )}
           <div className="field-wide">
             <button className="button">{t('admin.cms.action.saveChanges')}</button>{' '}
             <button
               type="button"
               className="admin-action"
-              onClick={() => setEditing(null)}
+              onClick={() => {
+                setEditing(null);
+                setEditingMedia([]);
+              }}
             >
               {t('admin.cms.action.cancel')}
             </button>

@@ -66,6 +66,8 @@ const createSchema = z.discriminatedUnion('collection', [
     alt: z.string().max(300).optional(),
     productId: z.string().nullable().optional(),
     projectId: z.string().nullable().optional(),
+    serviceId: z.string().nullable().optional(),
+    solutionId: z.string().nullable().optional(),
   }),
 ]);
 
@@ -125,6 +127,8 @@ const updateSchema = z.discriminatedUnion('collection', [
     alt: z.string().max(300).optional(),
     productId: z.string().nullable().optional(),
     projectId: z.string().nullable().optional(),
+    serviceId: z.string().nullable().optional(),
+    solutionId: z.string().nullable().optional(),
   }),
 ]);
 
@@ -133,9 +137,15 @@ async function list(collection: Collection): Promise<unknown> {
     case 'product-categories':
       return prisma.productCategory.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] });
     case 'services':
-      return prisma.service.findMany({ orderBy: { sortOrder: 'asc' } });
+      return prisma.service.findMany({
+        orderBy: { sortOrder: 'asc' },
+        include: { media: { orderBy: { createdAt: 'asc' } } },
+      });
     case 'solutions':
-      return prisma.solution.findMany({ orderBy: { sortOrder: 'asc' } });
+      return prisma.solution.findMany({
+        orderBy: { sortOrder: 'asc' },
+        include: { media: { orderBy: { createdAt: 'asc' } } },
+      });
     case 'testimonials':
       return prisma.testimonial.findMany({ orderBy: { sortOrder: 'asc' } });
     case 'faqs':
@@ -145,6 +155,47 @@ async function list(collection: Collection): Promise<unknown> {
     case 'media':
       return prisma.media.findMany({ orderBy: { createdAt: 'desc' } });
   }
+}
+
+async function ensureSingleMediaLink(input: {
+  productId?: string | null;
+  projectId?: string | null;
+  serviceId?: string | null;
+  solutionId?: string | null;
+}): Promise<string | null> {
+  const set = [input.productId, input.projectId, input.serviceId, input.solutionId].filter(
+    (v): v is string => typeof v === 'string' && v.length > 0,
+  );
+  if (set.length > 1) return 'Link media to one record at a time.';
+  if (input.productId) {
+    const exists = await prisma.product.findUnique({
+      where: { id: input.productId },
+      select: { id: true },
+    });
+    if (!exists) return 'Product record not found.';
+  }
+  if (input.projectId) {
+    const exists = await prisma.project.findUnique({
+      where: { id: input.projectId },
+      select: { id: true },
+    });
+    if (!exists) return 'Project record not found.';
+  }
+  if (input.serviceId) {
+    const exists = await prisma.service.findUnique({
+      where: { id: input.serviceId },
+      select: { id: true },
+    });
+    if (!exists) return 'Service record not found.';
+  }
+  if (input.solutionId) {
+    const exists = await prisma.solution.findUnique({
+      where: { id: input.solutionId },
+      select: { id: true },
+    });
+    if (!exists) return 'Solution record not found.';
+  }
+  return null;
 }
 
 export async function GET(request: NextRequest) {
@@ -214,20 +265,9 @@ export async function POST(request: NextRequest) {
   }
   const input = parsed.data;
   if (input.collection === 'media') {
-    if (input.productId && input.projectId) {
-      return NextResponse.json({ error: 'Link media to one record at a time.' }, { status: 400 });
-    }
-    if (
-      input.productId &&
-      !(await prisma.product.findUnique({ where: { id: input.productId }, select: { id: true } }))
-    ) {
-      return NextResponse.json({ error: 'Product record not found.' }, { status: 400 });
-    }
-    if (
-      input.projectId &&
-      !(await prisma.project.findUnique({ where: { id: input.projectId }, select: { id: true } }))
-    ) {
-      return NextResponse.json({ error: 'Project record not found.' }, { status: 400 });
+    const linkError = await ensureSingleMediaLink(input);
+    if (linkError) {
+      return NextResponse.json({ error: linkError }, { status: 400 });
     }
   }
   try {
@@ -298,8 +338,10 @@ export async function POST(request: NextRequest) {
             url: input.url,
             title: input.title,
             alt: input.alt,
-            productId: input.productId,
-            projectId: input.projectId,
+            productId: input.productId ?? null,
+            projectId: input.projectId ?? null,
+            serviceId: input.serviceId ?? null,
+            solutionId: input.solutionId ?? null,
           },
         });
         break;
@@ -340,20 +382,9 @@ export async function PATCH(request: NextRequest) {
   }
   const input = parsed.data;
   if (input.collection === 'media') {
-    if (input.productId && input.projectId) {
-      return NextResponse.json({ error: 'Link media to one record at a time.' }, { status: 400 });
-    }
-    if (
-      input.productId &&
-      !(await prisma.product.findUnique({ where: { id: input.productId }, select: { id: true } }))
-    ) {
-      return NextResponse.json({ error: 'Product record not found.' }, { status: 400 });
-    }
-    if (
-      input.projectId &&
-      !(await prisma.project.findUnique({ where: { id: input.projectId }, select: { id: true } }))
-    ) {
-      return NextResponse.json({ error: 'Project record not found.' }, { status: 400 });
+    const linkError = await ensureSingleMediaLink(input);
+    if (linkError) {
+      return NextResponse.json({ error: linkError }, { status: 400 });
     }
   }
   try {
@@ -442,8 +473,10 @@ export async function PATCH(request: NextRequest) {
             url: input.url,
             title: input.title,
             alt: input.alt,
-            productId: input.productId,
-            projectId: input.projectId,
+            productId: input.productId ?? null,
+            projectId: input.projectId ?? null,
+            serviceId: input.serviceId ?? null,
+            solutionId: input.solutionId ?? null,
           },
         });
         break;

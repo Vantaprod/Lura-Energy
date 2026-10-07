@@ -14,6 +14,7 @@ export default async function SolutionsPage() {
       ? Promise.resolve([])
       : prisma.solution.findMany({
           where: { published: true },
+          include: { media: { orderBy: { createdAt: 'asc' } } },
           orderBy: { sortOrder: 'asc' },
         }),
     getServerT(),

@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from '@/lib/i18n/context';
+import { Select } from '@/components/ui/select';
 
 type Category = {
   id: string;
@@ -47,6 +48,8 @@ const toValues = (c: Category): Values => ({
   sortOrder: String(c.sortOrder ?? 0),
 });
 
+const MAX_BYTES = 8 * 1024 * 1024;
+
 export function SeriesManager() {
   const { t } = useTranslation();
   const [items, setItems] = useState<Category[]>([]);
@@ -55,8 +58,10 @@ export function SeriesManager() {
   const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [values, setValues] = useState<Values>(empty);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -85,6 +90,44 @@ export function SeriesManager() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  async function uploadCover(file: File) {
+    if (file.size > MAX_BYTES) {
+      setError(t('admin.series.form.coverUploadFailed'));
+      return;
+    }
+    setUploading(true);
+    setError('');
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('subfolder', 'series');
+      const res = await fetch('/api/admin/media/upload', {
+        method: 'POST',
+        body: form,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const serverError =
+          (data as { errorKey?: string; error?: string }).errorKey
+            ? t((data as { errorKey: string }).errorKey)
+            : (data as { error?: string }).error ?? t('admin.series.form.coverUploadFailed');
+        setError(serverError);
+        return;
+      }
+      const uploaded = data as MediaItem & { url: string; alt: string | null; kind: string };
+      setMedia((prev) => [
+        { id: uploaded.id, url: uploaded.url, alt: uploaded.alt, kind: uploaded.kind },
+        ...prev,
+      ]);
+      setValues((prev) => ({ ...prev, coverUrl: uploaded.url }));
+    } catch {
+      setError(t('admin.series.form.coverUploadFailed'));
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  }
 
   async function create(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -177,6 +220,11 @@ export function SeriesManager() {
   }
 
   const previewUrl = values.coverUrl.trim();
+  const selectValue = media.some((m) => m.url === values.coverUrl) ? values.coverUrl : '';
+  const selectOptions = media.map((m) => ({
+    value: m.url,
+    label: m.alt ?? m.url.split('/').pop() ?? m.url,
+  }));
 
   return (
     <>
@@ -242,27 +290,56 @@ export function SeriesManager() {
 
         <div className="field field-wide">
           <label htmlFor="series-cover">{t('admin.series.form.coverUrl')}</label>
-          <select
+
+          <div style={{ marginBottom: '0.5rem' }}>
+            <button
+              type="button"
+              className="button"
+              disabled={uploading}
+              onClick={() => fileRef.current?.click()}
+              style={{ padding: '10px 20px', minHeight: '42px' }}
+            >
+              {uploading
+                ? t('admin.series.form.coverUploading')
+                : t('admin.series.form.coverUpload')}
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void uploadCover(f);
+              }}
+              style={{ display: 'none' }}
+            />
+            <span
+              className="form-note"
+              style={{ display: 'block', marginTop: '0.5rem' }}
+            >
+              {t('admin.series.form.coverFolderHint')}
+            </span>
+          </div>
+
+          <Select
             id="series-cover"
-            value={media.some((m) => m.url === values.coverUrl) ? values.coverUrl : ''}
-            onChange={(e) => {
-              if (e.target.value) setValues({ ...values, coverUrl: e.target.value });
+            value={selectValue}
+            onChange={(v) => {
+              if (v) setValues({ ...values, coverUrl: v });
             }}
-            style={{ marginBottom: '0.5rem' }}
-          >
-            <option value="">{t('admin.series.form.coverPick')}</option>
-            {media.map((m) => (
-              <option key={m.id} value={m.url}>
-                {m.alt ?? m.url.split('/').pop()}
-              </option>
-            ))}
-          </select>
+            options={selectOptions}
+            placeholder={t('admin.series.form.coverPick')}
+            fullWidth
+          />
+
           <input
             type="text"
             value={values.coverUrl}
             onChange={(e) => setValues({ ...values, coverUrl: e.target.value })}
             placeholder={t('admin.series.form.coverPlaceholder')}
+            style={{ marginTop: '0.5rem' }}
           />
+
           {previewUrl && (
             <img
               src={previewUrl}

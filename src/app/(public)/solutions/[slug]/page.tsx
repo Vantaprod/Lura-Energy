@@ -18,7 +18,10 @@ export default async function SolutionPage({
     notFound();
   }
   const [item, { t }] = await Promise.all([
-    prisma.solution.findFirst({ where: { slug, published: true } }),
+    prisma.solution.findFirst({
+      where: { slug, published: true },
+      include: { media: { orderBy: { createdAt: 'asc' } } },
+    }),
     getServerT(),
   ]);
   if (!item) notFound();
@@ -31,6 +34,42 @@ export default async function SolutionPage({
         {item.summary && <p>{item.summary}</p>}
       </section>
       <section className="content-section">
+        {item.media.length > 0 && (
+          <div className="media-gallery">
+            {item.media.map((media) =>
+              media.kind === 'IMAGE' ? (
+                <img
+                  className="record-image"
+                  key={media.id}
+                  src={media.url}
+                  alt={media.alt ?? media.title ?? item.name}
+                  loading="lazy"
+                  width="1200"
+                  height="800"
+                />
+              ) : media.kind === 'VIDEO' ? (
+                <video
+                  key={media.id}
+                  controls
+                  preload="none"
+                  aria-label={media.title ?? item.name}
+                >
+                  <source src={media.url} />
+                </video>
+              ) : (
+                <a
+                  key={media.id}
+                  href={media.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {media.title ?? t('detail.document')}
+                </a>
+              ),
+            )}
+          </div>
+        )}
+        <h2>{t('detail.solutionOverview')}</h2>
         {item.description && <p>{item.description}</p>}
         <Link className="button" href="/contact">
           {t('detail.discuss')} {'\u2192'}

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from '@/lib/i18n/context';
 import { Select } from '@/components/ui/select';
+import { MediaDropzone, type ProductMedia } from '@/components/admin/media-dropzone';
 
 type Item = {
   id: string;
@@ -13,8 +14,9 @@ type Item = {
   description: string | null;
   systemCapacity: string | null;
   published: boolean;
+  media?: ProductMedia[];
 };
-type Values = Omit<Item, 'id' | 'published'>;
+type Values = Omit<Item, 'id' | 'published' | 'media'>;
 type Result = {
   items: Item[];
   total: number;
@@ -46,6 +48,7 @@ export function ProjectsManager() {
   const [error, setError] = useState('');
   const [values, setValues] = useState<Values>(empty);
   const [editing, setEditing] = useState<string | null>(null);
+  const [editingMedia, setEditingMedia] = useState<ProductMedia[]>([]);
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [category, setCategory] = useState('');
@@ -116,7 +119,7 @@ export function ProjectsManager() {
       body: JSON.stringify(fromForm(e.currentTarget)),
     });
     if (r.ok) {
-      setEditing(null);
+      closeEdit();
       setError('');
       await load();
     } else {
@@ -143,6 +146,7 @@ export function ProjectsManager() {
 
   function edit(x: Item) {
     setEditing(x.id);
+    setEditingMedia(x.media ?? []);
     setValues({
       title: x.title,
       slug: x.slug,
@@ -151,6 +155,11 @@ export function ProjectsManager() {
       description: x.description ?? '',
       systemCapacity: x.systemCapacity ?? '',
     });
+  }
+
+  function closeEdit() {
+    setEditing(null);
+    setEditingMedia([]);
   }
 
   const fields = (value?: Values) => (
@@ -194,8 +203,6 @@ export function ProjectsManager() {
       </div>
     </>
   );
-
-  // ---- Dropdown options ----
 
   const categoryOptions = useMemo(
     () =>
@@ -401,12 +408,16 @@ export function ProjectsManager() {
           </div>
           {fields(values)}
           <div className="field-wide">
+            <label>{t('admin.proj.form.images')}</label>
+            <MediaDropzone
+              projectId={editing}
+              initial={editingMedia}
+              onChanged={setEditingMedia}
+            />
+          </div>
+          <div className="field-wide">
             <button className="button">{t('admin.proj.edit.save')}</button>{' '}
-            <button
-              type="button"
-              className="admin-action"
-              onClick={() => setEditing(null)}
-            >
+            <button type="button" className="admin-action" onClick={closeEdit}>
               {t('admin.actions.cancel')}
             </button>
           </div>
