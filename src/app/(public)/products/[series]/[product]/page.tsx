@@ -75,6 +75,7 @@ export default async function ProductDetailPage({
       datasheetUrl={item.datasheetUrl}
       categorySlug={item.category.slug}
       categoryName={item.category.name}
+      categorySummary={item.category.summary}
       keyFeatures={keyFeatures}
       specifications={item.specifications}
       media={media}
