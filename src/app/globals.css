@@ -4222,3 +4222,304 @@ select:focus-visible {
 .pdp-hero__media {
   display: none !important;
 }
+
+/* --- Product gallery box: taller, matches info column height (2026-10-08) ---
+   Gallery was ~280px tall on desktop, leaving the right column of
+   text looking stranded. Stretch both grid columns and give the
+   gallery a real min-height so the image has room to breathe. */
+.pdp-product {
+  align-items: stretch !important;
+}
+
+.pdp-product__gallery {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  min-height: 340px;
+}
+
+@media (min-width: 900px) {
+  .pdp-product__gallery {
+    min-height: 520px;
+  }
+}
+
+/* If the gallery component inside has its own aspect ratio on the
+   main image, override it so the image fills the taller box. */
+.pdp-product__gallery .product-gallery {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pdp-product__gallery .product-gallery > *:first-child {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pdp-product__gallery .product-gallery img {
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* --- Product grid: wider, left-biased (2026-10-08) ---
+   The 1200px centered container left too much side margin on wide
+   screens, making the gallery feel centered rather than left-aligned.
+   Widening to 1440px and giving the gallery more column share pulls
+   the composition to the left. */
+.pdp-product {
+  max-width: 1440px !important;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) !important;
+}
+
+@media (min-width: 900px) {
+  .pdp-product {
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+  }
+}
+
+@media (min-width: 1400px) {
+  .pdp-product {
+    padding-left: 32px !important;
+    padding-right: 64px !important;
+  }
+}
+
+/* Match the other sections to the same width so the page reads
+   as one column width, not two different ones. */
+.pdp-specs,
+.pdp-desc,
+.pdp-notice,
+.pdp-warranty,
+.pdp-datasheet {
+  max-width: 1440px !important;
+}
+
+@media (min-width: 900px) {
+  .pdp-specs,
+  .pdp-desc,
+  .pdp-notice,
+  .pdp-warranty,
+  .pdp-datasheet {
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+  }
+}
+
+@media (min-width: 1400px) {
+  .pdp-specs,
+  .pdp-desc,
+  .pdp-notice,
+  .pdp-warranty,
+  .pdp-datasheet {
+    padding-left: 32px !important;
+    padding-right: 64px !important;
+  }
+}
+
+/* --- Product detail: full-bleed layout (2026-10-08) ---
+   Removed the max-width cap. Content fills the viewport edge to
+   edge with only responsive side gutters. Matches itel-style
+   full-width product pages. */
+.pdp-product,
+.pdp-specs,
+.pdp-desc,
+.pdp-notice,
+.pdp-warranty,
+.pdp-datasheet,
+.pdp-hero__inner {
+  max-width: 100% !important;
+}
+
+.pdp-product {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) !important;
+  padding-left: clamp(20px, 3vw, 64px) !important;
+  padding-right: clamp(20px, 3vw, 64px) !important;
+}
+
+.pdp-specs,
+.pdp-desc,
+.pdp-notice,
+.pdp-warranty,
+.pdp-datasheet {
+  padding-left: clamp(20px, 3vw, 64px) !important;
+  padding-right: clamp(20px, 3vw, 64px) !important;
+}
+
+.pdp-hero__inner {
+  padding-left: clamp(20px, 3vw, 64px) !important;
+  padding-right: clamp(20px, 3vw, 64px) !important;
+}
+
+/* Feature banners were already full-bleed — keep them that way. */
+.pdp-banners {
+  max-width: 100% !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* --- Slideshow product gallery (2026-10-08) ---
+   Replaces the old static gallery. Auto-advances every 4s, pauses
+   on hover, transparent overlay arrows + dots + thumbnail strip. */
+
+/* Neutralize old .pdp-product__gallery wrapper rules so the inner
+   slideshow owns all its own spacing. */
+.pdp-product__gallery {
+  min-height: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.pdp-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+}
+
+.pdp-gallery__stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 340px;
+  background: #F7F8FA;
+  border-radius: 12px;
+  overflow: hidden;
+}
+@media (min-width: 900px) {
+  .pdp-gallery__stage { min-height: 480px; }
+}
+
+.pdp-gallery__slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  opacity: 0;
+  transition: opacity 500ms ease;
+  pointer-events: none;
+}
+.pdp-gallery__slide.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.pdp-gallery__slide img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.pdp-gallery__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 340px;
+  background: #F7F8FA;
+  border-radius: 12px;
+  color: #939AA5;
+  font-size: 14px;
+}
+
+/* Overlay nav arrows */
+.pdp-gallery__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #0A1550;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(5, 14, 31, 0.10);
+  transition: background 200ms ease, transform 200ms ease;
+}
+.pdp-gallery__nav:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-50%) scale(1.06);
+}
+.pdp-gallery__nav--prev { left: 16px; }
+.pdp-gallery__nav--next { right: 16px; }
+
+/* Dot indicators */
+.pdp-gallery__dots {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 999px;
+}
+.pdp-gallery__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(10, 21, 80, 0.28);
+  cursor: pointer;
+  padding: 0;
+  transition: background 200ms ease, transform 200ms ease;
+}
+.pdp-gallery__dot.is-active {
+  background: #1428A0;
+  transform: scale(1.25);
+}
+
+/* Thumbnail strip */
+.pdp-gallery__thumbs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.pdp-gallery__thumb {
+  flex: 0 0 auto;
+  width: 72px;
+  height: 72px;
+  padding: 4px;
+  border: 1.5px solid #E4E7EC;
+  border-radius: 8px;
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: border-color 200ms ease, transform 200ms ease;
+  overflow: hidden;
+}
+.pdp-gallery__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.pdp-gallery__thumb:hover { border-color: #C7D0DE; }
+.pdp-gallery__thumb.is-active {
+  border-color: #1428A0;
+  box-shadow: 0 0 0 2px rgba(20, 40, 160, 0.12);
+}
+
+@media (max-width: 520px) {
+  .pdp-gallery__nav { width: 38px; height: 38px; }
+  .pdp-gallery__nav--prev { left: 10px; }
+  .pdp-gallery__nav--next { right: 10px; }
+  .pdp-gallery__thumb { width: 60px; height: 60px; }
+  .pdp-gallery__slide { padding: 20px; }
+}

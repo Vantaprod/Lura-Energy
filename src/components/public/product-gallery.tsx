@@ -1,59 +1,135 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from '@/lib/i18n/context';
 
-type Item = {
+type Media = {
   id: string;
   url: string;
   alt: string;
-  kind: string;
+  kind: 'IMAGE' | 'VIDEO' | 'DOCUMENT';
 };
 
-export function ProductGallery({
-  items,
-  emptyLabel,
-}: {
-  items: Item[];
+type Props = {
+  items: Media[];
   emptyLabel: string;
-}) {
-  const [active, setActive] = useState(0);
+};
 
-  if (items.length === 0) {
-    return (
-      <div className="product-gallery__main">
-        <span className="model-card__placeholder">{emptyLabel}</span>
-      </div>
-    );
+const AUTOPLAY_MS = 4000;
+
+export function ProductGallery({ items, emptyLabel }: Props) {
+  const { t } = useTranslation();
+  const images = items.filter((m) => m.kind === 'IMAGE');
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  // Reset slide when the product changes
+  useEffect(() => {
+    setIndex(0);
+  }, [items]);
+
+  const go = useCallback(
+    (dir: 1 | -1) => {
+      setIndex((i) => {
+        const n = images.length;
+        if (n === 0) return 0;
+        return (i + dir + n) % n;
+      });
+    },
+    [images.length],
+  );
+
+  // Autoplay, paused on hover or when only one image
+  useEffect(() => {
+    if (images.length < 2 || paused) return;
+    const timer = window.setInterval(() => go(1), AUTOPLAY_MS);
+    return () => window.clearInterval(timer);
+  }, [images.length, paused, go]);
+
+  if (images.length === 0) {
+    return <div className="pdp-gallery__empty">{emptyLabel}</div>;
   }
 
-  const current = items[active];
+  const multiple = images.length > 1;
 
   return (
-    <div className="product-gallery">
-      {items.length > 1 && (
-        <div className="product-gallery__thumbs">
-          {items.map((item, i) => (
+    <div
+      className="pdp-gallery"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      <div className="pdp-gallery__stage">
+        {images.map((img, i) => (
+          <div
+            key={img.id}
+            className={'pdp-gallery__slide' + (i === index ? ' is-active' : '')}
+            aria-hidden={i !== index}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={img.url}
+              alt={img.alt}
+              loading={i === 0 ? 'eager' : 'lazy'}
+            />
+          </div>
+        ))}
+
+        {multiple && (
+          <>
             <button
-              key={item.id}
               type="button"
-              className={
-                'product-gallery__thumb' + (i === active ? ' is-active' : '')
-              }
-              onClick={() => setActive(i)}
-              aria-label={`Image ${i + 1}`}
-              aria-current={i === active}
+              className="pdp-gallery__nav pdp-gallery__nav--prev"
+              onClick={() => go(-1)}
+              aria-label={t('aria.galleryPrev')}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="pdp-gallery__nav pdp-gallery__nav--next"
+              onClick={() => go(1)}
+              aria-label={t('aria.galleryNext')}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+
+            <div className="pdp-gallery__dots" role="tablist">
+              {images.map((img, i) => (
+                <button
+                  key={img.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={i === index}
+                  aria-label={`${i + 1} / ${images.length}`}
+                  className={'pdp-gallery__dot' + (i === index ? ' is-active' : '')}
+                  onClick={() => setIndex(i)}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {multiple && (
+        <div className="pdp-gallery__thumbs">
+          {images.map((img, i) => (
+            <button
+              key={img.id}
+              type="button"
+              className={'pdp-gallery__thumb' + (i === index ? ' is-active' : '')}
+              onClick={() => setIndex(i)}
+              aria-label={`Show image ${i + 1}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={item.url} alt="" />
+              <img src={img.url} alt="" />
             </button>
           ))}
         </div>
       )}
-
-      <div className="product-gallery__main">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={current.url} alt={current.alt} />
-      </div>
     </div>
   );
 }
