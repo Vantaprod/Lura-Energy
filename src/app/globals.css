@@ -5097,3 +5097,152 @@ details[open] ul li > button.admin-action:hover {
   flex: 1 1 auto;
   letter-spacing: 0.01em;
 }
+
+/* --- Spec table: force header + values to share alignment (2026-10-08) ---
+   The navy header row was rendering its label centered (browser default
+   for th, or an inherited rule), while the td values sat left. Pin both
+   columns to the same x so the "SPECIFICATION" label sits directly over
+   the value column, not floating above it. */
+.pdp .pdp-specs__table thead th,
+.pdp .pdp-specs__table tbody th,
+.pdp .pdp-specs__table tbody td {
+  text-align: left !important;
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+  vertical-align: top;
+}
+
+/* Fix the column widths so header and body resolve to the same grid,
+   regardless of how long the content is. */
+.pdp-specs__table {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
+.pdp-specs__table thead th:first-child,
+.pdp-specs__table tbody th {
+  width: 40% !important;
+}
+
+.pdp-specs__table thead th:last-child,
+.pdp-specs__table tbody td {
+  width: 60% !important;
+}
+
+/* Kill any inherited letter-spacing that shifts the first glyph of
+   the header text off the cell's padding edge. */
+.pdp-specs__table thead th {
+  letter-spacing: 0.04em !important;
+}
+
+/* --- Spec rows with inline edit (2026-10-08) --- */
+.spec-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 10px 0 4px;
+}
+
+.spec-group__title {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0A1550;
+  margin-bottom: 6px;
+}
+.spec-group__title--muted { color: #6B7686; }
+
+.spec-group ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.spec-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #FFFFFF;
+  border: 1px solid #E4E7EC;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #2B3441;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+.spec-row:hover {
+  border-color: #C7D0DE;
+}
+.spec-row__text { flex: 1 1 auto; min-width: 0; }
+.spec-row__text strong {
+  font-weight: 600;
+  color: #0A1550;
+}
+
+.spec-row__actions {
+  display: flex;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.spec-row--editing {
+  display: block;
+  padding: 12px;
+  background: #F7F8FA;
+  border-color: #2547CC;
+}
+
+.spec-row__edit-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 0.8fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.spec-row__edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.spec-row__edit-field label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0A1550;
+}
+.spec-row__edit-field input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #DDE2EB;
+  background: #FFFFFF;
+  color: #0B0F17;
+  font-size: 13px;
+}
+.spec-row__edit-field input:focus {
+  outline: none;
+  border-color: #2547CC;
+  box-shadow: 0 0 0 3px rgba(37, 71, 204, 0.12);
+}
+
+.spec-row__edit-actions {
+  display: flex;
+  gap: 6px;
+  align-items: end;
+}
+
+@media (max-width: 900px) {
+  .spec-row__edit-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .spec-row__edit-actions {
+    grid-column: 1 / -1;
+  }
+}
