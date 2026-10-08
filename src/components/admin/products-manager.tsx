@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from '@/lib/i18n/context';
 import { ProductSpecifications } from '@/components/admin/product-specifications';
 import { MediaDropzone, type ProductMedia } from '@/components/admin/media-dropzone';
 import { Select } from '@/components/ui/select';
 
 type Specification = { id: string; label: string; value: string; unit: string | null };
+type FeatureBanner = { url: string; alt: string };
 type Product = {
   id: string;
   name: string;
@@ -20,6 +21,9 @@ type Product = {
   seoTitle: string | null;
   seoDescription: string | null;
   datasheetUrl: string | null;
+  heroImageUrl: string | null;
+  notice: string | null;
+  featureBanners: FeatureBanner[] | null;
   keyFeatures: string[] | null;
   sortOrder: number;
   published: boolean;
@@ -43,6 +47,8 @@ type EditValues = {
   seoTitle: string;
   seoDescription: string;
   datasheetUrl: string;
+  heroImageUrl: string;
+  notice: string;
   keyFeatures: string;
   sortOrder: string;
 };
@@ -67,6 +73,8 @@ const emptyEdit = (product: Product): EditValues => ({
   seoTitle: product.seoTitle ?? '',
   seoDescription: product.seoDescription ?? '',
   datasheetUrl: product.datasheetUrl ?? '',
+  heroImageUrl: product.heroImageUrl ?? '',
+  notice: product.notice ?? '',
   keyFeatures: Array.isArray(product.keyFeatures) ? product.keyFeatures.join('\n') : '',
   sortOrder: String(product.sortOrder ?? 0),
 });
@@ -86,7 +94,12 @@ export function ProductsManager() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Product | null>(null);
   const [values, setValues] = useState<EditValues | null>(null);
+  const [featureBanners, setFeatureBanners] = useState<FeatureBanner[]>([]);
+  const [heroUploading, setHeroUploading] = useState(false);
+  const [bannerUploading, setBannerUploading] = useState(false);
   const [createCategoryId, setCreateCategoryId] = useState('');
+  const heroFileRef = useRef<HTMLInputElement>(null);
+  const bannerFileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(
     async (signal?: AbortSignal) => {
@@ -135,6 +148,74 @@ export function ProductsManager() {
     };
   }, [load, query]);
 
+  function startEdit(product: Product) {
+    setEditing(product);
+    setValues(emptyEdit(product));
+    setFeatureBanners(
+      Array.isArray(product.featureBanners) ? product.featureBanners : [],
+    );
+  }
+
+  function closeEdit() {
+    setEditing(null);
+    setValues(null);
+    setFeatureBanners([]);
+  }
+
+  async function uploadImage(file: File, subfolder: string): Promise<string | null> {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('subfolder', subfolder);
+    try {
+      const res = await fetch('/api/admin/media/upload', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok) {
+        setError((data as { error?: string }).error ?? t('admin.prod.error.upload'));
+        return null;
+      }
+      return (data as { url: string }).url;
+    } catch {
+      setError(t('admin.prod.error.upload'));
+      return null;
+    }
+  }
+
+  async function uploadHero(file: File) {
+    setHeroUploading(true);
+    const url = await uploadImage(file, 'products-hero');
+    if (url) setValues((v) => (v ? { ...v, heroImageUrl: url } : v));
+    setHeroUploading(false);
+    if (heroFileRef.current) heroFileRef.current.value = '';
+  }
+
+  async function uploadBanner(file: File) {
+    setBannerUploading(true);
+    const url = await uploadImage(file, 'products-banners');
+    if (url) setFeatureBanners((b) => [...b, { url, alt: '' }]);
+    setBannerUploading(false);
+    if (bannerFileRef.current) bannerFileRef.current.value = '';
+  }
+
+  function removeBanner(i: number) {
+    setFeatureBanners((b) => b.filter((_, idx) => idx !== i));
+  }
+
+  function moveBanner(i: number, dir: -1 | 1) {
+    const target = i + dir;
+    if (target < 0 || target >= featureBanners.length) return;
+    setFeatureBanners((b) => {
+      const next = [...b];
+      [next[i], next[target]] = [next[target], next[i]];
+      return next;
+    });
+  }
+
+  function updateBannerAlt(i: number, alt: string) {
+    setFeatureBanners((b) =>
+      b.map((item, idx) => (idx === i ? { ...item, alt } : item)),
+    );
+  }
+
   async function create(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formElement = event.currentTarget;
@@ -157,13 +238,13 @@ export function ProductsManager() {
       setPage(1);
       await load();
       const created: Product = {
-        ...(data as Omit<Product, 'media' | 'specifications' | 'category'>),
+        ...(data as Omit<Product, 'media' | 'specifications' | 'category' | 'featureBanners'>),
         media: [],
         specifications: [],
         category: null,
+        featureBanners: [],
       };
-      setEditing(created);
-      setValues(emptyEdit(created));
+      startEdit(created);
       setTimeout(() => {
         const panel = document.querySelector('.edit-panel');
         if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -192,14 +273,17 @@ export function ProductsManager() {
           categoryId: values.categoryId || null,
           sortOrder: Number(values.sortOrder) || 0,
           keyFeatures: keyFeaturesArray,
+          heroImageUrl: values.heroImageUrl || null,
+          notice: values.notice || null,
+          featureBanners: featureBanners.length ? featureBanners : null,
+          datasheetUrl: values.datasheetUrl || null,
           published: editing.published,
           featured: editing.featured,
         }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? t('admin.prod.error.update'));
-      setEditing(null);
-      setValues(null);
+      closeEdit();
       await load();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : t('admin.prod.error.update'));
@@ -224,14 +308,15 @@ export function ProductsManager() {
   }
 
   function editField(key: keyof EditValues, label: string, wide = false) {
+    const isTextarea = key === 'description' || key === 'keyFeatures' || key === 'notice';
     return (
       <div className={'field ' + (wide ? 'field-wide' : '')} key={key}>
         <label htmlFor={'edit-' + key}>{label}</label>
-        {key === 'description' || key === 'keyFeatures' ? (
+        {isTextarea ? (
           <textarea
             id={'edit-' + key}
             value={values?.[key] ?? ''}
-            maxLength={key === 'keyFeatures' ? 4000 : 10000}
+            maxLength={key === 'keyFeatures' ? 4000 : key === 'notice' ? 4000 : 10000}
             onChange={(event) =>
               setValues((current) =>
                 current ? { ...current, [key]: event.target.value } : current,
@@ -253,8 +338,6 @@ export function ProductsManager() {
       </div>
     );
   }
-
-  // ---- Dropdown options ----
 
   const createCategoryOptions = useMemo(
     () =>
@@ -321,12 +404,6 @@ export function ProductsManager() {
         <div className="field field-wide">
           <label htmlFor="description">{t('admin.prod.form.description')}</label>
           <textarea name="description" id="description" maxLength={10000} />
-        </div>
-        <div className="field field-wide">
-          <label>{t('admin.prod.form.images')}</label>
-          <p className="form-note" style={{ marginBottom: '0.5rem' }}>
-            {t('admin.prod.form.imagesHint')}
-          </p>
         </div>
         <div className="field-wide">
           <button className="button" disabled={busy}>
@@ -451,10 +528,7 @@ export function ProductsManager() {
                       <button
                         type="button"
                         className="admin-action admin-action--edit"
-                        onClick={() => {
-                          setEditing(item);
-                          setValues(emptyEdit(item));
-                        }}
+                        onClick={() => startEdit(item)}
                       >
                         {t('admin.actions.edit')}
                       </button>
@@ -547,18 +621,175 @@ export function ProductsManager() {
             <MediaDropzone productId={editing.id} initial={editing.media ?? []} />
           </div>
 
+          <div className="field-wide">
+            <label htmlFor="edit-heroImageUrl">{t('admin.prod.form.heroImage')}</label>
+            <span className="form-note" style={{ display: 'block', marginBottom: '0.5rem' }}>
+              {t('admin.prod.form.heroHint')}
+            </span>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <input
+                id="edit-heroImageUrl"
+                type="text"
+                value={values.heroImageUrl}
+                maxLength={2000}
+                onChange={(event) =>
+                  setValues({ ...values, heroImageUrl: event.target.value })
+                }
+                placeholder="/uploads/... or https://..."
+                style={{ flex: '1 1 320px' }}
+              />
+              <button
+                type="button"
+                className="button"
+                disabled={heroUploading}
+                onClick={() => heroFileRef.current?.click()}
+              >
+                {heroUploading ? t('admin.prod.form.uploading') : t('admin.prod.form.upload')}
+              </button>
+              <input
+                ref={heroFileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void uploadHero(f);
+                }}
+              />
+            </div>
+            {values.heroImageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={values.heroImageUrl}
+                alt=""
+                style={{
+                  marginTop: '0.75rem',
+                  maxWidth: '300px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--line)',
+                }}
+              />
+            )}
+          </div>
+
+          {editField('notice', t('admin.prod.form.notice'), true)}
+          <div className="field-wide" style={{ marginTop: '-1rem' }}>
+            <span className="form-note">{t('admin.prod.form.noticeHint')}</span>
+          </div>
+
+          <div className="field-wide">
+            <label>{t('admin.prod.form.banners')}</label>
+            <span className="form-note" style={{ display: 'block', marginBottom: '0.5rem' }}>
+              {t('admin.prod.form.bannersHint')}
+            </span>
+
+            {featureBanners.length > 0 && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                  marginBottom: '12px',
+                }}
+              >
+                {featureBanners.map((banner, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      gap: '10px',
+                      alignItems: 'flex-start',
+                      padding: '10px',
+                      border: '1px solid var(--line)',
+                      borderRadius: '8px',
+                      background: '#FAFBFC',
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={banner.url}
+                      alt=""
+                      style={{
+                        width: '120px',
+                        height: '80px',
+                        objectFit: 'cover',
+                        borderRadius: '6px',
+                        flex: '0 0 auto',
+                      }}
+                    />
+                    <div style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <input
+                        type="text"
+                        value={banner.url}
+                        readOnly
+                        style={{ fontFamily: 'monospace', fontSize: '12px' }}
+                      />
+                      <input
+                        type="text"
+                        value={banner.alt}
+                        placeholder={t('admin.prod.form.bannerAlt')}
+                        onChange={(e) => updateBannerAlt(i, e.target.value)}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '4px', flex: '0 0 auto' }}>
+                      <button
+                        type="button"
+                        className="admin-action"
+                        disabled={i === 0}
+                        onClick={() => moveBanner(i, -1)}
+                        aria-label={t('admin.prod.form.bannerUp')}
+                      >
+                        {'\u2191'}
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-action"
+                        disabled={i === featureBanners.length - 1}
+                        onClick={() => moveBanner(i, 1)}
+                        aria-label={t('admin.prod.form.bannerDown')}
+                      >
+                        {'\u2193'}
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-action admin-action--danger"
+                        onClick={() => removeBanner(i)}
+                      >
+                        {'\u00D7'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="button"
+              disabled={bannerUploading}
+              onClick={() => bannerFileRef.current?.click()}
+            >
+              {bannerUploading
+                ? t('admin.prod.form.uploading')
+                : t('admin.prod.form.bannerAdd')}
+            </button>
+            <input
+              ref={bannerFileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void uploadBanner(f);
+              }}
+            />
+          </div>
+
           {editField('seoTitle', t('admin.prod.edit.seoTitle'))}
           {editField('seoDescription', t('admin.prod.edit.seoDescription'))}
           <div className="field-wide">
             <button className="button">{t('admin.prod.edit.save')}</button>{' '}
-            <button
-              type="button"
-              className="admin-action"
-              onClick={() => {
-                setEditing(null);
-                setValues(null);
-              }}
-            >
+            <button type="button" className="admin-action" onClick={closeEdit}>
               {t('admin.actions.cancel')}
             </button>
           </div>
