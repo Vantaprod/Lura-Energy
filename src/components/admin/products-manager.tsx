@@ -636,57 +636,34 @@ export function ProductsManager() {
             </span>
 
             {featureBanners.length > 0 && (
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '10px',
-                  marginBottom: '12px',
-                }}
-              >
+              <div className="banner-list">
                 {featureBanners.map((banner, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: 'flex',
-                      gap: '10px',
-                      alignItems: 'flex-start',
-                      padding: '10px',
-                      border: '1px solid var(--line)',
-                      borderRadius: '8px',
-                      background: '#FAFBFC',
-                    }}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={banner.url}
-                      alt=""
-                      style={{
-                        width: '120px',
-                        height: '80px',
-                        objectFit: 'cover',
-                        borderRadius: '6px',
-                        flex: '0 0 auto',
-                      }}
-                    />
-                    <div style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div key={i} className="banner-item">
+                    <div className="banner-item__thumb">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={banner.url} alt="" />
+                      <span className="banner-item__index">{i + 1}</span>
+                    </div>
+                    <div className="banner-item__fields">
                       <input
                         type="text"
+                        className="banner-item__url"
                         value={banner.url}
                         readOnly
-                        style={{ fontFamily: 'monospace', fontSize: '12px' }}
+                        aria-label={t('admin.prod.form.banners')}
                       />
                       <input
                         type="text"
+                        className="banner-item__alt"
                         value={banner.alt}
                         placeholder={t('admin.prod.form.bannerAlt')}
                         onChange={(e) => updateBannerAlt(i, e.target.value)}
                       />
                     </div>
-                    <div style={{ display: 'flex', gap: '4px', flex: '0 0 auto' }}>
+                    <div className="banner-item__actions">
                       <button
                         type="button"
-                        className="admin-action"
+                        className="banner-item__btn"
                         disabled={i === 0}
                         onClick={() => moveBanner(i, -1)}
                         aria-label={t('admin.prod.form.bannerUp')}
@@ -695,7 +672,7 @@ export function ProductsManager() {
                       </button>
                       <button
                         type="button"
-                        className="admin-action"
+                        className="banner-item__btn"
                         disabled={i === featureBanners.length - 1}
                         onClick={() => moveBanner(i, 1)}
                         aria-label={t('admin.prod.form.bannerDown')}
@@ -704,8 +681,9 @@ export function ProductsManager() {
                       </button>
                       <button
                         type="button"
-                        className="admin-action admin-action--danger"
+                        className="banner-item__btn banner-item__btn--danger"
                         onClick={() => removeBanner(i)}
+                        aria-label={t('admin.actions.delete')}
                       >
                         {'\u00D7'}
                       </button>

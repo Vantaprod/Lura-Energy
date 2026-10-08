@@ -4708,3 +4708,392 @@ select:focus-visible {
   font-size: 22px;
   line-height: 1.2;
 }
+
+/* --- Admin: feature banner list, brand-styled (2026-10-08) ---
+   Replaces the plain gray cards with an editor panel that reads as
+   part of the Lura admin system: navy accents, orange active states,
+   clean typography. */
+
+.banner-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.banner-item {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px;
+  background: #F7F8FA;
+  border: 1px solid #DDE2EB;
+  border-radius: 10px;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+.banner-item:hover {
+  border-color: #C7D0DE;
+  box-shadow: 0 2px 8px rgba(10, 21, 80, 0.05);
+}
+
+/* Thumbnail with number badge */
+.banner-item__thumb {
+  position: relative;
+  width: 132px;
+  height: 84px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #FFFFFF;
+  border: 1px solid #E4E7EC;
+  flex: 0 0 auto;
+}
+.banner-item__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.banner-item__index {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: rgba(10, 21, 80, 0.85);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.02em;
+}
+
+/* Fields column */
+.banner-item__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.banner-item__url,
+.banner-item__alt {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 6px;
+  border: 1px solid #DDE2EB;
+  background: #FFFFFF;
+  color: #0B0F17;
+  font-size: 13px;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.banner-item__url:focus,
+.banner-item__alt:focus {
+  outline: none;
+  border-color: #2547CC;
+  box-shadow: 0 0 0 3px rgba(37, 71, 204, 0.12);
+}
+
+.banner-item__url {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 12px;
+  color: #6B7686;
+  background: #F0F3F9;
+  cursor: default;
+}
+
+/* Action buttons */
+.banner-item__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.banner-item__btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 6px;
+  border: 1px solid #DDE2EB;
+  background: #FFFFFF;
+  color: #0A1550;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+.banner-item__btn:hover:not(:disabled) {
+  border-color: #1428A0;
+  color: #1428A0;
+  background: #EEF3FF;
+}
+.banner-item__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.banner-item__btn--danger {
+  color: #D94040;
+  border-color: #F0D6D6;
+}
+.banner-item__btn--danger:hover:not(:disabled) {
+  background: #FBE9E9;
+  border-color: #D94040;
+  color: #D94040;
+}
+
+/* Compact mode for narrow admin panels */
+@media (max-width: 720px) {
+  .banner-item {
+    grid-template-columns: 92px minmax(0, 1fr);
+  }
+  .banner-item__thumb {
+    width: 92px;
+    height: 62px;
+  }
+  .banner-item__actions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+}
+
+/* --- Spec form: brand-styled add row (2026-10-08) --- */
+.spec-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin-top: 14px;
+  padding: 14px;
+  background: #F7F8FA;
+  border: 1px solid #DDE2EB;
+  border-radius: 10px;
+}
+
+/* The Group label needs the datalist, still a normal grid cell */
+.spec-form > label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0A1550;
+  margin: 0;
+}
+
+.spec-form > label > input {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 6px;
+  border: 1px solid #DDE2EB;
+  background: #FFFFFF;
+  color: #0B0F17;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.spec-form > label > input::placeholder {
+  color: #939AA5;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.spec-form > label > input:focus {
+  outline: none;
+  border-color: #2547CC;
+  box-shadow: 0 0 0 3px rgba(37, 71, 204, 0.12);
+}
+
+/* The submit button — brand orange CTA */
+.spec-form > button {
+  padding: 9px 18px;
+  border: none;
+  border-radius: 6px;
+  background: #F58220;
+  color: #FFFFFF;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  height: fit-content;
+  align-self: end;
+  transition: background 180ms ease, transform 180ms ease;
+}
+.spec-form > button:hover {
+  background: #F5A623;
+  transform: translateY(-1px);
+}
+.spec-form > button:active {
+  transform: translateY(0);
+}
+
+/* Stack on narrow screens */
+@media (max-width: 900px) {
+  .spec-form {
+    grid-template-columns: 1fr 1fr;
+  }
+  .spec-form > button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .spec-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Existing spec list items: tighten and brand the remove button */
+details[open] ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+details[open] ul li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #FFFFFF;
+  border: 1px solid #E4E7EC;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #2B3441;
+}
+details[open] ul li > button.admin-action {
+  margin-left: auto;
+  color: #D94040;
+  border-color: #F0D6D6;
+  padding: 4px 10px;
+  font-size: 11px;
+}
+details[open] ul li > button.admin-action:hover {
+  background: #FBE9E9;
+  border-color: #D94040;
+}
+
+/* --- Spec group combobox (2026-10-08) ---
+   Replaces the browser-native <datalist> which can't be styled. Brand
+   navy text, blue focus ring, monochrome line icons. */
+.spec-combo {
+  position: relative;
+  width: 100%;
+}
+
+.spec-combo > input {
+  width: 100%;
+  padding: 9px 34px 9px 12px;
+  border-radius: 6px;
+  border: 1px solid #DDE2EB;
+  background: #FFFFFF;
+  color: #0B0F17;
+  font-size: 13px;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.spec-combo > input::placeholder { color: #939AA5; }
+.spec-combo > input:focus {
+  outline: none;
+  border-color: #2547CC;
+  box-shadow: 0 0 0 3px rgba(37, 71, 204, 0.12);
+}
+
+.spec-combo__toggle {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #6B7686;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+.spec-combo__toggle:hover { color: #1428A0; background: #EEF3FF; }
+
+.spec-combo__menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  min-width: 220px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: #FFFFFF;
+  border: 1px solid #DDE2EB;
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(5, 14, 31, 0.14);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.spec-combo__menu li { margin: 0; }
+
+.spec-combo__menu button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #0A1550;
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.spec-combo__menu button:hover,
+.spec-combo__menu button.is-active {
+  background: #EEF3FF;
+  color: #1428A0;
+}
+
+.spec-combo__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: #F1F4F9;
+  color: #1428A0;
+}
+.spec-combo__menu button.is-active .spec-combo__icon,
+.spec-combo__menu button:hover .spec-combo__icon {
+  background: #FFFFFF;
+}
+
+.spec-combo__label {
+  flex: 1 1 auto;
+  letter-spacing: 0.01em;
+}

@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { SpecGroupCombobox } from '@/components/admin/spec-group-combobox';
 import { useTranslation } from '@/lib/i18n/context';
 
 type Specification = {
@@ -10,13 +11,6 @@ type Specification = {
   group: string | null;
 };
 
-const SUGGESTED_GROUPS = [
-  '\u{1F50B} Battery',
-  '\u{26A1} Inverter',
-  '\u{2600} Solar',
-  '\u{1F50C} Performance',
-  '\u{1F4D0} Physical',
-];
 
 export function ProductSpecifications({
   productId,
@@ -28,6 +22,7 @@ export function ProductSpecifications({
   const { t } = useTranslation();
   const [items, setItems] = useState(initial);
   const [error, setError] = useState('');
+  const [groupValue, setGroupValue] = useState('');
 
   async function add(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -41,6 +36,7 @@ export function ProductSpecifications({
     if (response.ok) {
       setItems([...items, await response.json()]);
       formElement.reset();
+      setGroupValue('');
     } else setError((await response.json()).error ?? t('admin.specs.error.add'));
   }
 
@@ -124,18 +120,13 @@ export function ProductSpecifications({
       <form onSubmit={add} className="spec-form">
         <label>
           {t('admin.specs.field.group')}
-          <input
+          <SpecGroupCombobox
             name="group"
-            list="spec-group-suggestions"
-            maxLength={80}
+            value={groupValue}
+            onChange={setGroupValue}
             placeholder={t('admin.specs.field.groupPlaceholder')}
           />
         </label>
-        <datalist id="spec-group-suggestions">
-          {SUGGESTED_GROUPS.map((g) => (
-            <option key={g} value={g} />
-          ))}
-        </datalist>
         <label>
           {t('admin.specs.field.label')}
           <input name="label" required maxLength={120} />
