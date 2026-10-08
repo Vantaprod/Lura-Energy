@@ -4523,3 +4523,98 @@ select:focus-visible {
   .pdp-gallery__thumb { width: 60px; height: 60px; }
   .pdp-gallery__slide { padding: 20px; }
 }
+
+/* --- Unified gallery card + mockup-style thumbnails (2026-10-08) ---
+   Wraps main stage + thumbnail strip inside one bordered white card,
+   matching the itel/mockup reference. Thumbnails are square bordered
+   boxes, active one is highlighted. */
+
+/* Kill the previous outer wrapper background — the new card owns it. */
+.pdp-product__gallery {
+  background: transparent !important;
+  padding: 0 !important;
+  min-height: 0 !important;
+}
+
+.pdp-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: #FFFFFF;
+  border: 1px solid #E4E7EC;
+  border-radius: 14px;
+  overflow: hidden;
+  height: 100%;
+}
+
+/* Main stage sits at the top, no separate background now */
+.pdp-gallery__stage {
+  flex: 1 1 auto;
+  min-height: 380px;
+  background: #F7F8FA;
+  border-radius: 0;
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid #E4E7EC;
+}
+@media (min-width: 900px) {
+  .pdp-gallery__stage { min-height: 500px; }
+}
+
+/* Thumbnail strip — sits below the stage inside the same card */
+.pdp-gallery__thumbs {
+  display: flex;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #FFFFFF;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.pdp-gallery__thumbs::-webkit-scrollbar { height: 6px; }
+.pdp-gallery__thumbs::-webkit-scrollbar-thumb {
+  background: #D6DBE5;
+  border-radius: 3px;
+}
+
+/* Square thumbnails with visible border, like the mockup */
+.pdp-gallery__thumb {
+  flex: 0 0 auto;
+  width: 84px;
+  height: 84px;
+  padding: 6px;
+  border: 1.5px solid #E4E7EC;
+  border-radius: 8px;
+  background: #F7F8FA;
+  cursor: pointer;
+  transition: border-color 200ms ease, box-shadow 200ms ease, background 200ms ease;
+  overflow: hidden;
+}
+.pdp-gallery__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.pdp-gallery__thumb:hover {
+  border-color: #C7D0DE;
+  background: #FFFFFF;
+}
+.pdp-gallery__thumb.is-active {
+  border-color: #1428A0;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 2px rgba(20, 40, 160, 0.15);
+}
+
+/* Empty state stays inside the card look */
+.pdp-gallery__empty {
+  background: #F7F8FA;
+  border-radius: 0;
+  min-height: 420px;
+}
+
+/* Responsive tweaks */
+@media (max-width: 640px) {
+  .pdp-gallery__stage { min-height: 300px; }
+  .pdp-gallery__thumbs { padding: 10px 12px; gap: 8px; }
+  .pdp-gallery__thumb { width: 64px; height: 64px; padding: 4px; }
+}
