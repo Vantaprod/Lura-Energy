@@ -3602,3 +3602,87 @@ select:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+
+/* --- Hero image dropzone (2026-10-08) ---
+   Replaces the URL input + Upload button row. Full-width dashed
+   drop area with a click-to-pick fallback, matching the product
+   gallery MediaDropzone look. */
+.hero-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 20px;
+  border: 2px dashed var(--line, #D6DBE5);
+  border-radius: 10px;
+  background: #FAFBFC;
+  cursor: pointer;
+  transition: border-color 200ms ease, background 200ms ease;
+  text-align: center;
+}
+.hero-drop:hover,
+.hero-drop:focus-visible {
+  border-color: #F58220;
+  background: #FFF9F3;
+  outline: none;
+}
+.hero-drop.is-dragging {
+  border-color: #F58220;
+  background: #FFF2E0;
+}
+.hero-drop__icon {
+  color: #6B7686;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hero-drop__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0A1550;
+  margin: 0;
+}
+.hero-drop__hint {
+  font-size: 12px;
+  color: #6B7686;
+  margin: 0;
+}
+
+.hero-drop__preview {
+  position: relative;
+  display: inline-block;
+  max-width: 340px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--line, #D6DBE5);
+  background: #F7F8FA;
+}
+.hero-drop__preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 240px;
+  object-fit: contain;
+}
+.hero-drop__remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(10, 21, 80, 0.75);
+  color: #FFFFFF;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms ease;
+}
+.hero-drop__remove:hover {
+  background: #F58220;
+}

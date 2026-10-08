@@ -5,6 +5,7 @@ import { useTranslation } from '@/lib/i18n/context';
 import { ProductSpecifications } from '@/components/admin/product-specifications';
 import { MediaDropzone, type ProductMedia } from '@/components/admin/media-dropzone';
 import { Select } from '@/components/ui/select';
+import { HeroImageDropzone } from '@/components/admin/hero-image-dropzone';
 
 type Specification = { id: string; label: string; value: string; unit: string | null };
 type FeatureBanner = { url: string; alt: string };
@@ -95,10 +96,8 @@ export function ProductsManager() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [values, setValues] = useState<EditValues | null>(null);
   const [featureBanners, setFeatureBanners] = useState<FeatureBanner[]>([]);
-  const [heroUploading, setHeroUploading] = useState(false);
   const [bannerUploading, setBannerUploading] = useState(false);
   const [createCategoryId, setCreateCategoryId] = useState('');
-  const heroFileRef = useRef<HTMLInputElement>(null);
   const bannerFileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(
@@ -180,13 +179,6 @@ export function ProductsManager() {
     }
   }
 
-  async function uploadHero(file: File) {
-    setHeroUploading(true);
-    const url = await uploadImage(file, 'products-hero');
-    if (url) setValues((v) => (v ? { ...v, heroImageUrl: url } : v));
-    setHeroUploading(false);
-    if (heroFileRef.current) heroFileRef.current.value = '';
-  }
 
   async function uploadBanner(file: File) {
     setBannerUploading(true);
@@ -622,53 +614,14 @@ export function ProductsManager() {
           </div>
 
           <div className="field-wide">
-            <label htmlFor="edit-heroImageUrl">{t('admin.prod.form.heroImage')}</label>
+            <label>{t('admin.prod.form.heroImage')}</label>
             <span className="form-note" style={{ display: 'block', marginBottom: '0.5rem' }}>
               {t('admin.prod.form.heroHint')}
             </span>
-            <div className="admin-hero-row">
-              <input
-                id="edit-heroImageUrl"
-                type="text"
-                value={values.heroImageUrl}
-                maxLength={2000}
-                onChange={(event) =>
-                  setValues({ ...values, heroImageUrl: event.target.value })
-                }
-                placeholder="/uploads/... or https://..."
-              />
-              <button
-                type="button"
-                className="button admin-hero-row__btn"
-                disabled={heroUploading}
-                onClick={() => heroFileRef.current?.click()}
-              >
-                {heroUploading ? t('admin.prod.form.uploading') : t('admin.prod.form.upload')}
-              </button>
-              <input
-                ref={heroFileRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) void uploadHero(f);
-                }}
-              />
-            </div>
-            {values.heroImageUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={values.heroImageUrl}
-                alt=""
-                style={{
-                  marginTop: '0.75rem',
-                  maxWidth: '300px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--line)',
-                }}
-              />
-            )}
+            <HeroImageDropzone
+              value={values.heroImageUrl}
+              onChange={(url) => setValues({ ...values, heroImageUrl: url })}
+            />
           </div>
 
           {editField('notice', t('admin.prod.form.notice'), true)}
