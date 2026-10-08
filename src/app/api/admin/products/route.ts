@@ -16,7 +16,7 @@ const schema = z.object({
   warranty: z.string().max(300).optional(),
   seoTitle: z.string().max(180).optional(),
   seoDescription: z.string().max(320).optional(),
-  published: z.boolean().default(false),
+  published: z.boolean().default(true),
   featured: z.boolean().default(false),
 });
 
@@ -29,8 +29,17 @@ export async function GET(request: NextRequest) {
   if (!params.has('page')) {
     return NextResponse.json(
       await prisma.product.findMany({
-        include: { category: true, specifications: { orderBy: { sortOrder: 'asc' } }, media: true },
-        orderBy: { createdAt: 'desc' },
+        include: {
+          category: true,
+          specifications: { orderBy: { sortOrder: 'asc' } },
+          media: true,
+        },
+        orderBy: [
+          { category: { sortOrder: 'asc' } },
+          { category: { name: 'asc' } },
+          { sortOrder: 'asc' },
+          { name: 'asc' },
+        ],
       }),
     );
   }
@@ -66,8 +75,17 @@ export async function GET(request: NextRequest) {
   const page = Math.min(parsed.data.page, pageCount);
   const items = await prisma.product.findMany({
     where,
-    include: { category: true, specifications: { orderBy: { sortOrder: 'asc' } }, media: true },
-    orderBy: { createdAt: 'desc' },
+    include: {
+      category: true,
+      specifications: { orderBy: { sortOrder: 'asc' } },
+      media: true,
+    },
+    orderBy: [
+      { category: { sortOrder: 'asc' } },
+      { category: { name: 'asc' } },
+      { sortOrder: 'asc' },
+      { name: 'asc' },
+    ],
     skip: (page - 1) * pageSize,
     take: pageSize,
   });
@@ -97,7 +115,12 @@ export async function POST(request: NextRequest) {
   try {
     const product = await prisma.product.create({ data: parsed.data });
     await prisma.auditLog.create({
-      data: { actorId: user.id, action: 'product.create', entityType: 'product', entityId: product.id },
+      data: {
+        actorId: user.id,
+        action: 'product.create',
+        entityType: 'product',
+        entityId: product.id,
+      },
     });
     return NextResponse.json(product, { status: 201 });
   } catch {
