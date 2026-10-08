@@ -98,6 +98,9 @@ model Product {
   seoTitle        String?
   seoDescription  String?
   datasheetUrl    String?
+  heroImageUrl    String?
+  notice          String?
+  featureBanners  Json?
   keyFeatures     Json?
   published       Boolean               @default(false)
   sortOrder       Int                   @default(0)
