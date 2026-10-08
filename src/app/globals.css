@@ -5246,3 +5246,202 @@ details[open] ul li > button.admin-action:hover {
     grid-column: 1 / -1;
   }
 }
+
+/* --- Media thumbnails: move arrows + index badge (2026-10-08) --- */
+.media-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.media-thumb {
+  position: relative;
+  width: 108px;
+  height: 108px;
+  margin: 0;
+  border: 1.5px solid #E4E7EC;
+  border-radius: 10px;
+  background: #F7F8FA;
+  overflow: hidden;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.media-thumb:hover {
+  border-color: #C7D0DE;
+  box-shadow: 0 4px 14px rgba(5, 14, 31, 0.08);
+}
+
+.media-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 8px;
+  display: block;
+}
+
+/* Index badge — top-left, shows the order */
+.media-thumb__index {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 21, 80, 0.85);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+
+/* Move-left / move-right circular buttons */
+.media-thumb__move {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  color: #0A1550;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 150ms ease, background 150ms ease, transform 150ms ease;
+  box-shadow: 0 2px 8px rgba(5, 14, 31, 0.15);
+}
+.media-thumb:hover .media-thumb__move { opacity: 1; }
+.media-thumb__move:hover:not(:disabled) {
+  background: #FFFFFF;
+  color: #1428A0;
+  transform: translateY(-50%) scale(1.1);
+}
+.media-thumb__move:disabled {
+  opacity: 0;
+  cursor: not-allowed;
+}
+.media-thumb__move--prev { left: 6px; }
+.media-thumb__move--next { right: 6px; }
+
+/* Keep the arrow visible on mobile where hover doesn't exist */
+@media (hover: none) {
+  .media-thumb__move { opacity: 1; }
+  .media-thumb__move:disabled { opacity: 0.35; }
+}
+
+/* Remove button — moved to top-right, smaller */
+.media-thumb__remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(10, 21, 80, 0.85);
+  color: #FFFFFF;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 150ms ease, background 150ms ease;
+}
+.media-thumb:hover .media-thumb__remove { opacity: 1; }
+.media-thumb__remove:hover { background: #D94040; }
+@media (hover: none) {
+  .media-thumb__remove { opacity: 1; }
+}
+
+/* --- Admin product table: in-header search row (2026-10-08) --- */
+.admin-table__search-row th {
+  padding: 10px 12px !important;
+  background: #FFFFFF !important;
+  border-bottom: 1px solid #E4E7EC !important;
+}
+
+.admin-table__search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: #F7F8FA;
+  border: 1px solid #DDE2EB;
+  border-radius: 8px;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.admin-table__search:focus-within {
+  border-color: #2547CC;
+  box-shadow: 0 0 0 3px rgba(37, 71, 204, 0.10);
+  background: #FFFFFF;
+}
+.admin-table__search > svg {
+  color: #6B7686;
+  flex: 0 0 auto;
+}
+.admin-table__search > input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: #0B0F17;
+  padding: 4px 0;
+}
+.admin-table__search > input::placeholder { color: #939AA5; }
+
+.admin-table__search-clear {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: #DDE2EB;
+  color: #6B7686;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.admin-table__search-clear:hover { background: #C7D0DE; color: #0A1550; }
+
+.admin-table__search-hint {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: #939AA5;
+  padding-left: 10px;
+  border-left: 1px solid #DDE2EB;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .admin-table__search-hint { display: none; }
+}
+
+/* Highlighted row after a smart search narrows to one result */
+.admin-table tr.is-highlighted > td {
+  background: #FFF6E5 !important;
+  animation: row-highlight-pulse 900ms ease 3;
+}
+.admin-table tr.is-highlighted > td:first-child {
+  box-shadow: inset 4px 0 0 0 #F58220;
+}
+
+@keyframes row-highlight-pulse {
+  0%, 100% { background-color: #FFF6E5; }
+  50%      { background-color: #FFEDCC; }
+}

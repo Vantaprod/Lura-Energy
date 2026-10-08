@@ -98,6 +98,7 @@ export function ProductsManager() {
   const [featureBanners, setFeatureBanners] = useState<FeatureBanner[]>([]);
   const [bannerUploading, setBannerUploading] = useState(false);
   const [createCategoryId, setCreateCategoryId] = useState('');
+  const [highlightId, setHighlightId] = useState<string | null>(null);
   const bannerFileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(
@@ -146,6 +147,26 @@ export function ProductsManager() {
       controller.abort();
     };
   }, [load, query]);
+
+  // Highlight and scroll to the single matching row when the search
+  // narrows to one result. Auto-clears after a few seconds.
+  useEffect(() => {
+    if (!query.trim() || items.length !== 1) {
+      setHighlightId(null);
+      return;
+    }
+    const id = items[0].id;
+    setHighlightId(id);
+    const timer = setTimeout(() => {
+      const row = document.querySelector(`[data-product-id="${id}"]`);
+      if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+    const clear = setTimeout(() => setHighlightId(null), 4000);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(clear);
+    };
+  }, [items, query]);
 
   function startEdit(product: Product) {
     setEditing(product);
@@ -485,10 +506,48 @@ export function ProductsManager() {
                 <th>{t('admin.prod.list.colState')}</th>
                 <th>{t('admin.prod.list.colActions')}</th>
               </tr>
+              <tr className="admin-table__search-row">
+                <th colSpan={6}>
+                  <div className="admin-table__search">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input
+                      type="search"
+                      value={query}
+                      onChange={(event) => {
+                        setQuery(event.target.value);
+                        setPage(1);
+                      }}
+                      placeholder={t('admin.prod.list.smartPlaceholder')}
+                      maxLength={120}
+                      aria-label={t('admin.prod.list.smartSearch')}
+                    />
+                    {query && (
+                      <button
+                        type="button"
+                        className="admin-table__search-clear"
+                        onClick={() => setQuery('')}
+                        aria-label={t('admin.actions.cancel')}
+                      >
+                        {'\u00D7'}
+                      </button>
+                    )}
+                    <span className="admin-table__search-hint">
+                      {t('admin.prod.list.smartHint')}
+                    </span>
+                  </div>
+                </th>
+              </tr>
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id}>
+                <tr
+                  key={item.id}
+                  data-product-id={item.id}
+                  className={highlightId === item.id ? 'is-highlighted' : ''}
+                >
                   <td>
                     {item.name}
                     {item.modelNumber && (

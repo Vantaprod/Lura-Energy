@@ -38,7 +38,7 @@ export default async function ProductDetailPage({
     where: { slug: product, published: true },
     include: {
       category: true,
-      media: { orderBy: { createdAt: 'asc' } },
+      media: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
       specifications: { orderBy: { sortOrder: 'asc' } },
     },
   });

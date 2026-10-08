@@ -33,7 +33,7 @@ export default async function SeriesPage({
       products: {
         where: { published: true },
         orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-        include: { media: { take: 1 } },
+        include: { media: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }], take: 1 } },
       },
     },
   });

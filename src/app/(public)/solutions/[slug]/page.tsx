@@ -20,7 +20,7 @@ export default async function SolutionPage({
   const [item, { t }] = await Promise.all([
     prisma.solution.findFirst({
       where: { slug, published: true },
-      include: { media: { orderBy: { createdAt: 'asc' } } },
+      include: { media: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] } },
     }),
     getServerT(),
   ]);

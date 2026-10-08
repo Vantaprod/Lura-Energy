@@ -1,5 +1,6 @@
 'use client';
 
+import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 
 type Props = {
@@ -9,7 +10,7 @@ type Props = {
   placeholder?: string;
 };
 
-const SUGGESTIONS: { label: string; icon: JSX.Element }[] = [
+const SUGGESTIONS: { label: string; icon: React.ReactNode }[] = [
   {
     label: 'Battery',
     icon: (

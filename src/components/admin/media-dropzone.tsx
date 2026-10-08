@@ -58,6 +58,7 @@ export function MediaDropzone({
 
       setUploading(true);
       setError('');
+      const uploaded: ProductMedia[] = [];
 
       for (const file of list) {
         if (file.size > MAX_BYTES) {
@@ -86,10 +87,14 @@ export function MediaDropzone({
             setError(serverError);
             continue;
           }
-          push([...items, data as ProductMedia]);
+          uploaded.push(data as ProductMedia);
         } catch {
           setError(t('mediaDropzone.error.uploadFailed'));
         }
+      }
+
+      if (uploaded.length) {
+        push([...items, ...uploaded]);
       }
 
       setUploading(false);
@@ -111,6 +116,29 @@ export function MediaDropzone({
       return;
     }
     push(items.filter((m) => m.id !== item.id));
+    // Persist the new order too, so the DB matches what's shown.
+    void persistOrder(items.filter((m) => m.id !== item.id));
+  }
+
+  async function persistOrder(next: ProductMedia[]) {
+    try {
+      await fetch('/api/admin/media/reorder', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: next.map((m) => m.id) }),
+      });
+    } catch {
+      // Local UI already reflects the new order — silent failure is fine.
+    }
+  }
+
+  function move(index: number, dir: -1 | 1) {
+    const target = index + dir;
+    if (target < 0 || target >= items.length) return;
+    const next = [...items];
+    [next[index], next[target]] = [next[target], next[index]];
+    push(next);
+    void persistOrder(next);
   }
 
   function openPicker() {
@@ -155,9 +183,35 @@ export function MediaDropzone({
     <div className="media-block">
       {items.length > 0 && (
         <div className="media-thumbs">
-          {items.map((item) => (
+          {items.map((item, i) => (
             <figure key={item.id} className="media-thumb">
               <img src={item.url} alt={item.alt ?? ''} />
+
+              <button
+                type="button"
+                className="media-thumb__move media-thumb__move--prev"
+                onClick={() => move(i, -1)}
+                disabled={i === 0}
+                aria-label={t('aria.moveImageBack')}
+                title={t('aria.moveImageBack')}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="media-thumb__move media-thumb__move--next"
+                onClick={() => move(i, 1)}
+                disabled={i === items.length - 1}
+                aria-label={t('aria.moveImageForward')}
+                title={t('aria.moveImageForward')}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+
               <button
                 type="button"
                 className="media-thumb__remove"
@@ -166,6 +220,8 @@ export function MediaDropzone({
               >
                 {'\u00D7'}
               </button>
+
+              <span className="media-thumb__index">{i + 1}</span>
             </figure>
           ))}
         </div>

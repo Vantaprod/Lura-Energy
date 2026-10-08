@@ -20,6 +20,46 @@ const schema = z.object({
   featured: z.boolean().default(false),
 });
 
+// Intent patterns, ordered — kwh MUST come before kw because "kwh"
+// contains "kw". First match wins; subsequent matches are ignored.
+const INTENT_PATTERNS: [RegExp, string][] = [
+  [/\bkwh\b/i, 'battery-series'],
+  [/\bkw\b/i, 'inverter-series'],
+  [/\bbatter(?:y|ies)\b/i, 'battery-series'],
+  [/\binverter(?:s)?\b/i, 'inverter-series'],
+  [/\bc&i\b/i, 'commercial-industrial-series'],
+  [/\bcommercial\b/i, 'commercial-industrial-series'],
+  [/\bindustrial\b/i, 'commercial-industrial-series'],
+  [/\ball[\s-]?in[\s-]?one\b/i, 'all-in-one-series'],
+  [/\bvault\b/i, 'all-in-one-series'],
+  [/\bportable\b/i, 'all-in-one-series'],
+  [/\bpanel(?:s)?\b/i, 'solar-panel-series'],
+  [/\bpv\b/i, 'solar-panel-series'],
+  [/\baccessor(?:y|ies)\b/i, 'solar-accessories'],
+  [/\bmount(?:ing|s)?\b/i, 'solar-accessories'],
+  [/\bcable(?:s)?\b/i, 'solar-accessories'],
+];
+
+function detectIntent(rawQ: string): { core: string; seriesSlug: string | null } {
+  let text = rawQ.toLowerCase();
+  let seriesSlug: string | null = null;
+
+  for (const [pattern, slug] of INTENT_PATTERNS) {
+    const re = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
+    const before = text;
+    text = text.replace(re, ' ');
+    if (text !== before && seriesSlug === null) {
+      seriesSlug = slug;
+    }
+  }
+
+  // Drop decoy words so the text match stays tight.
+  text = text.replace(/\b(series|product|products|the|a|an)\b/gi, ' ');
+  text = text.replace(/\s+/g, ' ').trim();
+
+  return { core: text, seriesSlug };
+}
+
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user || !can(user.role, 'content.read')) {
@@ -32,7 +72,7 @@ export async function GET(request: NextRequest) {
         include: {
           category: true,
           specifications: { orderBy: { sortOrder: 'asc' } },
-          media: true,
+          media: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
         },
         orderBy: [
           { category: { sortOrder: 'asc' } },
@@ -55,20 +95,53 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid product filters.' }, { status: 400 });
   }
   const { q, categoryId, state } = parsed.data;
-  const where = {
-    ...(categoryId ? { categoryId } : {}),
-    ...(state ? { published: state === 'PUBLISHED' } : {}),
-    ...(q
-      ? {
-          OR: [
-            { name: { contains: q, mode: 'insensitive' as const } },
-            { slug: { contains: q, mode: 'insensitive' as const } },
-            { summary: { contains: q, mode: 'insensitive' as const } },
-            { brand: { contains: q, mode: 'insensitive' as const } },
-          ],
-        }
-      : {}),
-  };
+
+  // --- Exact slug fast path: "litharv-5kw-inverter" style queries ---
+  if (q && /^[a-z0-9]+(?:-[a-z0-9]+)+$/.test(q)) {
+    const exact = await prisma.product.findUnique({
+      where: { slug: q },
+      include: {
+        category: true,
+        specifications: { orderBy: { sortOrder: 'asc' } },
+        media: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
+      },
+    });
+    if (exact) {
+      return NextResponse.json({
+        items: [exact],
+        total: 1,
+        page: 1,
+        pageSize: 1,
+        pageCount: 1,
+        matchedBySlug: true,
+      });
+    }
+  }
+
+  // --- Intent-aware fuzzy search ---
+  const { core, seriesSlug } = q ? detectIntent(q) : { core: '', seriesSlug: null };
+
+  const where: Record<string, unknown> = {};
+  if (categoryId) where.categoryId = categoryId;
+  if (state) where.published = state === 'PUBLISHED';
+  if (seriesSlug) where.category = { slug: seriesSlug };
+  if (core) {
+    where.OR = [
+      { name: { contains: core, mode: 'insensitive' } },
+      { slug: { contains: core, mode: 'insensitive' } },
+      { summary: { contains: core, mode: 'insensitive' } },
+      { brand: { contains: core, mode: 'insensitive' } },
+    ];
+  } else if (q && !seriesSlug) {
+    // No intent, no core after stripping — search the raw query as-is.
+    where.OR = [
+      { name: { contains: q, mode: 'insensitive' } },
+      { slug: { contains: q, mode: 'insensitive' } },
+      { summary: { contains: q, mode: 'insensitive' } },
+      { brand: { contains: q, mode: 'insensitive' } },
+    ];
+  }
+
   const total = await prisma.product.count({ where });
   const pageSize = 20;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
@@ -78,7 +151,7 @@ export async function GET(request: NextRequest) {
     include: {
       category: true,
       specifications: { orderBy: { sortOrder: 'asc' } },
-      media: true,
+      media: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
     },
     orderBy: [
       { category: { sortOrder: 'asc' } },
@@ -89,7 +162,15 @@ export async function GET(request: NextRequest) {
     skip: (page - 1) * pageSize,
     take: pageSize,
   });
-  return NextResponse.json({ items, total, page, pageSize, pageCount });
+
+  return NextResponse.json({
+    items,
+    total,
+    page,
+    pageSize,
+    pageCount,
+    intent: seriesSlug,
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -109,7 +190,10 @@ export async function POST(request: NextRequest) {
       where: { id: parsed.data.categoryId, published: true },
     });
     if (!cat) {
-      return NextResponse.json({ error: 'Choose a published product category.' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Choose a published product category.' },
+        { status: 400 },
+      );
     }
   }
   try {
@@ -124,6 +208,9 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json(product, { status: 201 });
   } catch {
-    return NextResponse.json({ error: 'A product with this slug may already exist.' }, { status: 409 });
+    return NextResponse.json(
+      { error: 'A product with this slug may already exist.' },
+      { status: 409 },
+    );
   }
 }

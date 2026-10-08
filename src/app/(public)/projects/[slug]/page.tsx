@@ -35,7 +35,7 @@ export default async function ProjectPage({
   const [item, { t }] = await Promise.all([
     prisma.project.findFirst({
       where: { slug, published: true },
-      include: { media: true },
+      include: { media: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] } },
     }),
     getServerT(),
   ]);
