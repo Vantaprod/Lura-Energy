@@ -4106,3 +4106,119 @@ select:focus-visible {
   background: #2547CC;
   transform: translateY(-1px);
 }
+
+/* --- Full-bleed product hero (2026-10-08) ---
+   Image covers the entire hero section edge-to-edge like the itel
+   reference. Dark left-to-right gradient keeps the text legible. */
+.pdp-hero {
+  position: relative;
+  isolation: isolate;
+  min-height: 420px;
+  padding: 0 !important;
+  overflow: hidden;
+  background: #050E1F;
+}
+@media (min-width: 900px) {
+  .pdp-hero { min-height: 520px; }
+}
+
+.pdp-hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center right;
+  background-repeat: no-repeat;
+}
+/* On small screens, center the crop so the subject isn't cut off. */
+@media (max-width: 700px) {
+  .pdp-hero__bg { background-position: center; }
+}
+
+.pdp-hero__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(5, 14, 31, 0.94) 0%,
+      rgba(10, 21, 80, 0.78) 40%,
+      rgba(10, 21, 80, 0.35) 75%,
+      rgba(10, 21, 80, 0.12) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(5, 14, 31, 0.35) 0%,
+      rgba(5, 14, 31, 0) 30%,
+      rgba(5, 14, 31, 0.35) 100%
+    );
+}
+@media (max-width: 700px) {
+  .pdp-hero__overlay {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(5, 14, 31, 0.72) 0%,
+        rgba(10, 21, 80, 0.72) 60%,
+        rgba(10, 21, 80, 0.55) 100%
+      );
+  }
+}
+
+.pdp-hero__inner {
+  position: relative;
+  z-index: 2;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px 56px;
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 32px;
+}
+@media (min-width: 900px) {
+  .pdp-hero__inner {
+    padding: 56px 48px 72px;
+    min-height: 520px;
+  }
+}
+
+.pdp-hero__crumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65) !important;
+  margin: 0 !important;
+}
+.pdp-hero__crumbs a {
+  color: rgba(255, 255, 255, 0.75) !important;
+  text-decoration: none;
+}
+.pdp-hero__crumbs a:hover { color: #F58220 !important; }
+.pdp-hero__crumbs span { color: rgba(255, 255, 255, 0.35); }
+
+/* The text now sits alone at bottom-left, no grid, no second column */
+.pdp-hero__text {
+  max-width: 640px;
+}
+.pdp-hero__eyebrow {
+  color: #F58220 !important;
+  margin-bottom: 12px !important;
+}
+.pdp-hero__title {
+  color: #FFFFFF !important;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Hide the old right-side image container rules — the background
+   is now the image, so this selector should not match anything. */
+.pdp-hero__grid,
+.pdp-hero__media {
+  display: none !important;
+}

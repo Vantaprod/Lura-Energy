@@ -126,23 +126,23 @@ export function ProductDetail({
     <main className="pdp">
       {/* ---------- HERO BANNER ---------- */}
       <section className="pdp-hero">
+        {hero && (
+          <div
+            className="pdp-hero__bg"
+            style={{ backgroundImage: `url(${hero})` }}
+            aria-hidden="true"
+          />
+        )}
+        <div className="pdp-hero__overlay" aria-hidden="true" />
         <div className="pdp-hero__inner">
           <nav className="pdp-hero__crumbs" aria-label="Breadcrumb">
             <Link href="/products">{t('series.back')}</Link>
             <span aria-hidden="true">/</span>
             <Link href={`/products/${categorySlug}`}>{categoryName}</Link>
           </nav>
-          <div className="pdp-hero__grid">
-            <div className="pdp-hero__text">
-              <p className="pdp-hero__eyebrow">{heroEyebrow}</p>
-              <h1 className="pdp-hero__title">{heroHeading}</h1>
-            </div>
-            {hero && (
-              <div className="pdp-hero__media" aria-hidden="true">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={hero} alt="" />
-              </div>
-            )}
+          <div className="pdp-hero__text">
+            <p className="pdp-hero__eyebrow">{heroEyebrow}</p>
+            <h1 className="pdp-hero__title">{heroHeading}</h1>
           </div>
         </div>
       </section>
