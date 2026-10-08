@@ -119,6 +119,7 @@ model ProductSpecification {
   label     String
   value     String
   unit      String?
+  group     String? @map("spec_group")
   sortOrder Int     @default(0)
 }
 

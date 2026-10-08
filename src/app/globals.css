@@ -4618,3 +4618,93 @@ select:focus-visible {
   .pdp-gallery__thumbs { padding: 10px 12px; gap: 8px; }
   .pdp-gallery__thumb { width: 64px; height: 64px; padding: 4px; }
 }
+
+/* --- Spec table: mockup style (2026-10-08) ---
+   Navy header row, zebra-striped body. Both columns share the same
+   row background. Overrides the previous left-column-tinted version. */
+
+.pdp-specs__table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #E4E7EC;
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 14px;
+  box-shadow: 0 1px 2px rgba(5, 14, 31, 0.04);
+}
+
+.pdp-specs__table thead th {
+  background: #0A1550;            /* brand deep navy */
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 12px 18px;
+  text-align: left;
+  border: none;
+}
+
+/* zebra rows, both columns share the row background */
+.pdp-specs__table tbody tr {
+  background: #FFFFFF;
+}
+.pdp-specs__table tbody tr:nth-child(even) {
+  background: #F1F4F9;            /* cool light gray */
+}
+
+.pdp-specs__table tbody th {
+  background: transparent !important;
+  color: #0A1550;
+  font-weight: 600;
+  font-size: 13.5px;
+  padding: 12px 18px;
+  text-align: left;
+  width: 45%;
+  border: none;
+  border-bottom: 1px solid #E4E7EC;
+}
+
+.pdp-specs__table tbody td {
+  background: transparent !important;
+  color: #2B3441;
+  font-size: 13.5px;
+  padding: 12px 18px;
+  border: none;
+  border-bottom: 1px solid #E4E7EC;
+}
+
+.pdp-specs__table tbody tr:last-child th,
+.pdp-specs__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* section heading above the table */
+.pdp-specs__title {
+  font-family: var(--font-manrope), Manrope, system-ui, sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #0A1550;
+  margin: 0 0 20px;
+}
+
+@media (max-width: 640px) {
+  .pdp-specs__table thead th,
+  .pdp-specs__table tbody th,
+  .pdp-specs__table tbody td {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+}
+
+/* --- Spec groups: spacing between consecutive group sections (2026-10-08) --- */
+.pdp-specs + .pdp-specs {
+  margin-top: 8px;
+}
+
+/* Group headings carry emoji naturally; give them a bit more presence */
+.pdp-specs__title {
+  font-size: 22px;
+  line-height: 1.2;
+}

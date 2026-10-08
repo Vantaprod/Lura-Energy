@@ -788,6 +788,10 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.series.error.update': 'Could not update series.',
     'admin.series.error.delete': 'Could not delete series.',
     'admin.series.error.publish': 'Could not change publish status.',
+        'product.fullSpecsTitle': 'Full Technical Specifications',
+    'admin.specs.field.group': 'Group',
+    'admin.specs.field.groupPlaceholder': 'e.g. Battery, Inverter, Performance',
+    'admin.specs.ungrouped': 'Ungrouped',
   },
   zh: {
     'nav.home': '首页',
@@ -1570,6 +1574,10 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.series.error.update': '无法更新系列。',
     'admin.series.error.delete': '无法删除系列。',
     'admin.series.error.publish': '无法更改发布状态。',
+        'product.fullSpecsTitle': '完整技术规格',
+    'admin.specs.field.group': '分组',
+    'admin.specs.field.groupPlaceholder': '例如：电池、逆变器、性能',
+    'admin.specs.ungrouped': '未分组',
   },
   fr: {
     'nav.home': 'Accueil',
@@ -2353,5 +2361,9 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.series.error.update': 'Impossible de mettre à jour la série.',
     'admin.series.error.delete': 'Impossible de supprimer la série.',
     'admin.series.error.publish': 'Impossible de modifier le statut de publication.',
+        'product.fullSpecsTitle': 'Fiche technique complète',
+    'admin.specs.field.group': 'Groupe',
+    'admin.specs.field.groupPlaceholder': 'ex. Batterie, Onduleur, Performance',
+    'admin.specs.ungrouped': 'Sans groupe',
       },
 };

@@ -1,3 +1,65 @@
-import { NextRequest,NextResponse } from 'next/server';import { z } from 'zod';import { prisma } from '@/lib/db/prisma';import { getCurrentUser } from '@/lib/auth/session';import { can } from '@/lib/permissions/policy';import { sameOrigin } from '@/lib/security/origin';
-const schema=z.object({label:z.string().trim().min(1).max(120),value:z.string().trim().min(1).max(200),unit:z.string().max(40).optional()});
-export async function POST(request:NextRequest,{params}:{params:Promise<{id:string}>}){const user=await getCurrentUser();if(!user||!can(user.role,'content.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});if(!sameOrigin(request))return NextResponse.json({error:'Invalid origin'},{status:403});const parsed=schema.safeParse(await request.json().catch(()=>null));if(!parsed.success)return NextResponse.json({error:'Enter a specification label and value.'},{status:400});const{id}=await params;try{const specification=await prisma.$transaction(async tx=>{const sortOrder=await tx.productSpecification.count({where:{productId:id}});const result=await tx.productSpecification.create({data:{...parsed.data,productId:id,sortOrder}});await tx.auditLog.create({data:{actorId:user.id,action:'product.specification.create',entityType:'product-specification',entityId:result.id}});return result;});return NextResponse.json(specification,{status:201});}catch{return NextResponse.json({error:'Product not found or specification could not be saved.'},{status:404});}}
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { can } from '@/lib/permissions/policy';
+import { sameOrigin } from '@/lib/security/origin';
+
+const schema = z.object({
+  label: z.string().trim().min(1).max(120),
+  value: z.string().trim().min(1).max(200),
+  unit: z.string().max(40).optional().nullable(),
+  group: z.string().max(80).optional().nullable(),
+});
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const parsed = schema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: 'Enter a specification label and value.' },
+      { status: 400 },
+    );
+  }
+  const { id } = await params;
+  try {
+    const specification = await prisma.$transaction(async (tx) => {
+      const sortOrder = await tx.productSpecification.count({
+        where: { productId: id },
+      });
+      const result = await tx.productSpecification.create({
+        data: {
+          ...parsed.data,
+          group: parsed.data.group?.trim() || null,
+          unit: parsed.data.unit?.trim() || null,
+          productId: id,
+          sortOrder,
+        },
+      });
+      await tx.auditLog.create({
+        data: {
+          actorId: user.id,
+          action: 'product.specification.create',
+          entityType: 'product-specification',
+          entityId: result.id,
+        },
+      });
+      return result;
+    });
+    return NextResponse.json(specification, { status: 201 });
+  } catch {
+    return NextResponse.json(
+      { error: 'Product not found or specification could not be saved.' },
+      { status: 404 },
+    );
+  }
+}

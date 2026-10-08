@@ -7,7 +7,7 @@ import { MediaDropzone, type ProductMedia } from '@/components/admin/media-dropz
 import { Select } from '@/components/ui/select';
 import { HeroImageDropzone } from '@/components/admin/hero-image-dropzone';
 
-type Specification = { id: string; label: string; value: string; unit: string | null };
+type Specification = { id: string; label: string; value: string; unit: string | null; group: string | null };
 type FeatureBanner = { url: string; alt: string };
 type Product = {
   id: string;
