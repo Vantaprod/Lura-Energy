@@ -626,7 +626,7 @@ export function ProductsManager() {
             <span className="form-note" style={{ display: 'block', marginBottom: '0.5rem' }}>
               {t('admin.prod.form.heroHint')}
             </span>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="admin-hero-row">
               <input
                 id="edit-heroImageUrl"
                 type="text"
@@ -636,11 +636,10 @@ export function ProductsManager() {
                   setValues({ ...values, heroImageUrl: event.target.value })
                 }
                 placeholder="/uploads/... or https://..."
-                style={{ flex: '1 1 320px' }}
               />
               <button
                 type="button"
-                className="button"
+                className="button admin-hero-row__btn"
                 disabled={heroUploading}
                 onClick={() => heroFileRef.current?.click()}
               >

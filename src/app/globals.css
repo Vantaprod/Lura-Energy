@@ -3572,3 +3572,33 @@ select:focus-visible {
   color: #6B7686;
   margin: 0;
 }
+
+/* --- Admin hero image row (2026-10-08) ---
+   Previous flex layout let the URL input eat the full width and
+   pinched the Upload button. Grid + align:stretch makes both
+   elements equal height and gives the button a defined width. */
+.admin-hero-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+  margin-bottom: 0.75rem;
+}
+
+.admin-hero-row input[type="text"] {
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-hero-row__btn {
+  white-space: nowrap;
+  align-self: stretch;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+@media (max-width: 560px) {
+  .admin-hero-row {
+    grid-template-columns: 1fr;
+  }
+}
