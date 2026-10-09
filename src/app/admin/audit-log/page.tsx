@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { getServerT } from '@/lib/i18n/server';
 import Link from 'next/link';
 import { AuditLogFilters } from '@/components/admin/audit-log-filters';
+import { AuditLogTable, type AuditEntry } from '@/components/admin/audit-log-table';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Audit log' };
@@ -17,17 +18,6 @@ function rangeToDate(range: string | undefined): Date | null {
   if (range === '7d') return new Date(now - 7 * 24 * 60 * 60 * 1000);
   if (range === '30d') return new Date(now - 30 * 24 * 60 * 60 * 1000);
   return null;
-}
-
-function formatDate(d: Date): string {
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).format(d);
 }
 
 export default async function AuditLogPage({
@@ -71,7 +61,6 @@ export default async function AuditLogPage({
       take: PAGE_SIZE,
       include: { actor: { select: { id: true, name: true, email: true } } },
     }),
-    // Distinct actors who have at least one entry (for the dropdown).
     prisma.auditLog.findMany({
       where: { actorId: { not: null } },
       distinct: ['actorId'],
@@ -80,7 +69,6 @@ export default async function AuditLogPage({
     }),
   ]);
 
-  // Resolve actor details for the dropdown
   const actorIds = distinctActors
     .map((d) => d.actorId)
     .filter((id): id is string => Boolean(id));
@@ -90,10 +78,22 @@ export default async function AuditLogPage({
         select: { id: true, name: true, email: true },
       })
     : [];
-  // Sort alphabetically by name (fallback to email)
   actorRecords.sort((a, b) =>
     (a.name || a.email).localeCompare(b.name || b.email),
   );
+
+  const serialized: AuditEntry[] = entries.map((e) => ({
+    id: e.id,
+    createdAtIso: e.createdAt.toISOString(),
+    action: e.action,
+    entityType: e.entityType,
+    entityId: e.entityId,
+    ipAddress: e.ipAddress,
+    metadata: e.metadata,
+    actor: e.actor
+      ? { id: e.actor.id, name: e.actor.name, email: e.actor.email }
+      : null,
+  }));
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -124,7 +124,11 @@ export default async function AuditLogPage({
 
       <AuditLogFilters actors={actorRecords} />
 
-      <p className="form-note" aria-live="polite" style={{ marginBottom: '1rem' }}>
+      <p
+        className="form-note"
+        aria-live="polite"
+        style={{ marginBottom: '1rem' }}
+      >
         {total}{' '}
         {total === 1 ? t('admin.audit.countOne') : t('admin.audit.countMany')}
         {hasFilters ? ' · ' + t('admin.audit.filtered') : ''}
@@ -133,67 +137,14 @@ export default async function AuditLogPage({
       {entries.length === 0 ? (
         <div className="empty-panel">
           <strong>
-            {hasFilters ? t('admin.audit.emptyFiltered') : t('admin.audit.empty')}
+            {hasFilters
+              ? t('admin.audit.emptyFiltered')
+              : t('admin.audit.empty')}
           </strong>
         </div>
       ) : (
         <>
-          <div style={{ overflowX: 'auto' }}>
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>{t('admin.audit.colTime')}</th>
-                  <th>{t('admin.audit.colActor')}</th>
-                  <th>{t('admin.audit.colAction')}</th>
-                  <th>{t('admin.audit.colEntity')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {entries.map((entry) => (
-                  <tr key={entry.id}>
-                    <td style={{ whiteSpace: 'nowrap', fontSize: '12.5px' }}>
-                      {formatDate(entry.createdAt)}
-                    </td>
-                    <td>
-                      {entry.actor?.name ?? t('admin.audit.systemActor')}
-                      {entry.actor?.email && (
-                        <div className="form-note" style={{ fontSize: '11.5px' }}>
-                          {entry.actor.email}
-                        </div>
-                      )}
-                    </td>
-                    <td>
-                      <code
-                        style={{
-                          fontSize: '11.5px',
-                          background: '#EEF1F7',
-                          color: '#0A1550',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                        }}
-                      >
-                        {entry.action}
-                      </code>
-                    </td>
-                    <td>
-                      {entry.entityType}
-                      {entry.entityId && (
-                        <div
-                          className="form-note"
-                          style={{
-                            fontSize: '11px',
-                            fontFamily: 'ui-monospace, monospace',
-                          }}
-                        >
-                          {entry.entityId.slice(-8)}
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <AuditLogTable entries={serialized} />
 
           {pageCount > 1 && (
             <nav
