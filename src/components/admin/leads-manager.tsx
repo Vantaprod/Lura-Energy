@@ -33,6 +33,24 @@ function fill(template: string, vars: Record<string, string | number>): string {
   );
 }
 
+const DownloadIcon = () => (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="15" x2="12" y2="3" />
+  </svg>
+);
+
 export function LeadsManager() {
   const { t } = useTranslation();
   const [result, setResult] = useState<Result | null>(null);
@@ -99,6 +117,14 @@ export function LeadsManager() {
     }
   }
 
+  const exportHref = useMemo(() => {
+    const p = new URLSearchParams();
+    if (query.trim()) p.set('q', query.trim());
+    if (status) p.set('status', status);
+    const qs = p.toString();
+    return '/api/admin/leads/export' + (qs ? '?' + qs : '');
+  }, [query, status]);
+
   const summaryParts: string[] = [];
   if (result) {
     summaryParts.push(
@@ -133,7 +159,7 @@ export function LeadsManager() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'minmax(280px, 1fr) auto auto',
+          gridTemplateColumns: 'minmax(240px, 1fr) minmax(180px, 220px) auto auto',
           gap: '16px',
           alignItems: 'end',
           marginBottom: '1.5rem',
@@ -153,7 +179,7 @@ export function LeadsManager() {
             maxLength={120}
           />
         </div>
-        <div className="field" style={{ marginBottom: 0, minWidth: '200px' }}>
+        <div className="field" style={{ marginBottom: 0 }}>
           <label htmlFor="lead-status">{t('admin.leads.filter.label')}</label>
           <Select
             id="lead-status"
@@ -177,6 +203,26 @@ export function LeadsManager() {
           >
             {t('admin.leads.action.search')}
           </button>
+        </div>
+        <div style={{ paddingBottom: '2px' }}>
+          <a
+            href={exportHref}
+            className="admin-action"
+            download
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              height: '42px',
+              padding: '0 18px',
+              textDecoration: 'none',
+              fontWeight: 700,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <DownloadIcon />
+            {t('admin.leads.action.export')}
+          </a>
         </div>
       </div>
 
