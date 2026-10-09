@@ -282,6 +282,8 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.dashboard.seatCapacity': 'Administrator seat capacity',
 
     // ---- ADMIN ACTIONS ----
+        'admin.actions.feature': 'Feature',
+    'admin.actions.unfeature': 'Unfeature',
     'admin.actions.edit': 'Edit',
     'admin.actions.delete': 'Delete',
     'admin.actions.publish': 'Publish',
@@ -1151,6 +1153,8 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.dashboard.seatCapacity': '管理员席位容量',
 
     // ---- ADMIN ACTIONS ----
+        'admin.actions.feature': '设为精选',
+    'admin.actions.unfeature': '取消精选',
     'admin.actions.edit': '编辑',
     'admin.actions.delete': '删除',
     'admin.actions.publish': '发布',
@@ -2020,6 +2024,8 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.dashboard.seatCapacity': 'Capacité de sièges administrateur',
 
     // ---- ADMIN ACTIONS ----
+        'admin.actions.feature': 'Mettre en avant',
+    'admin.actions.unfeature': 'Retirer la mise en avant',
     'admin.actions.edit': 'Modifier',
     'admin.actions.delete': 'Supprimer',
     'admin.actions.publish': 'Publier',

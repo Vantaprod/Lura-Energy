@@ -14,9 +14,10 @@ type Item = {
   description: string | null;
   systemCapacity: string | null;
   published: boolean;
+  featured: boolean;
   media?: ProductMedia[];
 };
-type Values = Omit<Item, 'id' | 'published' | 'media'>;
+type Values = Omit<Item, 'id' | 'published' | 'media' | 'featured'>;
 type Result = {
   items: Item[];
   total: number;
@@ -132,6 +133,16 @@ export function ProjectsManager() {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ published: !x.published }),
+    });
+    if (r.ok) await load();
+    else setError((await r.json()).error ?? t('admin.proj.error.publish'));
+  }
+
+  async function toggleFeatured(x: Item) {
+    const r = await fetch(`/api/admin/projects/${x.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ featured: !x.featured }),
     });
     if (r.ok) await load();
     else setError((await r.json()).error ?? t('admin.proj.error.publish'));
@@ -343,6 +354,18 @@ export function ProjectsManager() {
                         {x.published
                           ? t('admin.actions.unpublish')
                           : t('admin.actions.publish')}
+                      </button>
+                      <button
+                        type="button"
+                        className={
+                          'admin-action' +
+                          (x.featured ? ' admin-action--featured' : '')
+                        }
+                        onClick={() => void toggleFeatured(x)}
+                      >
+                        {x.featured
+                          ? t('admin.actions.unfeature')
+                          : t('admin.actions.feature')}
                       </button>
                       <button
                         type="button"

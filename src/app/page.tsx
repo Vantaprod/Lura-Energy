@@ -75,7 +75,7 @@ export default async function HomePage() {
           },
         }),
         prisma.product.findMany({
-          where: { published: true, featured: true },
+          where: { published: true, featured: true, category: { published: true } },
           include: { media: true, category: true },
           orderBy: { sortOrder: 'asc' },
           take: 3,
@@ -96,6 +96,28 @@ export default async function HomePage() {
           orderBy: { sortOrder: 'asc' },
           take: 3,
         }),
+      ]);
+
+  // ---- Fallbacks: if no `featured` records exist yet, show the latest published ----
+  const [featuredProducts, featuredProjects] = isPreview
+    ? [[], []]
+    : await Promise.all([
+        products.length
+          ? Promise.resolve(products)
+          : prisma.product.findMany({
+              where: { published: true, category: { published: true } },
+              include: { media: true, category: true },
+              orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+              take: 3,
+            }),
+        projects.length
+          ? Promise.resolve(projects)
+          : prisma.project.findMany({
+              where: { published: true },
+              include: { media: true },
+              orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
+              take: 3,
+            }),
       ]);
 
   const { lang, t } = await getServerT();
@@ -220,10 +242,13 @@ export default async function HomePage() {
             {t('cta.allProducts')}
           </Link>
         </div>
-        {products.length ? (
+        {featuredProducts.length ? (
           <div className="grid">
-            {products.map((item) => {
+            {featuredProducts.map((item) => {
               const image = item.media.find((m) => m.kind === 'IMAGE');
+              const href = item.category
+                ? `/products/${item.category.slug}/${item.slug}`
+                : `/products/${item.slug}`;
               return (
                 <article className="record-card" key={item.id}>
                   <div>
@@ -243,9 +268,7 @@ export default async function HomePage() {
                     <h3>{item.name}</h3>
                     {item.summary && <p>{item.summary}</p>}
                   </div>
-                  <Link href={'/products/' + item.slug}>
-                    {t('cta.viewProduct')}
-                  </Link>
+                  <Link href={href}>{t('cta.viewProduct')}</Link>
                 </article>
               );
             })}
@@ -268,9 +291,9 @@ export default async function HomePage() {
             {t('cta.allProjects')}
           </Link>
         </div>
-        {projects.length ? (
+        {featuredProjects.length ? (
           <div className="grid">
-            {projects.map((item) => {
+            {featuredProjects.map((item) => {
               const image = item.media.find((m) => m.kind === 'IMAGE');
               return (
                 <article className="record-card" key={item.id}>

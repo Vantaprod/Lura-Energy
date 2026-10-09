@@ -313,6 +313,16 @@ export function ProductsManager() {
     else setError(t('admin.prod.error.publish'));
   }
 
+  async function toggleFeatured(item: Product) {
+    const response = await fetch('/api/admin/products/' + item.id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ featured: !item.featured }),
+    });
+    if (response.ok) await load();
+    else setError(t('admin.prod.error.publish'));
+  }
+
   async function remove(item: Product) {
     if (!window.confirm(t('admin.actions.confirmDelete'))) return;
     const response = await fetch('/api/admin/products/' + item.id, { method: 'DELETE' });
@@ -591,6 +601,18 @@ export function ProductsManager() {
                         {item.published
                           ? t('admin.actions.unpublish')
                           : t('admin.actions.publish')}
+                      </button>
+                      <button
+                        type="button"
+                        className={
+                          'admin-action' +
+                          (item.featured ? ' admin-action--featured' : '')
+                        }
+                        onClick={() => void toggleFeatured(item)}
+                      >
+                        {item.featured
+                          ? t('admin.actions.unfeature')
+                          : t('admin.actions.feature')}
                       </button>
                       <button
                         type="button"

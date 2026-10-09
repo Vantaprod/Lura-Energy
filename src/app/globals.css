@@ -5707,3 +5707,16 @@ details[open] ul li > button.admin-action:hover {
 .admin-status-pill--quoted { background: #D6DFFF; color: #0A1550; }
 .admin-status-pill--won { background: #DCFCE7; color: #15803D; }
 .admin-status-pill--lost { background: #FBE9E9; color: #B91C1C; }
+
+/* --- Admin feature toggle button (2026-10-09) ---
+   Same size as the other row-action buttons, but a distinct navy
+   pill when the record is currently featured. */
+.admin-action--featured {
+  background: #0A1550 !important;
+  color: #FFFFFF !important;
+  border-color: #0A1550 !important;
+}
+.admin-action--featured:hover {
+  background: #1428A0 !important;
+  border-color: #1428A0 !important;
+}
