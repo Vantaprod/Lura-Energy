@@ -42,6 +42,7 @@ export default async function AuditLogPage({
   const sp = await searchParams;
   const q = typeof sp.q === 'string' ? sp.q.trim().slice(0, 120) : '';
   const range = typeof sp.range === 'string' ? sp.range : 'all';
+  const actorId = typeof sp.actor === 'string' ? sp.actor : '';
   const pageRaw = typeof sp.page === 'string' ? Number(sp.page) : 1;
   const page = Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : 1;
 
@@ -49,6 +50,7 @@ export default async function AuditLogPage({
 
   const where: Record<string, unknown> = {};
   if (since) where.createdAt = { gte: since };
+  if (actorId) where.actorId = actorId;
   if (q) {
     where.OR = [
       { action: { contains: q, mode: 'insensitive' } },
@@ -59,7 +61,7 @@ export default async function AuditLogPage({
     ];
   }
 
-  const [{ t }, total, entries] = await Promise.all([
+  const [{ t }, total, entries, distinctActors] = await Promise.all([
     getServerT('admin'),
     prisma.auditLog.count({ where }),
     prisma.auditLog.findMany({
@@ -67,24 +69,46 @@ export default async function AuditLogPage({
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
-      include: { actor: { select: { name: true, email: true } } },
+      include: { actor: { select: { id: true, name: true, email: true } } },
+    }),
+    // Distinct actors who have at least one entry (for the dropdown).
+    prisma.auditLog.findMany({
+      where: { actorId: { not: null } },
+      distinct: ['actorId'],
+      select: { actorId: true },
+      take: 500,
     }),
   ]);
+
+  // Resolve actor details for the dropdown
+  const actorIds = distinctActors
+    .map((d) => d.actorId)
+    .filter((id): id is string => Boolean(id));
+  const actorRecords = actorIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: actorIds } },
+        select: { id: true, name: true, email: true },
+      })
+    : [];
+  // Sort alphabetically by name (fallback to email)
+  actorRecords.sort((a, b) =>
+    (a.name || a.email).localeCompare(b.name || b.email),
+  );
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
 
-  // Build pagination links preserving filters
   function pageHref(p: number): string {
     const params = new URLSearchParams();
     if (q) params.set('q', q);
     if (range !== 'all') params.set('range', range);
+    if (actorId) params.set('actor', actorId);
     if (p > 1) params.set('page', String(p));
     const qs = params.toString();
     return '/admin/audit-log' + (qs ? '?' + qs : '');
   }
 
-  const hasFilters = Boolean(q) || range !== 'all';
+  const hasFilters = Boolean(q) || range !== 'all' || Boolean(actorId);
 
   return (
     <div className="admin-shell">
@@ -98,7 +122,7 @@ export default async function AuditLogPage({
         {t('admin.audit.intro')}
       </p>
 
-      <AuditLogFilters />
+      <AuditLogFilters actors={actorRecords} />
 
       <p className="form-note" aria-live="polite" style={{ marginBottom: '1rem' }}>
         {total}{' '}

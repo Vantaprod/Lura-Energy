@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from '@/lib/i18n/context';
+import { MediaPreviewModal, type PreviewItem } from '@/components/admin/media-preview-modal';
 
 type MediaKind = 'IMAGE' | 'VIDEO' | 'DOCUMENT';
 
@@ -200,6 +201,7 @@ export function MediaLibrary() {
   const [sort, setSort] = useState<SortKey>('newest');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -276,6 +278,29 @@ export function MediaLibrary() {
     setItems((prev) => prev.filter((m) => m.id !== item.id));
   }
 
+  async function removeFromModal(item: PreviewItem) {
+    if (!window.confirm(t('admin.mediaLib.confirm.delete'))) return;
+    const res = await fetch('/api/admin/media/' + item.id, { method: 'DELETE' });
+    if (!res.ok) {
+      setError(t('admin.mediaLib.error.delete'));
+      return;
+    }
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.delete(item.id);
+      return next;
+    });
+    setItems((prev) => {
+      const next = prev.filter((m) => m.id !== item.id);
+      if (next.length === 0) setPreviewIndex(null);
+      else
+        setPreviewIndex((i) =>
+          i === null ? null : Math.min(i, Math.max(0, next.length - 1)),
+        );
+      return next;
+    });
+  }
+
   async function copyUrl(url: string) {
     const absolute = typeof window !== 'undefined' ? window.location.origin + url : url;
     try {
@@ -349,6 +374,12 @@ export function MediaLibrary() {
   useEffect(() => {
     setPage(1);
   }, [filter, query, sort]);
+
+  // Close the preview when the visible page changes so the modal
+  // doesn't hold an index that no longer maps to a visible item.
+  useEffect(() => {
+    setPreviewIndex(null);
+  }, [paginated]);
 
   function toggleSelect(id: string) {
     setSelected((prev) => {
@@ -604,7 +635,7 @@ export function MediaLibrary() {
         </div>
       ) : (
         <div className="media-library__grid">
-          {paginated.map((m) => {
+          {paginated.map((m, idx) => {
             const isSelected = selected.has(m.id);
             return (
               <div
@@ -616,8 +647,13 @@ export function MediaLibrary() {
                     : undefined
                 }
               >
-                <div className="media-tile__preview">
+                <div
+                  className="media-tile__preview"
+                  onClick={() => setPreviewIndex(idx)}
+                  style={{ cursor: 'zoom-in' }}
+                >
                   <label
+                    onClick={(e) => e.stopPropagation()}
                     style={{
                       position: 'absolute',
                       top: '8px',
@@ -685,7 +721,10 @@ export function MediaLibrary() {
                   </p>
                   <p className="media-tile__meta">{formatBytes(m.sizeBytes)}</p>
                 </div>
-                <div className="media-tile__actions">
+                <div
+                  className="media-tile__actions"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button type="button" className="admin-action" onClick={() => void copyUrl(m.url)}>
                     {t('admin.mediaLib.action.copyUrl')}
                   </button>
@@ -738,6 +777,16 @@ export function MediaLibrary() {
             {t('admin.mediaLib.pagination.next')}
           </button>
         </nav>
+      )}
+
+      {previewIndex !== null && paginated[previewIndex] && (
+        <MediaPreviewModal
+          items={paginated}
+          index={previewIndex}
+          onClose={() => setPreviewIndex(null)}
+          onNavigate={setPreviewIndex}
+          onDelete={(item) => void removeFromModal(item)}
+        />
       )}
     </div>
   );
