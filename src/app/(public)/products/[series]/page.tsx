@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/db/prisma';
 import { getServerT } from '@/lib/i18n/server';
-
+import { tField } from '@/lib/i18n/resolve';
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({
@@ -25,7 +25,7 @@ export default async function SeriesPage({
   params: Promise<{ series: string }>;
 }) {
   const { series } = await params;
-  const { t } = await getServerT('front');
+  const { lang, t } = await getServerT('front');
 
   const category = await prisma.productCategory.findUnique({
     where: { slug: series, published: true },
@@ -46,8 +46,23 @@ export default async function SeriesPage({
         <p className="eyebrow">
           <Link href="/products">{t('series.back')}</Link>
         </p>
-        <h1>{category.name}</h1>
-        {category.description && <p>{category.description}</p>}
+        <h1>
+          {tField<string>(
+            category.translations as Record<string, Record<string, unknown>> | null,
+            lang,
+            'name',
+            category.name,
+          )}
+        </h1>
+        {(() => {
+          const resolvedCategoryDescription = tField<string | null>(
+            category.translations as Record<string, Record<string, unknown>> | null,
+            lang,
+            'description',
+            category.description,
+          );
+          return resolvedCategoryDescription ? <p>{resolvedCategoryDescription}</p> : null;
+        })()}
       </section>
 
       <section className="section-generous">

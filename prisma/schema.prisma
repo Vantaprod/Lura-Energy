@@ -68,11 +68,12 @@ model Setting {
 }
 
 model ProductCategory {
-  id          String    @id @default(cuid())
-  name        String
-  slug        String    @unique
-  summary     String?
-  description String?
+  id           String    @id @default(cuid())
+  name         String
+  slug         String    @unique
+  summary      String?
+  description  String?
+  translations Json?
   coverUrl    String?
   coverAlt    String?
   sortOrder   Int       @default(0)
@@ -102,6 +103,7 @@ model Product {
   notice          String?
   featureBanners  Json?
   keyFeatures     Json?
+  translations    Json?
   published       Boolean               @default(false)
   sortOrder       Int                   @default(0)
   specifications  ProductSpecification[]
@@ -113,12 +115,13 @@ model Product {
 }
 
 model ProductSpecification {
-  id        String  @id @default(cuid())
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  label     String
-  value     String
-  unit      String?
+  id           String  @id @default(cuid())
+  productId    String
+  product      Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  label        String
+  value        String
+  unit         String?
+  translations Json?
   group     String? @map("spec_group")
   sortOrder Int     @default(0)
 }

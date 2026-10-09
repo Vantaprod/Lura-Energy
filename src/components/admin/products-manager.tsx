@@ -6,6 +6,7 @@ import { ProductSpecifications } from '@/components/admin/product-specifications
 import { MediaDropzone, type ProductMedia } from '@/components/admin/media-dropzone';
 import { Select } from '@/components/ui/select';
 import { HeroImageDropzone } from '@/components/admin/hero-image-dropzone';
+import { TranslationsEditor } from '@/components/admin/translations-editor';
 
 type Specification = { id: string; label: string; value: string; unit: string | null; group: string | null };
 type FeatureBanner = { url: string; alt: string };
@@ -25,6 +26,7 @@ type Product = {
   heroImageUrl: string | null;
   notice: string | null;
   featureBanners: FeatureBanner[] | null;
+  translations: Record<string, Record<string, unknown>> | null;
   keyFeatures: string[] | null;
   sortOrder: number;
   published: boolean;
@@ -96,6 +98,7 @@ export function ProductsManager() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [values, setValues] = useState<EditValues | null>(null);
   const [featureBanners, setFeatureBanners] = useState<FeatureBanner[]>([]);
+  const [translations, setTranslations] = useState<Record<string, Record<string, unknown>>>({});
   const [bannerUploading, setBannerUploading] = useState(false);
   const [createCategoryId, setCreateCategoryId] = useState('');
   const [highlightId, setHighlightId] = useState<string | null>(null);
@@ -174,12 +177,18 @@ export function ProductsManager() {
     setFeatureBanners(
       Array.isArray(product.featureBanners) ? product.featureBanners : [],
     );
+    setTranslations(
+      product.translations && typeof product.translations === 'object'
+        ? (product.translations as Record<string, Record<string, unknown>>)
+        : {},
+    );
   }
 
   function closeEdit() {
     setEditing(null);
     setValues(null);
     setFeatureBanners([]);
+    setTranslations({});
   }
 
   async function uploadImage(file: File, subfolder: string): Promise<string | null> {
@@ -289,6 +298,7 @@ export function ProductsManager() {
           heroImageUrl: values.heroImageUrl || null,
           notice: values.notice || null,
           featureBanners: featureBanners.length ? featureBanners : null,
+          translations: Object.keys(translations).length ? translations : null,
           datasheetUrl: values.datasheetUrl || null,
           published: editing.published,
           featured: editing.featured,
@@ -804,7 +814,21 @@ export function ProductsManager() {
               {t('admin.actions.cancel')}
             </button>
           </div>
-        </form>
+                  <div className="field-wide">
+            <TranslationsEditor
+              value={translations}
+              onChange={setTranslations}
+              fields={[
+                { key: 'name', label: t('admin.prod.form.name'), type: 'text' },
+                { key: 'summary', label: t('admin.prod.form.summary'), type: 'textarea' },
+                { key: 'description', label: t('admin.prod.form.description'), type: 'textarea' },
+                { key: 'keyFeatures', label: t('admin.prod.form.keyFeatures'), type: 'lines' },
+                { key: 'notice', label: t('admin.prod.form.notice'), type: 'textarea' },
+                { key: 'warranty', label: t('admin.prod.edit.warranty'), type: 'text' },
+              ]}
+            />
+          </div>
+</form>
       )}
     </>
   );

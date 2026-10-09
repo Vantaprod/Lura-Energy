@@ -616,6 +616,14 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.settings.impact.intro': 'Text and numbers for the homepage Impact band. Numbers animate up from zero when the section scrolls into view.',
     'admin.settings.page.title': 'Page content',
     'admin.settings.action.save': 'Save site settings',
+
+    // ---- TRANSLATIONS EDITOR ----
+    'admin.translations.title': 'Translations',
+    'admin.translations.hint': 'Optional. Fill in the language-specific versions of the fields above. Anything left blank falls back to the English value.',
+    'admin.translations.countFilled': '{n} field(s) translated',
+    'admin.translations.none': 'Not translated',
+    'admin.translations.linesHint': 'One item per line.',
+    'admin.translations.clearLang': 'Clear this language',
     'admin.settings.state.loading': 'Loading settings...',
     'admin.settings.state.saving': 'Saving...',
     'admin.settings.notice.saved': 'Settings saved.',
@@ -1563,6 +1571,14 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.settings.impact.intro': '首页影响力区域中的文字和数字。当版块滚动进入视图时，数字会从零开始动画。',
     'admin.settings.page.title': '页面内容',
     'admin.settings.action.save': '保存网站设置',
+
+    // ---- TRANSLATIONS EDITOR ----
+    'admin.translations.title': '翻译',
+    'admin.translations.hint': '可选。填写上方字段的对应语言版本。留空则使用英文版本。',
+    'admin.translations.countFilled': '已翻译 {n} 个字段',
+    'admin.translations.none': '尚未翻译',
+    'admin.translations.linesHint': '每行一项。',
+    'admin.translations.clearLang': '清除此语言',
     'admin.settings.state.loading': '正在加载设置...',
     'admin.settings.state.saving': '正在保存...',
     'admin.settings.notice.saved': '设置已保存。',
@@ -2509,6 +2525,14 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.settings.impact.intro': 'Textes et chiffres de la bande Impact de la page d\u2019accueil. Les nombres s\u2019animent à partir de zéro lorsque la section entre dans la vue.',
     'admin.settings.page.title': 'Contenu des pages',
     'admin.settings.action.save': 'Enregistrer les paramètres',
+
+    // ---- TRANSLATIONS EDITOR ----
+    'admin.translations.title': 'Traductions',
+    'admin.translations.hint': 'Facultatif. Saisissez les versions dans la langue cible des champs ci-dessus. Tout champ vide revient à la valeur anglaise.',
+    'admin.translations.countFilled': '{n} champ(s) traduit(s)',
+    'admin.translations.none': 'Non traduit',
+    'admin.translations.linesHint': 'Un élément par ligne.',
+    'admin.translations.clearLang': 'Effacer cette langue',
     'admin.settings.state.loading': 'Chargement des paramètres...',
     'admin.settings.state.saving': 'Enregistrement...',
     'admin.settings.notice.saved': 'Paramètres enregistrés.',

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db/prisma';
 import { getCurrentUser } from '@/lib/auth/session';
 import { can } from '@/lib/permissions/policy';
@@ -31,6 +32,7 @@ const createSchema = z.discriminatedUnion('collection', [
     coverUrl: secureUrl.optional(),
     coverAlt: z.string().max(200).optional(),
     sortOrder: z.coerce.number().int().min(0).max(9999).optional(),
+    translations: z.record(z.string(), z.record(z.string(), z.unknown())).nullable().optional(),
   }),
   z.object({
     collection: z.enum(['services', 'solutions']),
@@ -83,6 +85,7 @@ const updateSchema = z.discriminatedUnion('collection', [
     coverAlt: z.string().max(200).optional(),
     sortOrder: z.coerce.number().int().min(0).max(9999).optional(),
     published: z.boolean().optional(),
+    translations: z.record(z.string(), z.record(z.string(), z.unknown())).nullable().optional(),
   }),
   z.object({
     collection: z.enum(['services', 'solutions']),
@@ -283,6 +286,7 @@ export async function POST(request: NextRequest) {
             coverUrl: input.coverUrl,
             coverAlt: input.coverAlt,
             sortOrder: input.sortOrder ?? 0,
+            translations: (input.translations ?? undefined) as Prisma.InputJsonValue | undefined,
           },
         });
         break;
@@ -401,6 +405,7 @@ export async function PATCH(request: NextRequest) {
             coverAlt: input.coverAlt,
             sortOrder: input.sortOrder,
             published: input.published,
+            translations: (input.translations ?? undefined) as Prisma.InputJsonValue | undefined,
           },
         });
         break;

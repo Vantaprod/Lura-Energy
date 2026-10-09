@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   title: { default: 'Lura Energy', template: '%s | Lura Energy' },
   description:
     'Lura Energy - Home of Premium Solar. Solar systems, storage, and installation.',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
   other: {
     google: 'notranslate',
   },

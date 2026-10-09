@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from '@/lib/i18n/context';
 import { Select } from '@/components/ui/select';
+import { TranslationsEditor } from '@/components/admin/translations-editor';
 
 type Category = {
   id: string;
@@ -14,6 +15,7 @@ type Category = {
   coverAlt: string | null;
   sortOrder: number;
   published: boolean;
+  translations?: Record<string, Record<string, unknown>> | null;
 };
 
 type Values = {
@@ -61,6 +63,7 @@ export function SeriesManager() {
   const [uploading, setUploading] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [values, setValues] = useState<Values>(empty);
+  const [translations, setTranslations] = useState<Record<string, Record<string, unknown>>>({});
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -147,6 +150,7 @@ export function SeriesManager() {
           coverUrl: values.coverUrl || undefined,
           coverAlt: values.coverAlt || undefined,
           sortOrder: Number(values.sortOrder) || 0,
+          translations: Object.keys(translations).length ? translations : null,
         }),
       });
       const data = await response.json();
@@ -181,6 +185,7 @@ export function SeriesManager() {
           coverAlt: values.coverAlt || undefined,
           sortOrder: Number(values.sortOrder) || 0,
           published: editing.published,
+          translations: Object.keys(translations).length ? translations : null,
         }),
       });
       const data = await response.json();
@@ -371,6 +376,7 @@ export function SeriesManager() {
                 onClick={() => {
                   setEditing(null);
                   setValues(empty);
+                  setTranslations({});
                 }}
               >
                 {t('admin.actions.cancel')}
@@ -378,7 +384,18 @@ export function SeriesManager() {
             </>
           )}
         </div>
-      </form>
+              <div className="field-wide">
+          <TranslationsEditor
+            value={translations}
+            onChange={setTranslations}
+            fields={[
+              { key: 'name', label: t('admin.series.form.name'), type: 'text' },
+              { key: 'summary', label: t('admin.series.form.summary'), type: 'text' },
+              { key: 'description', label: t('admin.series.form.description'), type: 'textarea' },
+            ]}
+          />
+        </div>
+</form>
 
       {notice && <p role="status" className="form-note">{notice}</p>}
       {error && (
@@ -454,6 +471,11 @@ export function SeriesManager() {
                         onClick={() => {
                           setEditing(c);
                           setValues(toValues(c));
+                          setTranslations(
+                            c.translations && typeof c.translations === 'object'
+                              ? (c.translations as Record<string, Record<string, unknown>>)
+                              : {},
+                          );
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
                       >

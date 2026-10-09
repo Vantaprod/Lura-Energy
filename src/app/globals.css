@@ -6310,3 +6310,350 @@ details[open] ul li > button.admin-action:hover {
 .admin-nav a:hover:not(.is-active) {
   color: #1428A0;
 }
+
+/* --- Mobile product detail: tighter, more in-viewport (2026-10-09) ---
+   At phone widths the previous spacing pushed the info column way
+   below the fold. Trims padding, gallery min-height, and gap sizes
+   without changing the desktop layout. */
+@media (max-width: 700px) {
+  /* Product grid */
+  .pdp-product {
+    padding: 24px 18px !important;
+    gap: 24px !important;
+  }
+
+  /* Gallery card */
+  .pdp-gallery__stage {
+    min-height: 260px !important;
+  }
+  .pdp-gallery__slide {
+    padding: 16px !important;
+  }
+  .pdp-gallery__slide img {
+    max-height: 240px !important;
+  }
+
+  /* Arrows and dots closer to the edges */
+  .pdp-gallery__nav {
+    width: 34px !important;
+    height: 34px !important;
+  }
+  .pdp-gallery__nav--prev { left: 8px !important; }
+  .pdp-gallery__nav--next { right: 8px !important; }
+  .pdp-gallery__dots {
+    bottom: 10px !important;
+    padding: 4px 10px !important;
+  }
+
+  /* Thumbnails — smaller, less vertical */
+  .pdp-gallery__thumbs {
+    padding: 10px 12px !important;
+    gap: 8px !important;
+  }
+  .pdp-gallery__thumb {
+    width: 56px !important;
+    height: 56px !important;
+    padding: 3px !important;
+  }
+
+  /* Info column */
+  .pdp-product__info {
+    gap: 8px !important;
+  }
+  .pdp-product__title {
+    font-size: 24px !important;
+    line-height: 1.15 !important;
+  }
+  .pdp-product__summary {
+    font-size: 14.5px !important;
+    line-height: 1.5 !important;
+    margin: 4px 0 6px !important;
+  }
+
+  /* Feature list tighter */
+  .pdp-product__features {
+    gap: 8px !important;
+    margin: 6px 0 14px !important;
+  }
+  .pdp-product__features li {
+    font-size: 14px !important;
+    gap: 8px !important;
+  }
+  .pdp-product__check {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  /* CTA button full-width, larger tap target */
+  .pdp-product__cta {
+    align-self: stretch !important;
+    width: 100% !important;
+    padding: 14px 20px !important;
+    font-size: 15px !important;
+  }
+
+  /* Section spacing */
+  .pdp-specs,
+  .pdp-desc,
+  .pdp-notice,
+  .pdp-warranty,
+  .pdp-datasheet {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+    padding-bottom: 40px !important;
+  }
+}
+
+/* Very small phones — squeeze harder */
+@media (max-width: 380px) {
+  .pdp-gallery__stage {
+    min-height: 220px !important;
+  }
+  .pdp-gallery__slide img {
+    max-height: 200px !important;
+  }
+  .pdp-product__title {
+    font-size: 22px !important;
+  }
+}
+
+/* --- Mobile product: full-bleed gallery, no arrows (2026-10-09) ---
+   Match itel-style layout: image occupies the full viewport width,
+   info stacks below. Arrows removed — touch users get dots +
+   thumbnails which are more thumb-friendly. */
+@media (max-width: 700px) {
+  /* Kill the arrows entirely on mobile */
+  .pdp-gallery__nav {
+    display: none !important;
+  }
+
+  /* Grid becomes single column with zero horizontal padding so the
+     gallery can go edge-to-edge. */
+  .pdp-product {
+    padding: 0 !important;
+    gap: 0 !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Full-bleed gallery card — no rounded corners, no side margins */
+  .pdp-product__gallery {
+    padding: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+  }
+  .pdp-gallery {
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+  }
+  .pdp-gallery__stage {
+    min-height: 0 !important;
+    aspect-ratio: 1 / 1 !important;
+    background: #F7F8FA !important;
+    border-bottom: 1px solid #E4E7EC !important;
+  }
+  .pdp-gallery__slide {
+    padding: 24px 16px !important;
+  }
+  .pdp-gallery__slide img {
+    max-height: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Dots — center bottom, a bit bigger for thumb tapping */
+  .pdp-gallery__dots {
+    bottom: 14px !important;
+    gap: 10px !important;
+    padding: 6px 14px !important;
+  }
+  .pdp-gallery__dot {
+    width: 9px !important;
+    height: 9px !important;
+  }
+
+  /* Thumbnails strip — horizontal scroll, edge to edge, small */
+  .pdp-gallery__thumbs {
+    padding: 10px 14px !important;
+    gap: 8px !important;
+    border-bottom: 1px solid #E4E7EC !important;
+  }
+  .pdp-gallery__thumb {
+    width: 60px !important;
+    height: 60px !important;
+    padding: 4px !important;
+  }
+
+  /* Info column: restore padding now that the outer grid is flat */
+  .pdp-product__info {
+    padding: 22px 20px 28px !important;
+    gap: 10px !important;
+  }
+
+  /* Sections below keep their side padding */
+  .pdp-specs,
+  .pdp-desc,
+  .pdp-notice,
+  .pdp-warranty,
+  .pdp-datasheet {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+}
+
+/* --- Mobile hero: fit image + smaller title (2026-10-09) --- */
+@media (max-width: 700px) {
+  /* Hero fits within a comfortable slice of the screen */
+  .pdp-hero {
+    min-height: 300px !important;
+  }
+  .pdp-hero__inner {
+    min-height: 300px !important;
+    padding: 20px 20px 26px !important;
+    gap: 12px !important;
+  }
+
+  /* Background image — anchor to center so the subject isn't cropped */
+  .pdp-hero__bg {
+    background-position: center !important;
+    background-size: cover !important;
+  }
+
+  /* Breadcrumbs — small, tight */
+  .pdp-hero__crumbs {
+    font-size: 10px !important;
+    letter-spacing: 0.08em !important;
+    margin-bottom: 14px !important;
+  }
+
+  /* Eyebrow — compact */
+  .pdp-hero__eyebrow {
+    font-size: 10.5px !important;
+    letter-spacing: 0.14em !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* Title — the size fix. 20px, tight leading, max 4 lines. */
+  .pdp-hero__title {
+    font-size: 20px !important;
+    line-height: 1.25 !important;
+    letter-spacing: -0.01em !important;
+    max-width: 100% !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 4 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  /* Slightly stronger gradient so white text stays readable */
+  .pdp-hero__overlay {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(5, 14, 31, 0.35) 0%,
+        rgba(5, 14, 31, 0.72) 50%,
+        rgba(5, 14, 31, 0.92) 100%
+      ) !important;
+  }
+}
+
+/* Small phones — one notch smaller */
+@media (max-width: 380px) {
+  .pdp-hero,
+  .pdp-hero__inner {
+    min-height: 260px !important;
+  }
+  .pdp-hero__title {
+    font-size: 18px !important;
+    -webkit-line-clamp: 4 !important;
+  }
+}
+
+/* --- Admin translations editor (2026-10-09) --- */
+.translations-editor {
+  border: 1px solid #DDE2EB;
+  border-radius: 10px;
+  background: #FAFBFC;
+  overflow: hidden;
+}
+
+.translations-editor__toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0A1550;
+  cursor: pointer;
+  text-align: left;
+  transition: background 150ms ease;
+}
+.translations-editor__toggle:hover { background: #EEF1F7; }
+
+.translations-editor__chevron {
+  font-size: 12px;
+  color: #6B7686;
+  width: 12px;
+}
+
+.translations-editor__title { flex: 0 0 auto; }
+
+.translations-editor__count {
+  flex: 1 1 auto;
+  text-align: right;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #6B7686;
+  letter-spacing: 0.02em;
+}
+
+.translations-editor__body {
+  padding: 16px;
+  border-top: 1px solid #DDE2EB;
+  background: #FFFFFF;
+}
+
+.translations-editor__hint {
+  font-size: 12.5px;
+  color: #6B7686;
+  margin: 0 0 14px;
+  line-height: 1.5;
+}
+
+.translations-editor__tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: #EEF1F7;
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+
+.translations-editor__tab {
+  padding: 6px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0A1550;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+.translations-editor__tab:hover { color: #1428A0; }
+.translations-editor__tab.is-active {
+  background: #FFFFFF;
+  color: #1428A0;
+  box-shadow: 0 1px 3px rgba(5, 14, 31, 0.08);
+}
+
+.translations-editor__fields {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 14px;
+}

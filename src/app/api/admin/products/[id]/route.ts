@@ -28,6 +28,7 @@ const schema = z.object({
   notice: z.string().max(4000).nullable().optional(),
   featureBanners: z.array(featureBanner).nullable().optional(),
   keyFeatures: z.array(z.string().max(500)).nullable().optional(),
+  translations: z.record(z.string(), z.record(z.string(), z.unknown())).nullable().optional(),
   sortOrder: z.coerce.number().int().min(0).max(99999).optional(),
   published: z.boolean().optional(),
   featured: z.boolean().optional(),
