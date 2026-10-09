@@ -6,8 +6,15 @@ import {
   ProductDetail,
   type FeatureBanner,
 } from '@/components/public/product-detail';
+import { JsonLd } from '@/components/public/json-ld';
+import {
+  productSchema,
+  breadcrumbSchema,
+} from '@/lib/seo/schemas';
 
 export const dynamic = 'force-dynamic';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://luraenergy.com';
 
 export async function generateMetadata({
   params,
@@ -62,25 +69,55 @@ export default async function ProductDetailPage({
     kind: m.kind as 'IMAGE' | 'VIDEO' | 'DOCUMENT',
   }));
 
+  const productUrl = `${SITE_URL}/products/${item.category.slug}/${item.slug}`;
+  const galleryImages = media
+    .filter((m) => m.kind === 'IMAGE')
+    .map((m) => m.url);
+  const heroOrFirst = item.heroImageUrl ?? galleryImages[0];
+  const imagesForSchema = [
+    ...(heroOrFirst ? [heroOrFirst] : []),
+    ...galleryImages.filter((url) => url !== heroOrFirst),
+  ];
+
   return (
-    <ProductDetail
-      name={item.name}
-      modelNumber={item.modelNumber}
-      brand={item.brand}
-      summary={item.summary}
-      description={item.description}
-      warranty={item.warranty}
-      notice={item.notice}
-      heroImageUrl={item.heroImageUrl}
-      datasheetUrl={item.datasheetUrl}
-      categorySlug={item.category.slug}
-      categoryName={item.category.name}
-      categorySummary={item.category.summary}
-      keyFeatures={keyFeatures}
-      specifications={item.specifications}
-      media={media}
-      featureBanners={featureBanners}
-      t={t}
-    />
+    <>
+      <JsonLd
+        data={productSchema({
+          name: item.name,
+          description: item.summary ?? item.description ?? null,
+          sku: item.modelNumber,
+          brand: item.brand,
+          category: item.category.name,
+          images: imagesForSchema,
+          url: productUrl,
+        })}
+      />
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: t('nav.products'), url: '/products' },
+          { name: item.category.name, url: `/products/${item.category.slug}` },
+          { name: item.name, url: `/products/${item.category.slug}/${item.slug}` },
+        ])}
+      />
+      <ProductDetail
+        name={item.name}
+        modelNumber={item.modelNumber}
+        brand={item.brand}
+        summary={item.summary}
+        description={item.description}
+        warranty={item.warranty}
+        notice={item.notice}
+        heroImageUrl={item.heroImageUrl}
+        datasheetUrl={item.datasheetUrl}
+        categorySlug={item.category.slug}
+        categoryName={item.category.name}
+        categorySummary={item.category.summary}
+        keyFeatures={keyFeatures}
+        specifications={item.specifications}
+        media={media}
+        featureBanners={featureBanners}
+        t={t}
+      />
+    </>
   );
 }

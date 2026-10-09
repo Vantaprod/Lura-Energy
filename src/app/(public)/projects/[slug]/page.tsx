@@ -2,8 +2,12 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db/prisma';
 import type { Metadata } from 'next';
 import { getServerT } from '@/lib/i18n/server';
+import { JsonLd } from '@/components/public/json-ld';
+import { projectSchema, breadcrumbSchema } from '@/lib/seo/schemas';
 
 export const dynamic = 'force-dynamic';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://luraenergy.com';
 
 export async function generateMetadata({
   params,
@@ -35,7 +39,9 @@ export default async function ProjectPage({
   const [item, { t }] = await Promise.all([
     prisma.project.findFirst({
       where: { slug, published: true },
-      include: { media: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] } },
+      include: {
+        media: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
+      },
     }),
     getServerT(),
   ]);
@@ -59,8 +65,27 @@ export default async function ProjectPage({
     });
   }
 
+  const imageUrls = item.media
+    .filter((m) => m.kind === 'IMAGE')
+    .map((m) => m.url);
+
   return (
     <main>
+      <JsonLd
+        data={projectSchema({
+          title: item.title,
+          description: item.description,
+          images: imageUrls,
+          location: item.location,
+          url: `${SITE_URL}/projects/${item.slug}`,
+        })}
+      />
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: t('nav.projects'), url: '/projects' },
+          { name: item.title, url: `/projects/${item.slug}` },
+        ])}
+      />
       <section className="page-intro">
         <p className="eyebrow">
           {[item.category, item.location].filter(Boolean).join(' \u00B7 ')}
