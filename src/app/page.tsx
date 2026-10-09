@@ -4,6 +4,8 @@ import { loadHeroSlides } from '@/lib/hero-slides';
 import { HeroCarousel, type HeroSlide } from '@/components/public/hero-carousel';
 import { ImpactSection, type ImpactContent } from '@/components/public/impact-section';
 import { getServerT } from '@/lib/i18n/server';
+import { JsonLd } from '@/components/public/json-ld';
+import { websiteSchema } from '@/lib/seo/schemas';
 
 export const dynamic = 'force-dynamic';
 
@@ -102,11 +104,6 @@ export default async function HomePage() {
     settings.map((x) => [x.key, x.value]),
   );
 
-  /**
-   * Bilingual resolve:
-   * - English: use DB value if present, otherwise the English dictionary default.
-   * - Chinese / French: always use the dictionary so the language is fully translated.
-   */
   const resolve = (dbKey: string, i18nKey: string): string => {
     if (lang === 'en') {
       const dbValue = content[dbKey];
@@ -115,13 +112,15 @@ export default async function HomePage() {
     return t(i18nKey);
   };
 
-  const intro = lang === 'en' && typeof content['company.intro'] === 'string'
-    ? String(content['company.intro'])
-    : '';
+  const intro =
+    lang === 'en' && typeof content['company.intro'] === 'string'
+      ? String(content['company.intro'])
+      : '';
   const ctaTitle = resolve('home.ctaTitle', 'cta.talkToLura');
-  const ctaBody = typeof content['home.ctaBody'] === 'string' && lang === 'en'
-    ? String(content['home.ctaBody'])
-    : '';
+  const ctaBody =
+    typeof content['home.ctaBody'] === 'string' && lang === 'en'
+      ? String(content['home.ctaBody'])
+      : '';
 
   const impactContent: ImpactContent = {
     eyebrow: resolve('impact.eyebrow', 'impact.eyebrow'),
@@ -131,7 +130,8 @@ export default async function HomePage() {
     body2: resolve('impact.body2', 'impact.body2'),
     ctaLabel: resolve('impact.ctaLabel', 'impact.ctaLabel'),
     ctaHref:
-      typeof content['impact.ctaHref'] === 'string' && String(content['impact.ctaHref']).trim()
+      typeof content['impact.ctaHref'] === 'string' &&
+      String(content['impact.ctaHref']).trim()
         ? String(content['impact.ctaHref'])
         : '/projects',
     stats: [
@@ -159,6 +159,7 @@ export default async function HomePage() {
 
   return (
     <main>
+      <JsonLd data={websiteSchema()} />
       <section className="hero">
         <HeroCarousel slides={heroSlides} />
       </section>
@@ -227,13 +228,24 @@ export default async function HomePage() {
                 <article className="record-card" key={item.id}>
                   <div>
                     {image && (
-                      <img className="record-image" src={image.url} alt={image.alt ?? ''} loading="lazy" width="900" height="620" />
+                      <img
+                        className="record-image"
+                        src={image.url}
+                        alt={image.alt ?? ''}
+                        loading="lazy"
+                        width="900"
+                        height="620"
+                      />
                     )}
-                    {item.brand && <p className="eyebrow eyebrow-plain">{item.brand}</p>}
+                    {item.brand && (
+                      <p className="eyebrow eyebrow-plain">{item.brand}</p>
+                    )}
                     <h3>{item.name}</h3>
                     {item.summary && <p>{item.summary}</p>}
                   </div>
-                  <Link href={'/products/' + item.slug}>{t('cta.viewProduct')}</Link>
+                  <Link href={'/products/' + item.slug}>
+                    {t('cta.viewProduct')}
+                  </Link>
                 </article>
               );
             })}
@@ -264,13 +276,24 @@ export default async function HomePage() {
                 <article className="record-card" key={item.id}>
                   <div>
                     {image && (
-                      <img className="record-image" src={image.url} alt={image.alt ?? ''} loading="lazy" width="900" height="620" />
+                      <img
+                        className="record-image"
+                        src={image.url}
+                        alt={image.alt ?? ''}
+                        loading="lazy"
+                        width="900"
+                        height="620"
+                      />
                     )}
-                    {item.location && <p className="eyebrow eyebrow-plain">{item.location}</p>}
+                    {item.location && (
+                      <p className="eyebrow eyebrow-plain">{item.location}</p>
+                    )}
                     <h3>{item.title}</h3>
                     {item.category && <p>{item.category}</p>}
                   </div>
-                  <Link href={'/projects/' + item.slug}>{t('cta.viewProject')}</Link>
+                  <Link href={'/projects/' + item.slug}>
+                    {t('cta.viewProject')}
+                  </Link>
                 </article>
               );
             })}
@@ -295,7 +318,11 @@ export default async function HomePage() {
             {testimonials.map((item) => (
               <figure className="record-card testimonial-card" key={item.id}>
                 <blockquote>
-                  <p>{'\u201C'}{item.quote}{'\u201D'}</p>
+                  <p>
+                    {'\u201C'}
+                    {item.quote}
+                    {'\u201D'}
+                  </p>
                 </blockquote>
               </figure>
             ))}
@@ -310,8 +337,12 @@ export default async function HomePage() {
           {ctaBody && <p className="lead">{ctaBody}</p>}
         </div>
         <div className="hero-actions">
-          <Link className="button" href="/contact">{t('cta.quote')}</Link>
-          <Link className="button button-ghost" href="/products">{t('cta.exploreProducts')}</Link>
+          <Link className="button" href="/contact">
+            {t('cta.quote')}
+          </Link>
+          <Link className="button button-ghost" href="/products">
+            {t('cta.exploreProducts')}
+          </Link>
         </div>
       </section>
     </main>
