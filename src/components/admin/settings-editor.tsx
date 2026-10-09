@@ -7,12 +7,12 @@ import { Select } from '@/components/ui/select';
 type HeroImage = { url: string; alt: string; mobileUrl: string };
 type MediaFile = { url: string; name: string };
 
-const IMPACT_FIELDS: [string, string, string][] = [
+// ---- Field groups ----
+
+const IMPACT_SHORT_FIELDS: [string, string, string][] = [
   ['impact.eyebrow', 'admin.settings.field.impact.eyebrow.label', 'admin.settings.field.impact.eyebrow.hint'],
   ['impact.headingWhite', 'admin.settings.field.impact.headingWhite.label', 'admin.settings.field.impact.headingWhite.hint'],
   ['impact.headingAccent', 'admin.settings.field.impact.headingAccent.label', 'admin.settings.field.impact.headingAccent.hint'],
-  ['impact.body1', 'admin.settings.field.impact.body1.label', 'admin.settings.field.impact.body1.hint'],
-  ['impact.body2', 'admin.settings.field.impact.body2.label', 'admin.settings.field.impact.body2.hint'],
   ['impact.ctaLabel', 'admin.settings.field.impact.ctaLabel.label', 'admin.settings.field.impact.ctaLabel.hint'],
   ['impact.ctaHref', 'admin.settings.field.impact.ctaHref.label', 'admin.settings.field.impact.ctaHref.hint'],
   ['impact.stat1Label', 'admin.settings.field.impact.stat1Label.label', 'admin.settings.field.impact.stat1Label.hint'],
@@ -26,13 +26,21 @@ const IMPACT_FIELDS: [string, string, string][] = [
   ['impact.stat3Suffix', 'admin.settings.field.impact.stat3Suffix.label', 'admin.settings.field.impact.stat3Suffix.hint'],
 ];
 
-const TEXT_FIELDS: [string, string, string][] = [
+const IMPACT_LONG_FIELDS: [string, string, string][] = [
+  ['impact.body1', 'admin.settings.field.impact.body1.label', 'admin.settings.field.impact.body1.hint'],
+  ['impact.body2', 'admin.settings.field.impact.body2.label', 'admin.settings.field.impact.body2.hint'],
+];
+
+const TEXT_SHORT_FIELDS: [string, string, string][] = [
   ['home.ctaTitle', 'admin.settings.field.home.ctaTitle.label', 'admin.settings.field.home.ctaTitle.hint'],
-  ['home.ctaBody', 'admin.settings.field.home.ctaBody.label', 'admin.settings.field.home.ctaBody.hint'],
-  ['company.intro', 'admin.settings.field.company.intro.label', 'admin.settings.field.company.intro.hint'],
   ['contact.email', 'admin.settings.field.contact.email.label', 'admin.settings.field.contact.email.hint'],
   ['contact.phone', 'admin.settings.field.contact.phone.label', 'admin.settings.field.contact.phone.hint'],
   ['contact.whatsapp', 'admin.settings.field.contact.whatsapp.label', 'admin.settings.field.contact.whatsapp.hint'],
+];
+
+const TEXT_LONG_FIELDS: [string, string, string][] = [
+  ['home.ctaBody', 'admin.settings.field.home.ctaBody.label', 'admin.settings.field.home.ctaBody.hint'],
+  ['company.intro', 'admin.settings.field.company.intro.label', 'admin.settings.field.company.intro.hint'],
   ['legal.privacyNotice', 'admin.settings.field.legal.privacyNotice.label', 'admin.settings.field.legal.privacyNotice.hint'],
 ];
 
@@ -143,8 +151,46 @@ export function SettingsEditor() {
     return <p className="form-note">{t('admin.settings.state.loading')}</p>;
   }
 
+  function renderShortField(key: string, labelKey: string, hintKey: string) {
+    return (
+      <div className="field" key={key}>
+        <label htmlFor={key}>{t(labelKey)}</label>
+        <input
+          id={key}
+          type="text"
+          value={values[key] ?? ''}
+          onChange={(e) => setValues({ ...values, [key]: e.target.value })}
+          maxLength={500}
+        />
+        <span className="form-note">{t(hintKey)}</span>
+      </div>
+    );
+  }
+
+  function renderLongField(
+    key: string,
+    labelKey: string,
+    hintKey: string,
+    rows = 4,
+  ) {
+    return (
+      <div className="field field-wide" key={key}>
+        <label htmlFor={key}>{t(labelKey)}</label>
+        <textarea
+          id={key}
+          rows={rows}
+          value={values[key] ?? ''}
+          onChange={(e) => setValues({ ...values, [key]: e.target.value })}
+          maxLength={20000}
+        />
+        <span className="form-note">{t(hintKey)}</span>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={save}>
+      {/* HERO SLIDES */}
       <section style={{ marginBottom: '3rem' }}>
         <h2 style={{ marginBottom: '0.5rem' }}>{t('admin.settings.hero.title')}</h2>
         <p className="form-note" style={{ marginBottom: '1.5rem' }}>
@@ -213,10 +259,7 @@ export function SettingsEditor() {
                 </div>
               </div>
 
-              <label
-                htmlFor={'hero-url-' + index}
-                style={{ display: 'block', marginBottom: '0.5rem' }}
-              >
+              <label htmlFor={'hero-url-' + index} style={{ display: 'block', marginBottom: '0.5rem' }}>
                 {t('admin.settings.hero.field.image')}
               </label>
               <div style={{ marginBottom: '0.5rem' }}>
@@ -283,51 +326,29 @@ export function SettingsEditor() {
         </button>
       </section>
 
+      {/* IMPACT SECTION */}
       <section style={{ marginBottom: '3rem' }}>
         <h2 style={{ marginBottom: '0.5rem' }}>{t('admin.settings.impact.title')}</h2>
         <p className="form-note" style={{ marginBottom: '1.5rem' }}>
           {t('admin.settings.impact.intro')}
         </p>
-        {IMPACT_FIELDS.map(([key, labelKey, hintKey]) => (
-          <div className="field" key={key} style={{ margin: '1.25rem 0' }}>
-            <label htmlFor={key}>{t(labelKey)}</label>
-            <textarea
-              id={key}
-              value={values[key] ?? ''}
-              onChange={(e) => setValues({ ...values, [key]: e.target.value })}
-              maxLength={20000}
-              style={{
-                minHeight:
-                  key === 'impact.body1' || key === 'impact.body2' ? 120 : 52,
-              }}
-            />
-            <span className="form-note">{t(hintKey)}</span>
-          </div>
-        ))}
+        <div className="form-grid">
+          {IMPACT_SHORT_FIELDS.map(([k, l, h]) => renderShortField(k, l, h))}
+          {IMPACT_LONG_FIELDS.map(([k, l, h]) =>
+            renderLongField(k, l, h, 4),
+          )}
+        </div>
       </section>
 
+      {/* PAGE CONTENT */}
       <section style={{ marginBottom: '3rem' }}>
         <h2 style={{ marginBottom: '0.5rem' }}>{t('admin.settings.page.title')}</h2>
-        {TEXT_FIELDS.map(([key, labelKey, hintKey]) => (
-          <div className="field" key={key} style={{ margin: '1.25rem 0' }}>
-            <label htmlFor={key}>{t(labelKey)}</label>
-            <textarea
-              id={key}
-              value={values[key] ?? ''}
-              onChange={(e) => setValues({ ...values, [key]: e.target.value })}
-              maxLength={20000}
-              style={{
-                minHeight:
-                  key === 'company.intro' ||
-                  key === 'legal.privacyNotice' ||
-                  key === 'home.ctaBody'
-                    ? 120
-                    : 52,
-              }}
-            />
-            <span className="form-note">{t(hintKey)}</span>
-          </div>
-        ))}
+        <div className="form-grid">
+          {TEXT_SHORT_FIELDS.map(([k, l, h]) => renderShortField(k, l, h))}
+          {TEXT_LONG_FIELDS.map(([k, l, h]) =>
+            renderLongField(k, l, h, k === 'legal.privacyNotice' ? 8 : 4),
+          )}
+        </div>
       </section>
 
       <button className="button" type="submit">

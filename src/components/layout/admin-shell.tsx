@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n/context';
 import { AdminLogout } from '@/components/admin/admin-logout';
@@ -20,6 +20,7 @@ export function AdminShell({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { t, lang, applyServerLang } = useTranslation();
 
   const langRef = useRef<Lang>(lang);
@@ -76,6 +77,12 @@ export function AdminShell({
     };
   }, [applyServerLang, router]);
 
+  const isActive = (href: string): boolean => {
+    if (!pathname) return false;
+    if (href === '/admin') return pathname === '/admin';
+    return pathname === href || pathname.startsWith(href + '/');
+  };
+
   const NAV_LINKS = [
     { href: '/admin', label: t('admin.nav.overview') },
     { href: '/admin/service-centres', label: t('admin.nav.serviceCentres') },
@@ -95,6 +102,7 @@ export function AdminShell({
     { href: '/admin/content', label: t('admin.nav.siteSettings') },
     { href: '/admin/administrators', label: t('admin.nav.administrators') },
     { href: '/admin/audit-log', label: t('admin.nav.auditLog') },
+    { href: '/admin/system', label: t('admin.nav.system') },
   ];
 
   return (
@@ -129,13 +137,23 @@ export function AdminShell({
       {user && (
         <nav className="admin-nav" aria-label={t('aria.adminNav')}>
           {NAV_LINKS.map((item) => (
-            <Link key={item.href} href={item.href}>
+            <Link
+              key={item.href}
+              href={item.href}
+              className={isActive(item.href) ? 'is-active' : ''}
+              aria-current={isActive(item.href) ? 'page' : undefined}
+            >
               {item.label}
             </Link>
           ))}
           {user.role === 'OWNER' &&
             OWNER_LINKS.map((item) => (
-              <Link key={item.href} href={item.href}>
+              <Link
+                key={item.href}
+                href={item.href}
+                className={isActive(item.href) ? 'is-active' : ''}
+                aria-current={isActive(item.href) ? 'page' : undefined}
+              >
                 {item.label}
               </Link>
             ))}

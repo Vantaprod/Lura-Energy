@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useTranslation } from '@/lib/i18n/context';
 
@@ -228,7 +229,16 @@ export function AdminsManager() {
               {data.users.map((account) => (
                 <tr key={account.id}>
                   <td>
-                    {account.name}
+                    <Link
+                      href={`/admin/administrators/${account.id}`}
+                      style={{
+                        color: '#1428A0',
+                        fontWeight: 700,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      {account.name}
+                    </Link>
                     <br />
                     <span className="form-note">{account.email}</span>
                   </td>

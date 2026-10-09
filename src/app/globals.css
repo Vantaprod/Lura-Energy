@@ -6265,3 +6265,48 @@ details[open] ul li > button.admin-action:hover {
   background: #FBE9E9;
   color: #B91C1C;
 }
+
+/* --- Admin form field heights (2026-10-09) ---
+   Textareas were rendering at their browser-default height (~200px)
+   even when the value was a single word. These rules cap them so
+   single-line-ish values don't dominate the page. */
+.admin-shell textarea {
+  min-height: 0;
+  resize: vertical;
+}
+.admin-shell input[type="text"],
+.admin-shell input[type="search"],
+.admin-shell input[type="email"],
+.admin-shell input[type="number"],
+.admin-shell input[type="password"] {
+  min-height: 42px;
+}
+
+/* --- Admin nav active state (2026-10-09) ---
+   The link for the current page gets a navy pill + underline so it's
+   obvious at a glance which section you're in. */
+.admin-nav a {
+  position: relative;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.admin-nav a.is-active {
+  color: #0A1550;
+  font-weight: 700;
+}
+
+.admin-nav a.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -10px;
+  height: 2px;
+  background: #1428A0;
+  border-radius: 2px;
+}
+
+/* Give nav links a subtle hover so users know they're clickable */
+.admin-nav a:hover:not(.is-active) {
+  color: #1428A0;
+}
