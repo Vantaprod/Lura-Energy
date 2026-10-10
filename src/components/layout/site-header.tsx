@@ -85,8 +85,8 @@ export function SiteHeader() {
           <Image
             src="/brand/lura-logo.png"
             alt="Lura Energy"
-            width={140}
-            height={40}
+            width={1264}
+            height={632}
             priority
             style={{
               height: isMobile ? '22px' : '34px',

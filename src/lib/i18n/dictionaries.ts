@@ -460,6 +460,9 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.series.error.publish': 'Could not change publish status.',
 
     // ---- ADMIN SPECS ----
+        'admin.specs.translations.toggle': 'Translations',
+    'admin.specs.translations.hint': 'Optional. Translate the spec label shown to visitors in this language.',
+    'admin.specs.translations.short': 'tr',
     'admin.specs.summary': 'Specifications',
     'admin.specs.field.group': 'Group',
     'admin.specs.field.groupPlaceholder': 'e.g. Battery, Inverter, Performance',
@@ -1415,6 +1418,9 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.series.error.publish': '无法更改发布状态。',
 
     // ---- ADMIN SPECS ----
+        'admin.specs.translations.toggle': '翻译',
+    'admin.specs.translations.hint': '可选。填写访问者以该语言看到的规格标签翻译。',
+    'admin.specs.translations.short': '译',
     'admin.specs.summary': '规格',
     'admin.specs.field.group': '分组',
     'admin.specs.field.groupPlaceholder': '例如：电池、逆变器、性能',
@@ -2369,6 +2375,9 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.series.error.publish': 'Impossible de modifier le statut de publication.',
 
     // ---- ADMIN SPECS ----
+        'admin.specs.translations.toggle': 'Traductions',
+    'admin.specs.translations.hint': 'Facultatif. Traduisez le libellé de la spécification visible dans cette langue.',
+    'admin.specs.translations.short': 'trad',
     'admin.specs.summary': 'Spécifications',
     'admin.specs.field.group': 'Groupe',
     'admin.specs.field.groupPlaceholder': 'ex. Batterie, Onduleur, Performance',
