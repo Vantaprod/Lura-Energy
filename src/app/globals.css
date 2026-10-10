@@ -6782,3 +6782,83 @@ details[open] ul li > button.admin-action:hover {
     mask-image: none;
   }
 }
+
+/* --- Partner marquee: bigger, bolder (2026-10-10) ---
+   Previous logo height was 40px which read as small against the
+   1400px-wide hero. Bumping to 64px desktop, 48px tablet, 40px
+   mobile, with more breathing room and a touch more contrast. */
+
+.partner-marquee__logo {
+  height: 64px !important;
+  max-width: 260px !important;
+  opacity: 0.92;
+  transition: opacity 200ms ease, filter 200ms ease;
+}
+
+.partner-marquee__link:hover .partner-marquee__logo,
+.partner-marquee__link:focus-visible .partner-marquee__logo {
+  opacity: 1;
+}
+
+.partner-marquee__item {
+  padding: 0 64px !important;
+}
+
+/* Slightly slower loop now that logos are bigger — feels deliberate */
+.partner-marquee__track {
+  animation-duration: 70s !important;
+}
+
+/* Section itself: more vertical presence */
+.partner-marquee-section {
+  padding: 88px 0 112px !important;
+}
+
+.partner-marquee-section__head {
+  margin-bottom: 56px !important;
+}
+
+.partner-marquee-section__title {
+  font-size: 36px !important;
+}
+@media (min-width: 900px) {
+  .partner-marquee-section__title {
+    font-size: 46px !important;
+  }
+}
+
+.partner-marquee-section__body {
+  font-size: 16px !important;
+  max-width: 600px !important;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .partner-marquee__logo {
+    height: 56px !important;
+    max-width: 220px !important;
+  }
+  .partner-marquee__item {
+    padding: 0 48px !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+  .partner-marquee__logo {
+    height: 44px !important;
+    max-width: 160px !important;
+  }
+  .partner-marquee__item {
+    padding: 0 36px !important;
+  }
+  .partner-marquee-section {
+    padding: 64px 0 80px !important;
+  }
+  .partner-marquee-section__title {
+    font-size: 30px !important;
+  }
+  .partner-marquee-section__body {
+    font-size: 15px !important;
+  }
+}
