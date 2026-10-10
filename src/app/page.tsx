@@ -3,11 +3,27 @@ import { prisma } from '@/lib/db/prisma';
 import { loadHeroSlides } from '@/lib/hero-slides';
 import { HeroCarousel, type HeroSlide } from '@/components/public/hero-carousel';
 import { ImpactSection, type ImpactContent } from '@/components/public/impact-section';
+import { PartnerMarquee } from '@/components/public/partner-marquee';
 import { getServerT } from '@/lib/i18n/server';
 import { JsonLd } from '@/components/public/json-ld';
 import { websiteSchema } from '@/lib/seo/schemas';
 
 export const dynamic = 'force-dynamic';
+
+const ROTATION_WINDOW_MS = 30 * 60 * 1000;
+const ROTATION_COUNT = 3;
+
+function rotate<T>(pool: readonly T[], count: number): T[] {
+  if (pool.length === 0) return [];
+  if (pool.length <= count) return [...pool];
+  const windowIndex = Math.floor(Date.now() / ROTATION_WINDOW_MS);
+  const start = (windowIndex * count) % pool.length;
+  const result: T[] = [];
+  for (let i = 0; i < count; i++) {
+    result.push(pool[(start + i) % pool.length]);
+  }
+  return result;
+}
 
 function parseHeroImages(value: unknown): HeroSlide[] {
   if (typeof value !== 'string' || !value.trim()) return [];
@@ -43,82 +59,74 @@ export default async function HomePage() {
     process.env.NODE_ENV === 'development' &&
     process.env.PREVIEW_WITHOUT_DATABASE === 'true';
 
-  const [settings, products, projects, solutions, testimonials] = isPreview
-    ? ([[], [], [], [], []] as const)
-    : await Promise.all([
-        prisma.setting.findMany({
-          where: {
-            key: {
-              in: [
-                'home.heroImages',
-                'home.ctaTitle',
-                'home.ctaBody',
-                'company.intro',
-                'impact.eyebrow',
-                'impact.headingWhite',
-                'impact.headingAccent',
-                'impact.body1',
-                'impact.body2',
-                'impact.ctaLabel',
-                'impact.ctaHref',
-                'impact.stat1Label',
-                'impact.stat1Value',
-                'impact.stat1Suffix',
-                'impact.stat2Label',
-                'impact.stat2Value',
-                'impact.stat2Suffix',
-                'impact.stat3Label',
-                'impact.stat3Value',
-                'impact.stat3Suffix',
-              ],
+  const [settings, productPool, projectPool, solutions, testimonials, partners] =
+    isPreview
+      ? ([[], [], [], [], [], []] as const)
+      : await Promise.all([
+          prisma.setting.findMany({
+            where: {
+              key: {
+                in: [
+                  'home.heroImages',
+                  'home.ctaTitle',
+                  'home.ctaBody',
+                  'company.intro',
+                  'impact.eyebrow',
+                  'impact.headingWhite',
+                  'impact.headingAccent',
+                  'impact.body1',
+                  'impact.body2',
+                  'impact.ctaLabel',
+                  'impact.ctaHref',
+                  'impact.stat1Label',
+                  'impact.stat1Value',
+                  'impact.stat1Suffix',
+                  'impact.stat2Label',
+                  'impact.stat2Value',
+                  'impact.stat2Suffix',
+                  'impact.stat3Label',
+                  'impact.stat3Value',
+                  'impact.stat3Suffix',
+                ],
+              },
             },
-          },
-        }),
-        prisma.product.findMany({
-          where: { published: true, featured: true, category: { published: true } },
-          include: { media: true, category: true },
-          orderBy: { sortOrder: 'asc' },
-          take: 3,
-        }),
-        prisma.project.findMany({
-          where: { published: true, featured: true },
-          include: { media: true },
-          orderBy: { sortOrder: 'asc' },
-          take: 3,
-        }),
-        prisma.solution.findMany({
-          where: { published: true },
-          orderBy: { sortOrder: 'asc' },
-          take: 3,
-        }),
-        prisma.testimonial.findMany({
-          where: { published: true },
-          orderBy: { sortOrder: 'asc' },
-          take: 3,
-        }),
-      ]);
+          }),
+          prisma.product.findMany({
+            where: { published: true, category: { published: true } },
+            include: { media: true, category: true },
+            orderBy: [
+              { featured: 'desc' },
+              { sortOrder: 'asc' },
+              { name: 'asc' },
+            ],
+          }),
+          prisma.project.findMany({
+            where: { published: true },
+            include: { media: true },
+            orderBy: [
+              { featured: 'desc' },
+              { sortOrder: 'asc' },
+              { title: 'asc' },
+            ],
+          }),
+          prisma.solution.findMany({
+            where: { published: true },
+            orderBy: { sortOrder: 'asc' },
+            take: 3,
+          }),
+          prisma.testimonial.findMany({
+            where: { published: true },
+            orderBy: { sortOrder: 'asc' },
+            take: 3,
+          }),
+          prisma.partner.findMany({
+            where: { published: true },
+            orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+          }),
+        ]);
 
-  // ---- Fallbacks: if no `featured` records exist yet, show the latest published ----
-  const [featuredProducts, featuredProjects] = isPreview
-    ? [[], []]
-    : await Promise.all([
-        products.length
-          ? Promise.resolve(products)
-          : prisma.product.findMany({
-              where: { published: true, category: { published: true } },
-              include: { media: true, category: true },
-              orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-              take: 3,
-            }),
-        projects.length
-          ? Promise.resolve(projects)
-          : prisma.project.findMany({
-              where: { published: true },
-              include: { media: true },
-              orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
-              take: 3,
-            }),
-      ]);
+  const featuredProducts = rotate(productPool, ROTATION_COUNT);
+  const featuredProjects = rotate(projectPool, ROTATION_COUNT);
 
   const { lang, t } = await getServerT();
 
@@ -351,6 +359,21 @@ export default async function HomePage() {
             ))}
           </div>
         </section>
+      )}
+
+      {partners.length > 0 && (
+        <PartnerMarquee
+          partners={partners.map((p) => ({
+            id: p.id,
+            name: p.name,
+            logoUrl: p.logoUrl,
+            logoAlt: p.logoAlt,
+            websiteUrl: p.websiteUrl,
+          }))}
+          eyebrow={t('home.partnersEyebrow')}
+          heading={t('home.partnersHeading')}
+          body={t('home.partnersBody')}
+        />
       )}
 
       <section className="split-cta">

@@ -93,6 +93,7 @@ export function AdminShell({
     { href: '/admin/solutions', label: t('admin.nav.solutions') },
     { href: '/admin/media', label: t('admin.nav.media') },
     { href: '/admin/testimonials', label: t('admin.nav.testimonials') },
+    { href: '/admin/partners', label: t('admin.nav.partners') },
     { href: '/admin/faqs', label: t('admin.nav.faqs') },
     { href: '/admin/resources', label: t('admin.nav.resources') },
     { href: '/admin/leads', label: t('admin.nav.leads') },

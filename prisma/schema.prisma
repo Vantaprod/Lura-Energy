@@ -73,14 +73,14 @@ model ProductCategory {
   slug         String    @unique
   summary      String?
   description  String?
+  coverUrl     String?
+  coverAlt     String?
+  sortOrder    Int       @default(0)
+  published    Boolean   @default(false)
   translations Json?
-  coverUrl    String?
-  coverAlt    String?
-  sortOrder   Int       @default(0)
-  published   Boolean   @default(false)
-  products    Product[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  products     Product[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model Product {
@@ -121,9 +121,9 @@ model ProductSpecification {
   label        String
   value        String
   unit         String?
+  group        String? @map("spec_group")
   translations Json?
-  group     String? @map("spec_group")
-  sortOrder Int     @default(0)
+  sortOrder    Int     @default(0)
 }
 
 model Project {
@@ -296,6 +296,20 @@ model ServiceCentre {
   imageUrl    String?
   published   Boolean  @default(false)
   sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model Partner {
+  id          String   @id @default(cuid())
+  name        String
+  logoUrl     String
+  logoAlt     String?
+  websiteUrl  String?
+  sortOrder   Int      @default(0)
+  published   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
