@@ -6973,3 +6973,47 @@ details[open] ul li > button.admin-action:hover {
     90deg, transparent 0, #000 8%, #000 92%, transparent 100%
   ) !important;
 }
+
+/* --- Login tabs (2026-10-11) --- */
+.login-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  background: #EEF1F7;
+  border-radius: 10px;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.login-tab {
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0A1550;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+.login-tab:hover {
+  color: #1428A0;
+}
+.login-tab.is-active {
+  background: #FFFFFF;
+  color: #1428A0;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(5, 14, 31, 0.10);
+}
+
+.login-tab-note {
+  font-size: 12.5px;
+  color: #6B7686;
+  margin: 0 0 0.5rem;
+  padding: 8px 12px;
+  background: #FFF7EE;
+  border-left: 3px solid #F58220;
+  border-radius: 4px;
+}

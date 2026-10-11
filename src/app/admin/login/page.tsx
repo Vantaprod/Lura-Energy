@@ -2,12 +2,16 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n/context';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
+
+type Tab = 'admin' | 'master';
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const [tab, setTab] = useState<Tab>('admin');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -22,9 +26,22 @@ export default function AdminLoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(Object.fromEntries(form.entries())),
+        body: JSON.stringify({
+          ...Object.fromEntries(form.entries()),
+          intent: tab,
+        }),
       });
-      if (!res.ok) throw new Error();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(
+          (data as { error?: string }).error ?? t('admin.login.error'),
+        );
+        return;
+      }
+      if (tab === 'master' && !(data as { isMaster?: boolean }).isMaster) {
+        setError(t('admin.login.notMaster'));
+        return;
+      }
       router.push('/admin');
       router.refresh();
     } catch {
@@ -57,6 +74,43 @@ export default function AdminLoginPage() {
         <p className="eyebrow">{t('admin.login.eyebrow')}</p>
         <h1 style={{ fontSize: '2.6rem' }}>{t('admin.login.heading')}</h1>
         <p className="form-note">{t('admin.login.subtitle')}</p>
+
+        <div
+          className="login-tabs"
+          role="tablist"
+          aria-label={t('admin.login.tabs.label')}
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'admin'}
+            className={'login-tab' + (tab === 'admin' ? ' is-active' : '')}
+            onClick={() => {
+              setTab('admin');
+              setError('');
+            }}
+          >
+            {t('admin.login.tabs.admin')}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'master'}
+            className={'login-tab' + (tab === 'master' ? ' is-active' : '')}
+            onClick={() => {
+              setTab('master');
+              setError('');
+            }}
+          >
+            {t('admin.login.tabs.master')}
+          </button>
+        </div>
+
+        {tab === 'master' && (
+          <p className="form-note login-tab-note">
+            {t('admin.login.tabs.masterNote')}
+          </p>
+        )}
 
         <div className="field" style={{ marginTop: '1rem' }}>
           <label htmlFor="email">{t('admin.login.email')}</label>
@@ -118,6 +172,15 @@ export default function AdminLoginPage() {
         >
           {busy ? t('admin.login.signingIn') : t('admin.login.signIn')}
         </button>
+
+        <p style={{ marginTop: '1.25rem', textAlign: 'center' }}>
+          <Link
+            href="/admin/request-access"
+            style={{ color: '#1428A0', textDecoration: 'none', fontWeight: 600, fontSize: '14px' }}
+          >
+            {t('admin.login.requestAccess')}
+          </Link>
+        </p>
       </form>
     </div>
   );
