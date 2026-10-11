@@ -87,6 +87,28 @@ export default function RequestAccessPage() {
         </div>
 
         <div className="field" style={{ marginTop: '1rem' }}>
+          <label htmlFor="role">{t('admin.requestAccess.role')}</label>
+          <select
+            id="role"
+            name="role"
+            required
+            defaultValue=""
+            style={{ width: '100%', fontFamily: 'inherit', fontSize: '15px', padding: '12px', border: '1px solid #CFD6E2', borderRadius: '8px', background: '#fff' }}
+          >
+            <option value="" disabled>{t('admin.requestAccess.rolePlaceholder')}</option>
+            <option value="Customer Service">Customer Service</option>
+            <option value="Sales Representative">Sales Representative</option>
+            <option value="Social Media Manager">Social Media Manager</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Operations">Operations</option>
+            <option value="Warehouse / Logistics">Warehouse / Logistics</option>
+            <option value="Technical / Engineering">Technical / Engineering</option>
+            <option value="Management">Management</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div className="field" style={{ marginTop: '1rem' }}>
           <label htmlFor="reason">{t('admin.requestAccess.reason')}</label>
           <textarea
             id="reason"
