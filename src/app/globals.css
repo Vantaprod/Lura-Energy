@@ -7088,3 +7088,21 @@ details[open] ul li > button.admin-action:hover {
     object-fit: cover;
   }
 }
+
+/* --- Access requests (2026-10-11) --- */
+.ar-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.ar-row { background: #FFFFFF; border: 1px solid #E5E9F0; border-radius: 12px; padding: 18px 20px; }
+.ar-row__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+.ar-row__name { font-size: 16px; font-weight: 700; color: #0A1550; margin: 0; }
+.ar-row__meta { font-size: 13px; color: #6B7686; margin: 3px 0 0; }
+.ar-row__email { color: #1428A0; text-decoration: none; }
+.ar-row__email:hover { text-decoration: underline; }
+.ar-badge { padding: 3px 9px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 999px; flex-shrink: 0; }
+.ar-row__reason { font-size: 14px; color: #0A1550; line-height: 1.55; margin: 0 0 10px; white-space: pre-wrap; }
+.ar-row__date { font-size: 12px; color: #8A93A4; margin: 0 0 12px; }
+.ar-row__rejection { font-size: 13px; color: #991B1B; background: #FEF2F2; padding: 8px 12px; border-radius: 6px; margin: 0 0 12px; }
+.ar-row__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.ar-input { flex: 1 1 260px; min-width: 200px; padding: 10px 12px; font-family: inherit; font-size: 14px; border: 1px solid #CFD6E2; border-radius: 8px; }
+.ar-row__temp { background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 10px; padding: 14px 16px; margin-top: 12px; font-size: 14px; color: #064E3B; }
+.ar-row__temp p { margin: 0 0 8px; }
+.ar-temp-creds code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: #FFFFFF; padding: 4px 8px; border-radius: 6px; display: inline-block; margin: 2px 0; }

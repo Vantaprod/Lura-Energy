@@ -272,6 +272,19 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'globe.ariaLabel': 'Rotating globe highlighting Lura operating regions in Nigeria',
 
     // ---- ADMIN SHELL ----
+        'admin.requestAccess.eyebrow': 'LURA ADMINISTRATION',
+    'admin.requestAccess.heading': 'Request access',
+    'admin.requestAccess.subtitle': 'Tell us who you are and why you need admin access. A master administrator will review your request.',
+    'admin.requestAccess.fullName': 'Full name',
+    'admin.requestAccess.email': 'Email',
+    'admin.requestAccess.phone': 'Phone (optional)',
+    'admin.requestAccess.reason': 'Why do you need access?',
+    'admin.requestAccess.submit': 'Send request',
+    'admin.requestAccess.submitting': 'Sending…',
+    'admin.requestAccess.error': 'Could not send the request. Please try again.',
+    'admin.requestAccess.thanksTitle': 'Request received',
+    'admin.requestAccess.thanksBody': 'A master administrator will review your request. You will hear back at the email you provided.',
+    'admin.requestAccess.backToLogin': 'Back to sign in',
     'admin.workspaceEyebrow': 'Lura workspace',
     'admin.heading': 'Administration',
     'admin.signOut': 'Sign out',
@@ -1236,6 +1249,7 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'globe.ariaLabel': '旋转地球，突出显示 Lura 在尼日利亚的运营区域',
 
     // ---- ADMIN SHELL ----
+    
         'admin.login.requestAccess': '申请访问权限',
     'admin.workspaceEyebrow': 'Lura 工作区',
     'admin.heading': '管理',
@@ -1296,7 +1310,19 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.actions.saving': '保存中...',
     'admin.actions.saveFailed': '保存失败。',
     'admin.actions.confirmDelete': '删除此记录？此操作无法撤销。',
-
+'admin.requestAccess.eyebrow': 'LURA 管理后台',
+'admin.requestAccess.heading': '申请访问权限',
+'admin.requestAccess.subtitle': '请告知您的身份以及申请管理员访问权限的原因。主管理员将审核您的申请。',
+'admin.requestAccess.fullName': '姓名',
+'admin.requestAccess.email': '电子邮箱',
+'admin.requestAccess.phone': '电话号码（选填）',
+'admin.requestAccess.reason': '您为什么需要访问权限？',
+'admin.requestAccess.submit': '提交申请',
+'admin.requestAccess.submitting': '正在提交…',
+'admin.requestAccess.error': '无法提交申请，请重试。',
+'admin.requestAccess.thanksTitle': '申请已收到',
+'admin.requestAccess.thanksBody': '主管理员将审核您的申请。审核结果将发送至您提供的电子邮箱。',
+'admin.requestAccess.backToLogin': '返回登录页面',
     // ---- ADMIN SERVICE CENTRES ----
     'admin.sc.eyebrow': 'Lura 连锁店',
     'admin.sc.title': '服务中心',
@@ -2329,6 +2355,19 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.actions.saving': 'Enregistrement...',
     'admin.actions.saveFailed': '\u00C9chec de l\u2019enregistrement.',
     'admin.actions.confirmDelete': 'Supprimer cet enregistrement ? Cette action est irréversible.',
+'admin.requestAccess.eyebrow': 'ADMINISTRATION LURA',
+'admin.requestAccess.heading': 'Demander un accès',
+'admin.requestAccess.subtitle': 'Indiquez-nous qui vous êtes et pourquoi vous avez besoin d’un accès administrateur. Un administrateur principal examinera votre demande.',
+'admin.requestAccess.fullName': 'Nom complet',
+'admin.requestAccess.email': 'Adresse e-mail',
+'admin.requestAccess.phone': 'Téléphone (facultatif)',
+'admin.requestAccess.reason': 'Pourquoi avez-vous besoin d’un accès ?',
+'admin.requestAccess.submit': 'Envoyer la demande',
+'admin.requestAccess.submitting': 'Envoi en cours…',
+'admin.requestAccess.error': 'Impossible d’envoyer la demande. Veuillez réessayer.',
+'admin.requestAccess.thanksTitle': 'Demande reçue',
+'admin.requestAccess.thanksBody': 'Un administrateur principal examinera votre demande. Vous recevrez une réponse à l’adresse e-mail que vous avez fournie.',
+'admin.requestAccess.backToLogin': 'Retour à la connexion',
 
     // ---- ADMIN SERVICE CENTRES ----
     'admin.sc.eyebrow': 'Lura Chain Store',
