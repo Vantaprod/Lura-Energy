@@ -844,6 +844,7 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.audit.systemActor': 'System',
     'admin.audit.pagination.previous': 'Previous',
     'admin.audit.pagination.next': 'Next',
+        'admin.login.requestAccess': 'Request access',
     'aria.pagination.audit': 'Audit log pages',
 
     // ---- ADMIN MEDIA LIBRARY ----
@@ -1235,6 +1236,7 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'globe.ariaLabel': '旋转地球，突出显示 Lura 在尼日利亚的运营区域',
 
     // ---- ADMIN SHELL ----
+        'admin.login.requestAccess': '申请访问权限',
     'admin.workspaceEyebrow': 'Lura 工作区',
     'admin.heading': '管理',
     'admin.signOut': '退出登录',
@@ -2267,6 +2269,7 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'globe.ariaLabel': 'Globe rotatif mettant en évidence les régions d\u2019exploitation de Lura au Nigeria',
 
     // ---- ADMIN SHELL ----
+        'admin.login.requestAccess': 'Demander l\u2019acc\u00e8s',
     'admin.workspaceEyebrow': 'Espace Lura',
     'admin.heading': 'Administration',
     'admin.signOut': 'Déconnexion',
