@@ -75,7 +75,7 @@ export default async function SeriesPage({
         ) : (
           <div className="model-grid">
             {category.products.map((product) => {
-              const image = product.media[0];
+              const image = product.media[0] ?? (product.heroImageUrl ? { url: product.heroImageUrl, alt: product.name } : null);
               return (
                 <Link
                   key={product.id}
