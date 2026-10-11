@@ -19,6 +19,7 @@ export function AdminGate({
   const pathname = usePathname();
   const isAuthPage =
     pathname === '/admin/login' ||
+    pathname === '/admin/request-access' ||
     (pathname?.startsWith('/admin/accept-invitation') ?? false);
 
   const scope = isAuthPage ? 'login' : 'admin';

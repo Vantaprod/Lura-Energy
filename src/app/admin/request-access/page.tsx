@@ -24,6 +24,7 @@ export default function RequestAccessPage() {
           fullName: form.get('fullName'),
           email: form.get('email'),
           phone: form.get('phone'),
+          role: form.get('role'),
           reason: form.get('reason'),
         }),
       });

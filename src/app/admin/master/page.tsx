@@ -8,7 +8,7 @@ export default async function MasterOverviewPage() {
   const me = await requireMaster();
   const onlineCutoff = new Date(Date.now() - 2 * 60 * 1000);
 
-  const [adminCount, onlineAdmins, recent] = await Promise.all([
+  const [adminCount, onlineAdmins, recent, pendingRequests] = await Promise.all([
     prisma.user.count({ where: { active: true } }),
     prisma.user.findMany({
       where: { active: true, lastSeenAt: { gte: onlineCutoff } },
@@ -37,13 +37,13 @@ export default async function MasterOverviewPage() {
           <p className="master-card-sub">of {adminCount} admins</p>
         </Link>
         <Link href="/admin/master/requests" className="master-card">
-          <p className="master-card-label">ACCESS REQUESTS</p>
-          <p className="master-card-number">&mdash;</p>
-          <p className="master-card-sub">Coming in Chunk C</p>
+          <p className="master-card-label">ACCESS REQUESTS{pendingRequests > 0 && <span className="master-card-badge">{pendingRequests}</span>}</p>
+          <p className="master-card-number">{pendingRequests}</p>
+          <p className="master-card-sub">{pendingRequests === 0 ? `No pending requests` : `${pendingRequests} awaiting review`}</p>
         </Link>
         <Link href="/admin/master/messages" className="master-card">
           <p className="master-card-label">MESSAGES</p>
-          <p className="master-card-number">&mdash;</p>
+          <p className="master-card-number">{pendingRequests}</p>
           <p className="master-card-sub">Coming in Chunk D</p>
         </Link>
         <Link href="/admin/administrators" className="master-card">

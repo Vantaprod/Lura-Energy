@@ -8,6 +8,7 @@ type Item = {
   fullName: string;
   email: string;
   phone: string | null;
+  role: string;
   reason: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   rejectionReason: string | null;
@@ -59,7 +60,7 @@ export function AccessRequestRow({ item }: { item: Item }) {
       <div className="ar-row__head">
         <div>
           <p className="ar-row__name">{item.fullName}</p>
-          <p className="ar-row__meta">
+          <p className="ar-row__role-tag">{item.role}</p>`r`n          <p className="ar-row__meta">
             <a href={`mailto:${item.email}`} className="ar-row__email">{item.email}</a>
             {item.phone ? <> · <a href={`tel:${item.phone}`}>{item.phone}</a></> : null}
           </p>

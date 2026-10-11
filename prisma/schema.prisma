@@ -320,6 +320,7 @@ model Partner {
 }
 
 model AccessRequest {
+  role            String    @default("Other")
   id              String    @id @default(cuid())
   fullName        String
   email           String    @unique

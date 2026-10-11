@@ -11,6 +11,7 @@ const schema = z.object({
   email: z.string().trim().toLowerCase().email().max(254),
   phone: z.string().trim().max(40).optional().or(z.literal('')),
   reason: z.string().trim().min(20).max(800),
+  role: z.string().trim().min(2).max(80),
 });
 
 // Simple in-memory rate limit per IP. Resets on redeploy; good enough for spam deterrence.
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'Please check the form and try again.' }, { status: 400 });
   }
-  const { fullName, email, phone, reason } = parsed.data;
+  const { fullName, email, phone, reason, role } = parsed.data;
 
   const existing = await prisma.accessRequest.findUnique({ where: { email } });
   if (existing && existing.status === 'APPROVED') {

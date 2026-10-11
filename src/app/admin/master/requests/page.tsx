@@ -24,6 +24,7 @@ export default async function RequestsPage() {
     fullName: r.fullName,
     email: r.email,
     phone: r.phone,
+    role: r.role,
     reason: r.reason,
     status: r.status as 'PENDING' | 'APPROVED' | 'REJECTED',
     rejectionReason: r.rejectionReason,

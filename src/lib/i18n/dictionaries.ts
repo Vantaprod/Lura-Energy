@@ -1,4 +1,4 @@
-﻿export type Lang = 'en' | 'zh' | 'fr';
+export type Lang = 'en' | 'zh' | 'fr';
 
 export const LANGUAGES: { code: Lang; label: string; native: string }[] = [
   { code: 'en', label: 'English', native: 'English' },
@@ -274,6 +274,8 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     // ---- ADMIN SHELL ----
         'admin.requestAccess.eyebrow': 'LURA ADMINISTRATION',
     'admin.requestAccess.heading': 'Request access',
+    'admin.requestAccess.role': 'Role',
+    'admin.requestAccess.rolePlaceholder': 'Select the role you are applying for',
     'admin.requestAccess.subtitle': 'Tell us who you are and why you need admin access. A master administrator will review your request.',
     'admin.requestAccess.fullName': 'Full name',
     'admin.requestAccess.email': 'Email',
@@ -1312,6 +1314,8 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.actions.confirmDelete': '删除此记录？此操作无法撤销。',
 'admin.requestAccess.eyebrow': 'LURA 管理后台',
 'admin.requestAccess.heading': '申请访问权限',
+    'admin.requestAccess.role': '角色',
+    'admin.requestAccess.rolePlaceholder': '选择您申请的角色',
 'admin.requestAccess.subtitle': '请告知您的身份以及申请管理员访问权限的原因。主管理员将审核您的申请。',
 'admin.requestAccess.fullName': '姓名',
 'admin.requestAccess.email': '电子邮箱',
@@ -2357,6 +2361,8 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.actions.confirmDelete': 'Supprimer cet enregistrement ? Cette action est irréversible.',
 'admin.requestAccess.eyebrow': 'ADMINISTRATION LURA',
 'admin.requestAccess.heading': 'Demander un accès',
+    'admin.requestAccess.role': 'Rôle',
+    'admin.requestAccess.rolePlaceholder': 'Sélectionnez le rôle souhaité',
 'admin.requestAccess.subtitle': 'Indiquez-nous qui vous êtes et pourquoi vous avez besoin d’un accès administrateur. Un administrateur principal examinera votre demande.',
 'admin.requestAccess.fullName': 'Nom complet',
 'admin.requestAccess.email': 'Adresse e-mail',
