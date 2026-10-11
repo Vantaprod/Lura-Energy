@@ -109,6 +109,12 @@ export function ProductDetail({
   const firstImage = media.find((m) => m.kind === 'IMAGE');
   const hero = heroImageUrl ?? firstImage?.url ?? null;
   const imageCount = media.filter((m) => m.kind === 'IMAGE').length;
+  const galleryItems: ProductMedia[] =
+    imageCount > 0
+      ? media
+      : heroImageUrl
+        ? [{ id: 'hero', url: heroImageUrl, alt: name, kind: 'IMAGE' }]
+        : [];
 
   const heroEyebrow = brand ? `${brand} \u00B7 ${categoryName}` : categoryName;
   const heroHeading = categorySummary || name;
@@ -157,8 +163,8 @@ export function ProductDetail({
       {/* PRODUCT */}
       <section className="pdp-product">
         <div className="pdp-product__gallery">
-          {imageCount > 0 ? (
-            <ProductGallery items={media} emptyLabel={t('product.gallery.empty')} />
+          {galleryItems.length > 0 ? (
+            <ProductGallery items={galleryItems} emptyLabel={t('product.gallery.empty')} />
           ) : (
             <div className="pdp-product__placeholder">
               {t('product.gallery.empty')}
