@@ -7358,3 +7358,17 @@ body {
   flex: 1 0 auto;
 }
 .site-footer { flex-shrink: 0; }
+
+/* --- Master console full width (2026-10-11) --- */
+.master-shell {
+  max-width: 100% !important;
+  width: 100%;
+  margin: 0;
+  padding: 24px 32px 64px;
+}
+@media (max-width: 720px) {
+  .master-shell { padding: 20px 16px 48px; }
+}
+.master-header,
+.master-nav,
+.master-main { max-width: 1400px; }

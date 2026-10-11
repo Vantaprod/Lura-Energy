@@ -81,13 +81,8 @@ export function LanguageProvider({
       writeCookie(COOKIE_BY_SCOPE[scope], next);
       document.documentElement.lang = next;
 
-      if (scope === 'admin' && typeof window !== 'undefined') {
-        void fetch('/api/admin/language', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lang: next }),
-        }).catch(() => undefined);
-      }
+      // Persist is handled by LanguageSwitcher; the cookie write above
+      // is enough for the server to pick up the change on next render.
     },
     [scope],
   );
