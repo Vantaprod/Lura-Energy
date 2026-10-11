@@ -8,7 +8,7 @@ import { JsonLd } from '@/components/public/json-ld';
 import { organizationSchema } from '@/lib/seo/schemas';
 
 export const viewport: Viewport = {
-  width: 1024,
+  width: 980,
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
