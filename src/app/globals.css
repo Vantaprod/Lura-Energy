@@ -7171,3 +7171,87 @@ details[open] ul li > button.admin-action:hover {
 /* --- Access request role tag + badge (2026-10-11) --- */
 .ar-row__role-tag { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #1428A0; background: #EEF1F7; padding: 3px 9px; border-radius: 999px; margin: 4px 0; }
 .master-card-badge { display: inline-block; margin-left: 8px; min-width: 20px; height: 20px; padding: 0 6px; background: #EF4444; color: #FFFFFF; font-size: 11px; font-weight: 800; line-height: 20px; border-radius: 999px; text-align: center; vertical-align: middle; letter-spacing: 0; text-transform: none; }
+
+/* --- Lura brand form controls (2026-10-11) --- */
+.lura-select {
+  position: relative;
+  width: 100%;
+}
+.lura-select select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 100%;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: #0A1550;
+  background: #FFFFFF;
+  border: 1.5px solid #CFD6E2;
+  border-radius: 8px;
+  padding: 12px 40px 12px 14px;
+  cursor: pointer;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+  background-image: none;
+  line-height: 1.35;
+}
+.lura-select select:hover {
+  border-color: #A9B3C4;
+}
+.lura-select select:focus {
+  outline: none;
+  border-color: #1428A0;
+  box-shadow: 0 0 0 3px rgba(20, 40, 160, 0.14);
+  background: #FFFFFF;
+}
+.lura-select select:invalid,
+.lura-select select option[value=""][disabled] {
+  color: #6B7686;
+}
+.lura-select select option {
+  color: #0A1550;
+  background: #FFFFFF;
+  padding: 10px;
+}
+.lura-select select option:checked {
+  background: #EEF1F7;
+  color: #1428A0;
+  font-weight: 600;
+}
+.lura-select__chevron {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #1428A0;
+  pointer-events: none;
+  transition: color 150ms ease;
+}
+.lura-select select:focus + .lura-select__chevron {
+  color: #F58220;
+}
+
+.lura-textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: #0A1550;
+  border: 1.5px solid #CFD6E2;
+  border-radius: 8px;
+  padding: 12px 14px;
+  resize: vertical;
+  line-height: 1.5;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.lura-textarea::placeholder {
+  color: #6B7686;
+}
+.lura-textarea:hover {
+  border-color: #A9B3C4;
+}
+.lura-textarea:focus {
+  outline: none;
+  border-color: #1428A0;
+  box-shadow: 0 0 0 3px rgba(20, 40, 160, 0.14);
+}

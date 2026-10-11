@@ -88,24 +88,23 @@ export default function RequestAccessPage() {
 
         <div className="field" style={{ marginTop: '1rem' }}>
           <label htmlFor="role">{t('admin.requestAccess.role')}</label>
-          <select
-            id="role"
-            name="role"
-            required
-            defaultValue=""
-            style={{ width: '100%', fontFamily: 'inherit', fontSize: '15px', padding: '12px', border: '1px solid #CFD6E2', borderRadius: '8px', background: '#fff' }}
-          >
-            <option value="" disabled>{t('admin.requestAccess.rolePlaceholder')}</option>
-            <option value="Customer Service">Customer Service</option>
-            <option value="Sales Representative">Sales Representative</option>
-            <option value="Social Media Manager">Social Media Manager</option>
-            <option value="Marketing">Marketing</option>
-            <option value="Operations">Operations</option>
-            <option value="Warehouse / Logistics">Warehouse / Logistics</option>
-            <option value="Technical / Engineering">Technical / Engineering</option>
-            <option value="Management">Management</option>
-            <option value="Other">Other</option>
-          </select>
+          <div className="lura-select">
+            <select id="role" name="role" required defaultValue="">
+              <option value="" disabled>{t('admin.requestAccess.rolePlaceholder')}</option>
+              <option value="Customer Service">Customer Service</option>
+              <option value="Sales Representative">Sales Representative</option>
+              <option value="Social Media Manager">Social Media Manager</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Operations">Operations</option>
+              <option value="Warehouse / Logistics">Warehouse / Logistics</option>
+              <option value="Technical / Engineering">Technical / Engineering</option>
+              <option value="Management">Management</option>
+              <option value="Other">Other</option>
+            </select>
+            <svg className="lura-select__chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </div>
         </div>
 
         <div className="field" style={{ marginTop: '1rem' }}>
@@ -117,7 +116,7 @@ export default function RequestAccessPage() {
             minLength={20}
             maxLength={800}
             rows={4}
-            style={{ width: '100%', fontFamily: 'inherit', fontSize: '15px', padding: '12px', border: '1px solid #CFD6E2', borderRadius: '8px', resize: 'vertical' }}
+            className="lura-textarea"
           />
         </div>
 
