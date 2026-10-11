@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteFooter } from '@/components/layout/site-footer';
@@ -7,11 +7,17 @@ import { LanguageProvider } from '@/lib/i18n/context';
 import { JsonLd } from '@/components/public/json-ld';
 import { organizationSchema } from '@/lib/seo/schemas';
 
+export const viewport: Viewport = {
+  width: 1280,
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+};
+
 export const metadata: Metadata = {
   title: { default: 'Lura Energy', template: '%s | Lura Energy' },
   description:
     'Lura Energy - Home of Premium Solar. Solar systems, storage, and installation.',
-
   other: {
     google: 'notranslate',
   },
