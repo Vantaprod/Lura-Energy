@@ -1,4 +1,4 @@
-﻿import type { Metadata, Viewport } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteFooter } from '@/components/layout/site-footer';
@@ -8,7 +8,7 @@ import { JsonLd } from '@/components/public/json-ld';
 import { organizationSchema } from '@/lib/seo/schemas';
 
 export const viewport: Viewport = {
-  width: 1280,
+  width: 1024,
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
