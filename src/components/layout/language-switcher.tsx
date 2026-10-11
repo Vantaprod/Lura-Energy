@@ -15,7 +15,6 @@ export function LanguageSwitcher({
   const router = useRouter();
   const { t, lang, scope, setLang } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -38,30 +37,28 @@ export function LanguageSwitcher({
 
   const current = LANGUAGES.find((l) => l.code === lang) ?? LANGUAGES[0];
 
-  async function choose(code: Lang) {
-    if (busy || code === lang) {
-      setOpen(false);
-      return;
-    }
-
-    setBusy(true);
-    setLang(code);
+  function choose(code: Lang) {
     setOpen(false);
+    if (code === lang) return;
 
+    // 1. Switch UI language IMMEDIATELY (synchronous React state update).
+    setLang(code);
+
+    // 2. Persist to server in background — do not block the click.
     if (scope === 'admin') {
-      try {
-        await fetch('/api/admin/language', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lang: code }),
-        });
-      } catch {
-        // Network blip - the AdminShell polling will retry the sync within 1s.
-      }
+      void fetch('/api/admin/language', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lang: code }),
+        keepalive: true,
+      }).catch(() => {});
     }
 
-    router.refresh();
-    setBusy(false);
+    // 3. Refresh server-rendered content shortly after, so the visible
+    //    switch happens first and the refresh runs in the background.
+    window.setTimeout(() => {
+      router.refresh();
+    }, 150);
   }
 
   return (
@@ -71,7 +68,6 @@ export function LanguageSwitcher({
         onClick={() => setOpen((v) => !v)}
         aria-label={t('aria.changeLanguage')}
         aria-expanded={open}
-        disabled={busy}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -79,7 +75,7 @@ export function LanguageSwitcher({
           gap: '5px',
           background: '#FFFFFF',
           border: '1px solid #E4E7EC',
-          cursor: busy ? 'wait' : 'pointer',
+          cursor: 'pointer',
           padding: compact ? '6px 8px' : '8px 12px',
           borderRadius: '6px',
           color: '#0A1550',
@@ -87,7 +83,6 @@ export function LanguageSwitcher({
           fontFamily: 'inherit',
           fontSize: '13px',
           lineHeight: 1,
-          opacity: busy ? 0.7 : 1,
         }}
       >
         <svg
@@ -127,8 +122,7 @@ export function LanguageSwitcher({
             <button
               key={l.code}
               type="button"
-              onClick={() => void choose(l.code)}
-              disabled={busy}
+              onClick={() => choose(l.code)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -137,7 +131,7 @@ export function LanguageSwitcher({
                 padding: '11px 16px',
                 background: lang === l.code ? '#E8EEF9' : 'transparent',
                 border: 0,
-                cursor: busy ? 'wait' : 'pointer',
+                cursor: 'pointer',
                 fontFamily: 'inherit',
                 fontSize: '14px',
                 fontWeight: lang === l.code ? 700 : 500,
