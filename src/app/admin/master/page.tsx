@@ -21,6 +21,7 @@ export default async function MasterOverviewPage() {
       orderBy: { lastLoginAt: 'desc' },
       take: 6,
     }),
+    prisma.accessRequest.count({ where: { status: 'PENDING' } }),
   ]);
 
   const firstName = (me.name ?? me.email).split(' ')[0];
@@ -37,13 +38,18 @@ export default async function MasterOverviewPage() {
           <p className="master-card-sub">of {adminCount} admins</p>
         </Link>
         <Link href="/admin/master/requests" className="master-card">
-          <p className="master-card-label">ACCESS REQUESTS{pendingRequests > 0 && <span className="master-card-badge">{pendingRequests}</span>}</p>
+          <p className="master-card-label">
+            ACCESS REQUESTS
+            {pendingRequests > 0 && <span className="master-card-badge">{pendingRequests}</span>}
+          </p>
           <p className="master-card-number">{pendingRequests}</p>
-          <p className="master-card-sub">{pendingRequests === 0 ? `No pending requests` : `${pendingRequests} awaiting review`}</p>
+          <p className="master-card-sub">
+            {pendingRequests === 0 ? 'No pending requests' : `${pendingRequests} awaiting review`}
+          </p>
         </Link>
         <Link href="/admin/master/messages" className="master-card">
           <p className="master-card-label">MESSAGES</p>
-          <p className="master-card-number">{pendingRequests}</p>
+          <p className="master-card-number">&mdash;</p>
           <p className="master-card-sub">Coming in Chunk D</p>
         </Link>
         <Link href="/admin/administrators" className="master-card">
