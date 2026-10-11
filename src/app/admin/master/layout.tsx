@@ -2,9 +2,11 @@ import Link from 'next/link';
 import { requireMaster } from '@/lib/auth/require-master';
 import { PresenceHeartbeat } from '@/components/admin/presence-heartbeat';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
+import { getServerT } from '@/lib/i18n/server';
 
 export default async function MasterLayout({ children }: { children: React.ReactNode }) {
   const me = await requireMaster();
+  const { t } = await getServerT('admin');
   const initials = (me.name ?? me.email).slice(0, 1).toUpperCase();
 
   return (
@@ -12,8 +14,8 @@ export default async function MasterLayout({ children }: { children: React.React
       <PresenceHeartbeat />
       <header className="master-header">
         <div>
-          <p className="eyebrow">LURA MASTER</p>
-          <h1 className="master-title">Master console</h1>
+          <p className="eyebrow">{t('master.eyebrow')}</p>
+          <h1 className="master-title">{t('master.title')}</h1>
         </div>
         <div className="master-header-right">
           <LanguageSwitcher />
@@ -26,18 +28,18 @@ export default async function MasterLayout({ children }: { children: React.React
             )}
             <span>{me.name ?? me.email}</span>
           </span>
-          <Link href="/admin" className="button button-quiet">Site admin</Link>
+          <Link href="/admin" className="button button-quiet">{t('master.siteAdmin')}</Link>
           <form action="/api/auth/logout" method="post">
-            <button className="button">Sign out</button>
+            <button className="button">{t('master.signOut')}</button>
           </form>
         </div>
       </header>
       <nav className="master-nav" aria-label="Master navigation">
-        <Link href="/admin/master">Overview</Link>
-        <Link href="/admin/master/presence">Presence</Link>
-        <Link href="/admin/master/requests">Requests</Link>
-        <Link href="/admin/master/messages">Messages</Link>
-        <Link href="/admin/administrators">Administrators</Link>
+        <Link href="/admin/master">{t('master.nav.overview')}</Link>
+        <Link href="/admin/master/presence">{t('master.nav.presence')}</Link>
+        <Link href="/admin/master/requests">{t('master.nav.requests')}</Link>
+        <Link href="/admin/master/messages">{t('master.nav.messages')}</Link>
+        <Link href="/admin/administrators">{t('master.nav.administrators')}</Link>
       </nav>
       <main className="master-main">{children}</main>
     </div>

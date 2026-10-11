@@ -1,11 +1,20 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/db/prisma';
 import { requireMaster } from '@/lib/auth/require-master';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
+function fill(template: string, vars: Record<string, string | number>): string {
+  return Object.entries(vars).reduce(
+    (acc, [k, v]) => acc.replaceAll(`{${k}}`, String(v)),
+    template,
+  );
+}
+
 export default async function MasterOverviewPage() {
   const me = await requireMaster();
+  const { t } = await getServerT('admin');
   const onlineCutoff = new Date(Date.now() - 2 * 60 * 1000);
 
   const [adminCount, onlineAdmins, recent, pendingRequests] = await Promise.all([
@@ -28,41 +37,43 @@ export default async function MasterOverviewPage() {
 
   return (
     <>
-      <p className="eyebrow">MASTER OVERVIEW</p>
-      <h2 className="master-h2">Welcome, {firstName}.</h2>
+      <p className="eyebrow">{t('master.overviewEyebrow')}</p>
+      <h2 className="master-h2">{fill(t('master.welcome'), { name: firstName })}</h2>
 
       <div className="master-grid">
         <Link href="/admin/master/presence" className="master-card">
-          <p className="master-card-label">ONLINE NOW</p>
+          <p className="master-card-label">{t('master.card.onlineNow')}</p>
           <p className="master-card-number">{onlineAdmins.length}</p>
-          <p className="master-card-sub">of {adminCount} admins</p>
+          <p className="master-card-sub">{fill(t('master.card.ofAdmins'), { n: adminCount })}</p>
         </Link>
         <Link href="/admin/master/requests" className="master-card">
           <p className="master-card-label">
-            ACCESS REQUESTS
+            {t('master.card.accessRequests')}
             {pendingRequests > 0 && <span className="master-card-badge">{pendingRequests}</span>}
           </p>
           <p className="master-card-number">{pendingRequests}</p>
           <p className="master-card-sub">
-            {pendingRequests === 0 ? 'No pending requests' : `${pendingRequests} awaiting review`}
+            {pendingRequests === 0
+              ? t('master.card.noPending')
+              : fill(t('master.card.pendingCount'), { n: pendingRequests })}
           </p>
         </Link>
         <Link href="/admin/master/messages" className="master-card">
-          <p className="master-card-label">MESSAGES</p>
+          <p className="master-card-label">{t('master.card.messages')}</p>
           <p className="master-card-number">&mdash;</p>
-          <p className="master-card-sub">Coming in Chunk D</p>
+          <p className="master-card-sub">{t('master.card.comingLater')}</p>
         </Link>
         <Link href="/admin/administrators" className="master-card">
-          <p className="master-card-label">ADMINS</p>
+          <p className="master-card-label">{t('master.card.admins')}</p>
           <p className="master-card-number">{adminCount}</p>
-          <p className="master-card-sub">active accounts</p>
+          <p className="master-card-sub">{t('master.card.activeAccounts')}</p>
         </Link>
       </div>
 
       <section className="master-section">
-        <h3 className="master-h3">Online now</h3>
+        <h3 className="master-h3">{t('master.onlineNow')}</h3>
         {onlineAdmins.length === 0 ? (
-          <p className="master-empty">No admins online.</p>
+          <p className="master-empty">{t('master.noOnline')}</p>
         ) : (
           <ul className="master-list">
             {onlineAdmins.map((a) => (
@@ -82,7 +93,7 @@ export default async function MasterOverviewPage() {
       </section>
 
       <section className="master-section">
-        <h3 className="master-h3">Recent sign-ins</h3>
+        <h3 className="master-h3">{t('master.recentSignIns')}</h3>
         <ul className="master-list">
           {recent.map((a) => (
             <li key={a.id} className="master-list-item">
@@ -92,7 +103,7 @@ export default async function MasterOverviewPage() {
               <div>
                 <p className="master-list-name">
                   {a.name ?? a.email}{' '}
-                  {a.role === 'OWNER' && <span className="master-role-tag">master</span>}
+                  {a.role === 'OWNER' && <span className="master-role-tag">{t('master.roleMaster')}</span>}
                 </p>
                 <p className="master-list-meta">{a.email}</p>
               </div>

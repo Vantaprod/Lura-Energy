@@ -1,12 +1,14 @@
 import { requireMaster } from '@/lib/auth/require-master';
+import { getServerT } from '@/lib/i18n/server';
 
 export default async function MessagesPage() {
   await requireMaster();
+  const { t } = await getServerT('admin');
   return (
     <>
-      <p className="eyebrow">MESSAGES</p>
-      <h2 className="master-h2">Team messages</h2>
-      <p className="master-meta">Direct messaging and per-admin notifications ship in a later chunk.</p>
+      <p className="eyebrow">{t('master.messages.eyebrow')}</p>
+      <h2 className="master-h2">{t('master.messages.title')}</h2>
+      <p className="master-meta">{t('master.messages.subtitle')}</p>
     </>
   );
 }

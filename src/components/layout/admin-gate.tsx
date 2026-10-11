@@ -22,11 +22,14 @@ export function AdminGate({
     pathname === '/admin/request-access' ||
     (pathname?.startsWith('/admin/accept-invitation') ?? false);
 
+  const isMasterPage = pathname?.startsWith('/admin/master') ?? false;
+  const noShell = isAuthPage || isMasterPage;
+
   const scope = isAuthPage ? 'login' : 'admin';
 
   return (
     <LanguageProvider scope={scope} initialLang={adminLang}>
-      {isAuthPage ? children : <AdminShell user={user}>{children}</AdminShell>}
+      {noShell ? children : <AdminShell user={user}>{children}</AdminShell>}
     </LanguageProvider>
   );
 }
