@@ -7372,3 +7372,28 @@ body {
 .master-header,
 .master-nav,
 .master-main { max-width: 1400px; }
+
+/* --- Master console layout v2 (2026-10-11) --- */
+.master-shell {
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  padding: 24px 32px 64px !important;
+  width: 100%;
+}
+.master-header {
+  max-width: 100% !important;
+}
+.master-nav,
+.master-main {
+  max-width: 100% !important;
+}
+@media (max-width: 720px) {
+  .master-shell { padding: 20px 16px 48px !important; }
+}
+
+/* Header controls hug the title instead of the far edge */
+.master-header {
+  justify-content: flex-start;
+  gap: 24px;
+}
+.master-header-right { margin-left: auto; }
