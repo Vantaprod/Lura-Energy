@@ -7017,3 +7017,34 @@ details[open] ul li > button.admin-action:hover {
   border-left: 3px solid #F58220;
   border-radius: 4px;
 }
+
+/* --- Master console (2026-10-11) --- */
+.master-shell { max-width: 1120px; margin: 0 auto; padding: 24px 20px 64px; }
+.master-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.master-title { font-size: 2rem; margin: 4px 0 0; color: #0A1550; }
+.master-header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.master-user-chip { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: #0A1550; font-weight: 600; padding: 4px 10px; background: #EEF1F7; border-radius: 999px; }
+.master-user-avatar { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; display: inline-flex; align-items: center; justify-content: center; }
+.master-user-avatar--fallback { background: #1428A0; color: #FFFFFF; font-weight: 700; font-size: 12px; }
+.master-nav { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 20px 0 8px; padding: 12px 0; border-top: 1px solid #E5E9F0; border-bottom: 1px solid #E5E9F0; }
+.master-nav a { color: #1428A0; font-weight: 600; font-size: 14px; text-decoration: none; }
+.master-nav a:hover { text-decoration: underline; }
+.master-main { padding-top: 24px; }
+.master-h2 { font-size: 2rem; color: #0A1550; margin: 4px 0 18px; }
+.master-h3 { font-size: 1.1rem; color: #0A1550; margin: 0 0 12px; }
+.master-meta { color: #6B7686; font-size: 13.5px; margin: -10px 0 18px; }
+.master-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 26px; }
+.master-card { display: block; background: #FFFFFF; border: 1px solid #E5E9F0; border-radius: 12px; padding: 18px 20px; text-decoration: none; color: inherit; transition: border-color 150ms ease, transform 150ms ease; }
+.master-card:hover { border-color: #1428A0; transform: translateY(-1px); }
+.master-card-label { font-size: 11.5px; letter-spacing: 0.08em; color: #F58220; font-weight: 700; margin: 0 0 8px; }
+.master-card-number { font-size: 1.9rem; font-weight: 700; color: #0A1550; margin: 0; }
+.master-card-sub { font-size: 12.5px; color: #6B7686; margin: 4px 0 0; }
+.master-section { margin-top: 28px; }
+.master-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.master-list-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #FFFFFF; border: 1px solid #E5E9F0; border-radius: 10px; }
+.master-list-name { font-size: 14px; color: #0A1550; font-weight: 600; margin: 0; }
+.master-list-meta { font-size: 12.5px; color: #6B7686; margin: 2px 0 0; }
+.master-list-item > .master-list-meta { margin-left: auto; }
+.master-dot { width: 9px; height: 9px; border-radius: 50%; background: #16A34A; box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18); margin-left: auto; }
+.master-role-tag { display: inline-block; margin-left: 6px; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; color: #1428A0; background: #EEF1F7; padding: 2px 6px; border-radius: 4px; vertical-align: middle; }
+.master-empty { color: #6B7686; font-size: 13.5px; }

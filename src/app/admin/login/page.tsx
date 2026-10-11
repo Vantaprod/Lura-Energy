@@ -42,7 +42,7 @@ export default function AdminLoginPage() {
         setError(t('admin.login.notMaster'));
         return;
       }
-      router.push('/admin');
+      router.push(tab === 'master' && (data as { isMaster?: boolean }).isMaster ? '/admin/master' : '/admin');
       router.refresh();
     } catch {
       setError(t('admin.login.error'));

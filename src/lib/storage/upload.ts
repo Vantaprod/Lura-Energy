@@ -1,10 +1,18 @@
-import { mkdir, writeFile, unlink } from 'node:fs/promises';
-import path from 'node:path';
 import crypto from 'node:crypto';
+import { v2 as cloudinary } from 'cloudinary';
 
-export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;      // 8 MB
-export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;    // 100 MB
-export const MAX_DOCUMENT_BYTES = 25 * 1024 * 1024;  // 25 MB
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
+
+// Vercel serverless functions have a ~4.5 MB request body limit. Keep caps
+// under that ceiling — larger videos will need a direct-to-Cloudinary flow.
+export const MAX_IMAGE_BYTES = 4 * 1024 * 1024;      // 4 MB
+export const MAX_VIDEO_BYTES = 4 * 1024 * 1024;      // 4 MB (Vercel body limit)
+export const MAX_DOCUMENT_BYTES = 4 * 1024 * 1024;   // 4 MB
 
 const IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'] as const;
 const VIDEO_MIMES = ['video/mp4', 'video/webm', 'video/quicktime'] as const;
@@ -36,13 +44,18 @@ function kindFor(mime: string): MediaKind | null {
   return null;
 }
 
+function resourceTypeFor(kind: MediaKind): 'image' | 'video' | 'raw' {
+  if (kind === 'IMAGE') return 'image';
+  if (kind === 'VIDEO') return 'video';
+  return 'raw';
+}
+
 function maxBytesFor(kind: MediaKind): number {
   if (kind === 'IMAGE') return MAX_IMAGE_BYTES;
   if (kind === 'VIDEO') return MAX_VIDEO_BYTES;
   return MAX_DOCUMENT_BYTES;
 }
 
-/** Verify first bytes match the declared MIME type. Only images can be signature-verified reliably. */
 function signatureMatches(buffer: Buffer, mime: Mime): boolean {
   if (buffer.length < 12) return false;
   const b = buffer;
@@ -61,31 +74,67 @@ function signatureMatches(buffer: Buffer, mime: Mime): boolean {
   }
   if (mime === 'application/pdf') return b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46;
   if (mime === 'video/mp4' || mime === 'video/quicktime') {
-    // ISO BMFF: 'ftyp' at bytes 4-7
     return b[4] === 0x66 && b[5] === 0x74 && b[6] === 0x79 && b[7] === 0x70;
   }
   if (mime === 'video/webm') {
-    // EBML magic: 1A 45 DF A3
     return b[0] === 0x1a && b[1] === 0x45 && b[2] === 0xdf && b[3] === 0xa3;
   }
   return false;
 }
 
-/**
- * Server-side media save result.
- *
- * - `errorKey` is a translation key the client should resolve via `t()`.
- * - `error` remains as an English fallback for callers that haven't yet
- *   been updated to translate (or for server-side logs).
- */
 export type SaveMediaResult =
   | { ok: true; url: string; mimeType: string; sizeBytes: number; storageKey: string; kind: MediaKind }
   | { ok: false; errorKey: string; error: string };
+
+function cloudinaryConfigured(): boolean {
+  return Boolean(
+    process.env.CLOUDINARY_CLOUD_NAME &&
+      process.env.CLOUDINARY_API_KEY &&
+      process.env.CLOUDINARY_API_SECRET,
+  );
+}
+
+async function uploadToCloudinary(
+  buffer: Buffer,
+  options: { folder: string; resourceType: 'image' | 'video' | 'raw' },
+): Promise<{ url: string; publicId: string; bytes: number }> {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: options.folder,
+        resource_type: options.resourceType,
+        use_filename: false,
+        unique_filename: true,
+        overwrite: false,
+      },
+      (error, result) => {
+        if (error || !result) {
+          reject(error ?? new Error('Cloudinary upload failed'));
+          return;
+        }
+        resolve({
+          url: result.secure_url,
+          publicId: result.public_id,
+          bytes: typeof result.bytes === 'number' ? result.bytes : buffer.length,
+        });
+      },
+    );
+    stream.end(buffer);
+  });
+}
 
 export async function saveMediaUpload(
   file: File,
   subfolder = 'library',
 ): Promise<SaveMediaResult> {
+  if (!cloudinaryConfigured()) {
+    return {
+      ok: false,
+      errorKey: 'upload.error.notConfigured',
+      error: 'Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET.',
+    };
+  }
+
   const mime = file.type as Mime;
   const kind = kindFor(mime);
   if (!kind) {
@@ -98,11 +147,7 @@ export async function saveMediaUpload(
   }
 
   if (file.size <= 0) {
-    return {
-      ok: false,
-      errorKey: 'upload.error.empty',
-      error: 'Empty file.',
-    };
+    return { ok: false, errorKey: 'upload.error.empty', error: 'Empty file.' };
   }
 
   const limit = maxBytesFor(kind);
@@ -124,42 +169,47 @@ export async function saveMediaUpload(
     };
   }
 
-  const ext = EXT_BY_MIME[mime] ?? 'bin';
-  const random = crypto.randomBytes(12).toString('hex');
-  const filename = Date.now() + '-' + random + '.' + ext;
-
   const safeSub = subfolder.replace(/[^a-z0-9-]/gi, '').toLowerCase() || 'library';
   const now = new Date();
   const year = String(now.getUTCFullYear());
   const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-  const relativeDir = path.join('uploads', safeSub, year, month);
-  const absoluteDir = path.join(process.cwd(), 'public', relativeDir);
-  await mkdir(absoluteDir, { recursive: true });
+  const folder = 'lura/' + safeSub + '/' + year + '/' + month;
 
-  const absolutePath = path.join(absoluteDir, filename);
-  await writeFile(absolutePath, buffer);
+  let uploaded: { url: string; publicId: string; bytes: number };
+  try {
+    uploaded = await uploadToCloudinary(buffer, {
+      folder,
+      resourceType: resourceTypeFor(kind),
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      errorKey: 'upload.error.cloudinaryFailed',
+      error:
+        'Upload to Cloudinary failed: ' +
+        (error instanceof Error ? error.message : 'unknown error'),
+    };
+  }
 
-  const segments = relativeDir.split(path.sep).join('/');
   return {
     ok: true,
-    url: '/' + segments + '/' + filename,
+    url: uploaded.url,
     mimeType: mime,
-    sizeBytes: buffer.length,
-    storageKey: segments + '/' + filename,
+    sizeBytes: uploaded.bytes,
+    storageKey: uploaded.publicId,
     kind,
   };
 }
 
 export async function deleteUploadByUrl(url: string): Promise<void> {
-  if (!url.startsWith('/uploads/')) return;
-  const relative = url.replace(/^\//, '');
-  const absolute = path.join(process.cwd(), 'public', relative);
-  const normalized = path.normalize(absolute);
-  const allowedRoot = path.join(process.cwd(), 'public', 'uploads');
-  if (!normalized.startsWith(allowedRoot)) return;
+  if (!url.includes('res.cloudinary.com')) return;
+  const match = url.match(/\/(image|video|raw)\/upload\/(?:v\d+\/)?(.+?)(?:\.[a-z0-9]+)?$/i);
+  if (!match) return;
+  const resourceType = match[1] as 'image' | 'video' | 'raw';
+  const publicId = match[2];
   try {
-    await unlink(normalized);
+    await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
   } catch {
-    // Already missing.
+    // Already gone.
   }
 }

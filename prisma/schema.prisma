@@ -41,6 +41,8 @@ model User {
   sessions            Session[]
   auditLogs           AuditLog[]
   invitationsCreated  AdminInvitation[] @relation("Inviter")
+  avatarUrl   String?
+  lastSeenAt  DateTime?
 }
 
 model Session {
