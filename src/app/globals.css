@@ -7255,3 +7255,87 @@ details[open] ul li > button.admin-action:hover {
   border-color: #1428A0;
   box-shadow: 0 0 0 3px rgba(20, 40, 160, 0.14);
 }
+
+/* --- Lura custom dropdown (2026-10-11) --- */
+.lura-dd { position: relative; width: 100%; }
+.lura-dd__trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: left;
+  color: #0A1550;
+  background: #FFFFFF;
+  border: 1.5px solid #CFD6E2;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.lura-dd__trigger:hover { border-color: #A9B3C4; }
+.lura-dd__trigger:focus,
+.lura-dd__trigger.is-open {
+  outline: none;
+  border-color: #1428A0;
+  box-shadow: 0 0 0 3px rgba(20, 40, 160, 0.14);
+}
+.lura-dd__placeholder { color: #6B7686; font-weight: 500; }
+.lura-dd__value { color: #0A1550; font-weight: 600; }
+.lura-dd__chevron {
+  flex-shrink: 0;
+  color: #1428A0;
+  transition: transform 180ms ease, color 150ms ease;
+}
+.lura-dd__trigger.is-open .lura-dd__chevron {
+  transform: rotate(180deg);
+  color: #F58220;
+}
+.lura-dd__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: #FFFFFF;
+  border: 1px solid #E5E9F0;
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(5, 14, 31, 0.14), 0 2px 6px rgba(5, 14, 31, 0.06);
+  max-height: 300px;
+  overflow-y: auto;
+  animation: lura-dd-in 140ms ease-out;
+}
+@keyframes lura-dd-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.lura-dd__opt {
+  padding: 10px 12px;
+  font-size: 14.5px;
+  color: #0A1550;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 100ms ease, color 100ms ease;
+}
+.lura-dd__opt.is-active {
+  background: #EEF1F7;
+  color: #1428A0;
+}
+.lura-dd__opt.is-selected {
+  color: #F58220;
+  font-weight: 700;
+  background: #FFF7EE;
+}
+.lura-dd__opt.is-selected.is-active {
+  background: #FFEEDD;
+}
+.lura-dd__opt + .lura-dd__opt {
+  margin-top: 2px;
+}
