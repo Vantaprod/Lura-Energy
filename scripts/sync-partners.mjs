@@ -14,14 +14,16 @@ cloudinary.config({
 const local = new PrismaClient({ datasources: { db: { url: 'postgresql://lura:lura@localhost:5432/lura' } } });
 const neon  = new PrismaClient({ datasources: { db: { url: process.env.NEON_DATABASE_URL } } });
 
-async function uploadLocal(localUrl) {
-  if (!localUrl) return null;
-  if (localUrl.startsWith('http')) return localUrl;
-  const rel = localUrl.replace(/^\//, '');
+async function uploadLogo(rawUrl) {
+  if (!rawUrl) return rawUrl;
+  // Strip localhost origin if present
+  let rel = rawUrl.replace(/^https?:\/\/[^/]+/, '');
+  if (rel.startsWith('http')) return rel; // already remote
+  rel = rel.replace(/^\//, '');
   const abs = path.join(process.cwd(), 'public', rel);
   let buf;
   try { buf = await readFile(abs); }
-  catch { console.warn('  missing:', rel); return null; }
+  catch { console.warn('  missing:', rel); return rawUrl; }
   const publicId = 'lura/partners/' + createHash('sha256').update(rel).digest('hex').slice(0, 24);
   const ext = (path.extname(rel).replace(/^\./, '') || 'bin').toLowerCase();
   const res = await new Promise((resolve, reject) => {
@@ -31,24 +33,33 @@ async function uploadLocal(localUrl) {
     );
     s.end(buf);
   });
-  console.log('  up:', rel);
+  console.log('  up:', rel, '→', res.secure_url.slice(0, 80) + '...');
   return res.secure_url;
 }
 
 (async () => {
-  const partners = await local.partner.findMany();
+  const partners = await local.partner.findMany({ orderBy: { sortOrder: 'asc' } });
   console.log('Local partners:', partners.length);
+
+  // Wipe any partial state in Neon
+  await neon.partner.deleteMany({});
+
   for (const p of partners) {
-    console.log('  fields:', Object.keys(p).join(', '));
-    const logo = await uploadLocal(p.logoUrl ?? null);
-    const u = await neon.partner.upsert({
-      where: { slug: p.slug },
-      create: { slug: p.slug, name: p.name, websiteUrl: p.websiteUrl ?? null, logoUrl: logo, summary: p.summary ?? null, sortOrder: p.sortOrder ?? 0, published: p.published ?? true },
-      update: { name: p.name, websiteUrl: p.websiteUrl ?? null, logoUrl: logo, summary: p.summary ?? null, sortOrder: p.sortOrder ?? 0, published: p.published ?? true },
+    const logo = await uploadLogo(p.logoUrl);
+    await neon.partner.create({
+      data: {
+        id: p.id,
+        name: p.name,
+        logoUrl: logo,
+        logoAlt: p.logoAlt,
+        websiteUrl: p.websiteUrl,
+        sortOrder: p.sortOrder,
+        published: p.published,
+      },
     });
-    console.log('  ok', u.slug);
+    console.log('  ok', p.name);
   }
-  console.log('Done.');
+  console.log('Done. Neon partners:', await neon.partner.count());
   await local.$disconnect();
   await neon.$disconnect();
 })();
