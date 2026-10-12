@@ -8626,7 +8626,6 @@ body {
 
 
 
-}
 
 @media (max-width: 640px) {
   .partner-marquee__item { padding: 0 28px; height: 76px; }
@@ -8664,5 +8663,22 @@ body {
     height: 44px !important;
     max-width: 130px !important;
     max-height: 44px !important;
+  }
+}
+/* --- Partner marquee: definitive logo sizing (2026-10-12 FINAL) --- */
+.partner-marquee .partner-marquee__item .partner-marquee__logo {
+  height: 60px !important;
+  max-height: 60px !important;
+  width: auto !important;
+  max-width: 200px !important;
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+@media (max-width: 640px) {
+  .partner-marquee .partner-marquee__item .partner-marquee__logo {
+    height: 40px !important;
+    max-height: 40px !important;
+    max-width: 140px !important;
   }
 }
