@@ -8669,3 +8669,19 @@ body {
   .partner-marquee__item { padding: 0 28px; height: 76px; }
   .partner-marquee__logo { max-height: 34px; }
 }
+/* --- Partner marquee: force uniform logo height (2026-10-12) --- */
+.partner-marquee__logo {
+  height: 44px !important;
+  width: auto !important;
+  max-height: 44px !important;
+  max-width: 200px !important;
+  object-fit: contain;
+}
+
+@media (max-width: 640px) {
+  .partner-marquee__logo {
+    height: 40px !important;
+    max-height: 40px !important;
+    max-width: 140px !important;
+  }
+}
