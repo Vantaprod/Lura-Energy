@@ -44,6 +44,8 @@ model User {
   avatarUrl          String?
   lastSeenAt         DateTime?
   displayName        String?
+  sentMessages       Message[]         @relation("SentMessages")
+  receivedMessages   Message[]         @relation("ReceivedMessages")
 }
 
 model Session {
@@ -335,4 +337,18 @@ model AccessRequest {
   updatedAt       DateTime  @updatedAt
 
   @@index([status, createdAt])
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  senderId    String
+  sender      User      @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  recipientId String
+  recipient   User      @relation("ReceivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
+  body        String    @db.Text
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([recipientId, readAt])
+  @@index([senderId, recipientId, createdAt])
 }

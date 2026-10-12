@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n/context';
 import { AdminLogout } from '@/components/admin/admin-logout';
 import { LanguageSwitcher } from './language-switcher';
+import { MessagesBell } from '@/components/admin/messages-bell';
 import type { Lang } from '@/lib/i18n/dictionaries';
 
 type User = { name: string; role: string } | null;
@@ -99,6 +100,7 @@ export function AdminShell({
     { href: '/admin/faqs', label: t('admin.nav.faqs') },
     { href: '/admin/resources', label: t('admin.nav.resources') },
     { href: '/admin/leads', label: t('admin.nav.leads') },
+    { href: '/admin/messages', label: t('admin.nav.messages') },
   ];
 
   const OWNER_LINKS = [
@@ -127,6 +129,7 @@ export function AdminShell({
             flexWrap: 'wrap',
           }}
         >
+          {user && <MessagesBell />}
           <LanguageSwitcher />
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
