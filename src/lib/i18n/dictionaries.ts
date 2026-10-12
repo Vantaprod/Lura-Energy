@@ -1,4 +1,4 @@
-export type Lang = 'en' | 'zh' | 'fr';
+﻿export type Lang = 'en' | 'zh' | 'fr';
 
 export const LANGUAGES: { code: Lang; label: string; native: string }[] = [
   { code: 'en', label: 'English', native: 'English' },
@@ -1040,6 +1040,21 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.admins.activity.createdAt': 'Account created',
     'admin.admins.activity.pendingInvites': 'pending invitation(s)',
     'admin.admins.activity.empty': 'This administrator has no recorded actions yet.',
+'admin.account.eyebrow': 'Account',
+'admin.account.heading': 'Your profile',
+'admin.account.subtitle': 'Update the name and photo other administrators see.',
+'admin.account.displayName': 'Display name',
+'admin.account.email': 'Email',
+'admin.account.changePhoto': 'Change photo',
+'admin.account.removePhoto': 'Remove photo',
+'admin.account.save': 'Save changes',
+'admin.account.saving': 'Saving…',
+'admin.account.saved': 'Profile updated.',
+'admin.account.imageOnly': 'Please pick an image file.',
+'admin.account.imageError': 'Could not process that image.',
+'admin.presence.heading': 'Administrators',
+'admin.presence.online': 'Online',
+'admin.presence.offline': 'Offline',
 
     // ---- SITE HEALTH CHECK ----
         'admin.system.eyebrow': 'Diagnostics',
@@ -2015,6 +2030,21 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.mediaLib.pagination.pageOf': '第 {page} 页 / 共 {count} 页',
     'admin.mediaLib.count.one': '个文件',
     'admin.mediaLib.count.many': '个文件',
+    'admin.account.eyebrow': '账户',
+'admin.account.heading': '您的资料',
+'admin.account.subtitle': '更新其他管理员看到的名称和头像。',
+'admin.account.displayName': '显示名称',
+'admin.account.email': '邮箱',
+'admin.account.changePhoto': '更换头像',
+'admin.account.removePhoto': '移除头像',
+'admin.account.save': '保存更改',
+'admin.account.saving': '保存中…',
+'admin.account.saved': '资料已更新。',
+'admin.account.imageOnly': '请选择图片文件。',
+'admin.account.imageError': '无法处理该图片。',
+'admin.presence.heading': '管理员',
+'admin.presence.online': '在线',
+'admin.presence.offline': '离线',
 
     // ---- WHATSAPP ----
     'wa.bubble': '立即联系我们',
@@ -2801,6 +2831,21 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.cms.label.project': 'Projet',
     'admin.cms.label.service': 'Service',
     'admin.cms.label.solution': 'Solution',
+    'admin.account.eyebrow': 'Compte',
+'admin.account.heading': 'Votre profil',
+'admin.account.subtitle': 'Mettez à jour le nom et la photo visibles par les autres administrateurs.',
+'admin.account.displayName': 'Nom affiché',
+'admin.account.email': 'Email',
+'admin.account.changePhoto': 'Changer la photo',
+'admin.account.removePhoto': 'Retirer la photo',
+'admin.account.save': 'Enregistrer',
+'admin.account.saving': 'Enregistrement…',
+'admin.account.saved': 'Profil mis à jour.',
+'admin.account.imageOnly': 'Veuillez choisir un fichier image.',
+'admin.account.imageError': 'Impossible de traiter cette image.',
+'admin.presence.heading': 'Administrateurs',
+'admin.presence.online': 'En ligne',
+'admin.presence.offline': 'Hors ligne',
 
     // ---- ADMIN SETTINGS / MEDIA / LEADS / ADMINS ----
     'admin.settings.eyebrow': 'CMS',

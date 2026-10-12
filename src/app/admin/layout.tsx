@@ -1,6 +1,7 @@
 import { getCurrentUser } from '@/lib/auth/session';
 import { getServerLang } from '@/lib/i18n/server';
 import { AdminGate } from '@/components/layout/admin-gate';
+import { PresenceBeacon } from '@/components/admin/presence-beacon';
 
 export default async function AdminLayout({
   children,
@@ -13,8 +14,11 @@ export default async function AdminLayout({
   ]);
 
   return (
-    <AdminGate user={user} adminLang={adminLang}>
-      {children}
-    </AdminGate>
+    <>
+      <PresenceBeacon />
+      <AdminGate user={user} adminLang={adminLang}>
+        {children}
+      </AdminGate>
+    </>
   );
 }

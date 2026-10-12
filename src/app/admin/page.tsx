@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { redirect } from 'next/navigation';
 import { INITIAL_ADMIN_SEAT_LIMIT } from '@/lib/auth/admin-capacity';
 import { getServerT } from '@/lib/i18n/server';
+import { PresenceCard } from '@/components/admin/presence-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -136,6 +137,8 @@ export default async function AdminDashboard() {
       <h1 style={{ fontSize: 'clamp(2.2rem,4vw,3.5rem)', marginBottom: '2rem' }}>
         {t('admin.dashboard.welcome')}, {firstName}.
       </h1>
+
+      <PresenceCard />
 
       {/* ============ TOP STAT GRID ============ */}
       <div className="admin-stat-grid">

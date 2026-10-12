@@ -29,20 +29,21 @@ enum MediaKind {
 }
 
 model User {
-  id                  String            @id @default(cuid())
-  email               String            @unique
-  name                String
-  passwordHash        String
-  role                Role              @default(ADMIN)
-  active              Boolean           @default(true)
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
-  lastLoginAt         DateTime?
-  sessions            Session[]
-  auditLogs           AuditLog[]
-  invitationsCreated  AdminInvitation[] @relation("Inviter")
-  avatarUrl   String?
-  lastSeenAt  DateTime?
+  id                 String            @id @default(cuid())
+  email              String            @unique
+  name               String
+  passwordHash       String
+  role               Role              @default(ADMIN)
+  active             Boolean           @default(true)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  lastLoginAt        DateTime?
+  sessions           Session[]
+  auditLogs          AuditLog[]
+  invitationsCreated AdminInvitation[] @relation("Inviter")
+  avatarUrl          String?
+  lastSeenAt         DateTime?
+  displayName        String?
 }
 
 model Session {
@@ -87,32 +88,32 @@ model ProductCategory {
 }
 
 model Product {
-  id              String                @id @default(cuid())
-  name            String
-  slug            String                @unique
-  modelNumber     String?
-  categoryId      String?
-  brand           String?
-  category        ProductCategory?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  summary         String?
-  description     String?
-  status          String?
-  featured        Boolean               @default(false)
-  warranty        String?
-  seoTitle        String?
-  seoDescription  String?
-  datasheetUrl    String?
-  heroImageUrl    String?
-  notice          String?
-  featureBanners  Json?
-  keyFeatures     Json?
-  translations    Json?
-  published       Boolean               @default(false)
-  sortOrder       Int                   @default(0)
-  specifications  ProductSpecification[]
-  media           Media[]
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
+  id             String                 @id @default(cuid())
+  name           String
+  slug           String                 @unique
+  modelNumber    String?
+  categoryId     String?
+  brand          String?
+  category       ProductCategory?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  summary        String?
+  description    String?
+  status         String?
+  featured       Boolean                @default(false)
+  warranty       String?
+  seoTitle       String?
+  seoDescription String?
+  datasheetUrl   String?
+  heroImageUrl   String?
+  notice         String?
+  featureBanners Json?
+  keyFeatures    Json?
+  translations   Json?
+  published      Boolean                @default(false)
+  sortOrder      Int                    @default(0)
+  specifications ProductSpecification[]
+  media          Media[]
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
 
   @@index([published, sortOrder])
 }
@@ -130,21 +131,21 @@ model ProductSpecification {
 }
 
 model Project {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   title          String
-  slug           String   @unique
+  slug           String    @unique
   category       String?
   location       String?
   clientName     String?
   description    String?
   systemCapacity String?
   completionDate DateTime?
-  featured       Boolean  @default(false)
-  published      Boolean  @default(false)
-  sortOrder      Int      @default(0)
+  featured       Boolean   @default(false)
+  published      Boolean   @default(false)
+  sortOrder      Int       @default(0)
   media          Media[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@index([published, sortOrder])
 }
@@ -306,15 +307,15 @@ model ServiceCentre {
 }
 
 model Partner {
-  id          String   @id @default(cuid())
-  name        String
-  logoUrl     String
-  logoAlt     String?
-  websiteUrl  String?
-  sortOrder   Int      @default(0)
-  published   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  name       String
+  logoUrl    String
+  logoAlt    String?
+  websiteUrl String?
+  sortOrder  Int      @default(0)
+  published  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([published, sortOrder])
 }

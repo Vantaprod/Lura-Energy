@@ -7397,3 +7397,112 @@ body {
   gap: 24px;
 }
 .master-header-right { margin-left: auto; }
+
+/* --- Presence + account (2026-10-12) --- */
+.account-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 1.5rem;
+}
+.account-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: #1428A0;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 34px;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+.account-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.button-ghost {
+  background: transparent !important;
+  color: #1428A0 !important;
+  border: 1px solid #C8D0E0 !important;
+}
+.button-ghost:hover { background: #EEF1F7 !important; }
+
+.form-success {
+  margin-top: 12px;
+  color: #0F7A3D;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.presence-card {
+  background: #fff;
+  border: 1px solid #E3E7EF;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-top: 1rem;
+}
+.presence-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.presence-head h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0A1550;
+  margin: 0;
+}
+.presence-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0A1550;
+}
+.presence-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #2BB673;
+  box-shadow: 0 0 0 3px rgba(43,182,115,0.18);
+}
+.presence-list { list-style: none; margin: 0; padding: 0; }
+.presence-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid #F1F3F8;
+}
+.presence-row:first-child { border-top: none; }
+.presence-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: #EEF1F7; color: #0A1550;
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 700;
+  overflow: hidden;
+  position: relative;
+  flex: 0 0 auto;
+}
+.presence-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.presence-avatar.is-online::after {
+  content: '';
+  position: absolute;
+  right: -1px; bottom: -1px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #2BB673;
+  border: 2px solid #fff;
+}
+.presence-meta { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.presence-name {
+  font-size: 13.5px; font-weight: 600; color: #0A1550;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.presence-role {
+  font-size: 11.5px; color: #6B7686; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.presence-status {
+  font-size: 12px; font-weight: 600; color: #97A1B2;
+}
+.presence-status.is-online { color: #2BB673; }
