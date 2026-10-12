@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next';
-import Script from 'next/script';
 import './globals.css';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteFooter } from '@/components/layout/site-footer';
@@ -31,9 +30,6 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" translate="no" suppressHydrationWarning>
-      <head>
-        <Script src="/sw-nuke.js" strategy="beforeInteractive" />
-      </head>
       <body suppressHydrationWarning>
         <JsonLd data={organizationSchema()} />
         <LanguageProvider scope="front">

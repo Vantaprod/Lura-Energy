@@ -8682,3 +8682,117 @@ body {
     max-width: 140px !important;
   }
 }
+
+/* --- Legal pages (2026-10-12) --- */
+.legal-page {
+  padding: 64px 20px 96px;
+  background: #F7F9FC;
+  min-height: 60vh;
+}
+.legal-container {
+  max-width: 760px;
+  margin: 0 auto;
+  background: #FFFFFF;
+  padding: 56px 56px 72px;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(5, 14, 31, 0.05);
+}
+.legal-container h1 {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 800;
+  color: #0A1550;
+  margin: 0 0 8px;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+.legal-meta {
+  font-size: 12.5px;
+  color: #97A1B2;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 32px;
+  font-weight: 600;
+}
+.legal-lead {
+  font-size: 17px;
+  line-height: 1.65;
+  color: #4A5568;
+  margin: 0 0 40px;
+  padding: 20px 24px;
+  background: #F7F9FC;
+  border-left: 3px solid #F58220;
+  border-radius: 6px;
+}
+.legal-container section {
+  margin-bottom: 36px;
+}
+.legal-container section h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0A1550;
+  margin: 0 0 14px;
+  letter-spacing: -0.005em;
+}
+.legal-container section p {
+  font-size: 15.5px;
+  line-height: 1.75;
+  color: #3D4859;
+  margin: 0 0 12px;
+}
+.legal-container section ul {
+  margin: 0 0 12px;
+  padding-left: 22px;
+}
+.legal-container section ul li {
+  font-size: 15.5px;
+  line-height: 1.75;
+  color: #3D4859;
+  margin-bottom: 6px;
+}
+.legal-container a {
+  color: #1428A0;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.legal-container a:hover {
+  color: #0A1550;
+  text-decoration-thickness: 2px;
+}
+.legal-container code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  background: #EEF1F7;
+  color: #0A1550;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.legal-table-wrap {
+  overflow-x: auto;
+  margin: 16px 0 20px;
+}
+.legal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.legal-table th,
+.legal-table td {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid #E7EBF2;
+  color: #3D4859;
+  vertical-align: top;
+}
+.legal-table th {
+  font-weight: 700;
+  color: #0A1550;
+  background: #F7F9FC;
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+@media (max-width: 640px) {
+  .legal-page { padding: 32px 16px 64px; }
+  .legal-container { padding: 32px 24px 48px; }
+}
