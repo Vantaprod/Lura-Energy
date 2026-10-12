@@ -8081,3 +8081,42 @@ body {
   color: #97A1B2;
   font-style: italic;
 }
+/* --- Master broadcast (2026-10-12) --- */
+.broadcast-card {
+  background: #fff;
+  border: 1px solid #E3E7EF;
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin-top: 1.5rem;
+}
+.broadcast-card__head { margin-bottom: 16px; }
+.broadcast-card__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0A1550;
+  margin: 0;
+}
+.broadcast-card__sub {
+  font-size: 12.5px;
+  color: #6B7686;
+  margin: 4px 0 0;
+}
+.broadcast-form { display: flex; flex-direction: column; gap: 12px; }
+.broadcast-form textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid #C8D0E0;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: #0A1550;
+  background: #fff;
+  outline: none;
+  min-height: 96px;
+}
+.broadcast-form textarea:focus {
+  border-color: #1428A0;
+  box-shadow: 0 0 0 3px rgba(20,40,160,0.10);
+}
+.broadcast-form button.button { align-self: flex-start; }
