@@ -7899,3 +7899,185 @@ body {
   flex-wrap: wrap;
   flex: 0 0 auto;
 }
+/* --- Master messages overview (2026-10-12) --- */
+.mm-layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 16px;
+  align-items: start;
+  margin-top: 1.5rem;
+}
+@media (max-width: 900px) { .mm-layout { grid-template-columns: 1fr; } }
+
+.mm-sidebar {
+  background: #fff;
+  border: 1px solid #E3E7EF;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.mm-sidebar__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px 8px;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6B7686;
+  font-weight: 700;
+}
+.mm-count {
+  background: #EEF1F7;
+  color: #0A1550;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+.mm-pair-list { list-style: none; margin: 0; padding: 0 6px 10px; }
+.mm-pair {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: #0A1550;
+}
+.mm-pair:hover { background: #F4F6FB; }
+.mm-pair.is-active { background: #EEF1F7; }
+.mm-pair__avatars {
+  position: relative;
+  width: 42px;
+  height: 32px;
+  flex: 0 0 auto;
+}
+.mm-pair__av {
+  position: absolute;
+  left: 0; top: 0;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: #1428A0;
+  color: #fff;
+  display: grid; place-items: center;
+  font-size: 11px; font-weight: 700;
+  overflow: hidden;
+  border: 2px solid #fff;
+}
+.mm-pair__av--second { left: 14px; background: #F58220; }
+.mm-pair__av img { width: 100%; height: 100%; object-fit: cover; }
+.mm-pair__meta { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.mm-pair__names {
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mm-pair__preview {
+  font-size: 12px;
+  color: #6B7686;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mm-pair__side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+.mm-pair__time { font-size: 11px; color: #97A1B2; }
+.mm-pair__unread {
+  min-width: 18px; height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #F58220;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  display: grid; place-items: center;
+}
+
+.mm-main {
+  background: #fff;
+  border: 1px solid #E3E7EF;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  min-height: 520px;
+  overflow: hidden;
+}
+.mm-placeholder {
+  display: grid; place-items: center;
+  flex: 1;
+  color: #97A1B2;
+  font-size: 14px;
+}
+.mm-main__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #F1F3F8;
+  flex-wrap: wrap;
+}
+.mm-arrow { color: #97A1B2; padding: 0 6px; }
+.mm-main__meta { font-size: 12px; color: #6B7686; }
+.mm-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #F7F9FC;
+}
+.mm-empty { color: #97A1B2; font-size: 13px; margin: auto; }
+.mm-bubble {
+  max-width: 72%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #E3E7EF;
+  font-size: 13.5px;
+  color: #0A1550;
+  align-self: flex-start;
+}
+.mm-bubble p { margin: 0; white-space: pre-wrap; word-break: break-word; }
+.mm-bubble__from {
+  display: block;
+  font-size: 11px;
+  color: #1428A0;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.mm-bubble__time {
+  display: block;
+  margin-top: 4px;
+  font-size: 10.5px;
+  color: #97A1B2;
+}
+.mm-bubble.is-b {
+  align-self: flex-end;
+  background: #FFF7EE;
+  border-color: #F58220;
+}
+.mm-bubble.is-b .mm-bubble__from { color: #B85A12; }
+.mm-foot {
+  padding: 10px 14px;
+  border-top: 1px solid #F1F3F8;
+  text-align: center;
+}
+.mm-note {
+  font-size: 11.5px;
+  color: #97A1B2;
+  font-style: italic;
+}

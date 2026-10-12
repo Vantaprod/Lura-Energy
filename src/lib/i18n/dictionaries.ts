@@ -1,4 +1,4 @@
-﻿export type Lang = 'en' | 'zh' | 'fr';
+export type Lang = 'en' | 'zh' | 'fr';
 
 export const LANGUAGES: { code: Lang; label: string; native: string }[] = [
   { code: 'en', label: 'English', native: 'English' },
@@ -868,6 +868,12 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
 'admin.notifications.markOne': 'Mark read',
 'admin.notifications.viewAll': 'View all',
 'admin.notifications.open': 'Open',
+    'master.messages.conversations': 'Conversations',
+    'master.messages.empty': 'No conversations yet.',
+    'master.messages.loading': 'Loading…',
+    'master.messages.pick': 'Pick a conversation to view the transcript.',
+    'master.messages.count': '{n} messages',
+    'master.messages.readOnlyNote': 'Read-only view — masters do not participate in these threads.',
 
     // ---- ADMIN INVITE / LOGIN / AUDIT ----
     'admin.invite.eyebrow': 'Administrator invitation',
@@ -1390,6 +1396,12 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
 'admin.notifications.markOne': '标为已读',
 'admin.notifications.viewAll': '查看全部',
 'admin.notifications.open': '打开',
+    'master.messages.conversations': '会话',
+    'master.messages.empty': '暂无会话。',
+    'master.messages.loading': '加载中…',
+    'master.messages.pick': '选择一个会话以查看记录。',
+    'master.messages.count': '{n} 条消息',
+    'master.messages.readOnlyNote': '只读视图——主控不参与这些对话。',
 
     // ---- ADMIN ACTIONS ----
         'admin.actions.feature': '设为精选',
@@ -3077,6 +3089,12 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
 'admin.notifications.markOne': 'Marquer comme lu',
 'admin.notifications.viewAll': 'Voir tout',
 'admin.notifications.open': 'Ouvrir',
+    'master.messages.conversations': 'Conversations',
+    'master.messages.empty': 'Aucune conversation pour le moment.',
+    'master.messages.loading': 'Chargement…',
+    'master.messages.pick': 'Choisissez une conversation pour voir la transcription.',
+    'master.messages.count': '{n} messages',
+    'master.messages.readOnlyNote': 'Vue en lecture seule — les maîtres ne participent pas à ces conversations.',
 
     // ---- ADMIN INVITE / LOGIN / AUDIT ----
     'admin.invite.eyebrow': 'Invitation administrateur',
