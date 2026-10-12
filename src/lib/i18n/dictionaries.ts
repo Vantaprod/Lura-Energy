@@ -102,7 +102,7 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'impact.ctaLabel': 'Learn more',
     'impact.stat1Label': 'Operating Regions in Nigeria',
     'impact.stat2Label': 'Successful Projects',
-    'impact.stat3Label': 'Distribution Partners',
+    'impact.stat3Label': 'Installer Network',
 
     // ---- LCS ----
     'lcs.hours': 'Hours',
@@ -1224,7 +1224,7 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'impact.ctaLabel': '了解更多',
     'impact.stat1Label': '尼日利亚运营区域',
     'impact.stat2Label': '成功项目',
-    'impact.stat3Label': '分销合作伙伴',
+    'impact.stat3Label': 'Installer Network',
 
     // ---- LCS ----
     'lcs.hours': '营业时间',
@@ -2401,7 +2401,7 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'impact.ctaLabel': 'En savoir plus',
     'impact.stat1Label': 'Régions opérationnelles au Nigeria',
     'impact.stat2Label': 'Projets réussis',
-    'impact.stat3Label': 'Partenaires distributeurs',
+    'impact.stat3Label': 'Installer Network',
 
     // ---- LCS ----
     'lcs.hours': 'Horaires',

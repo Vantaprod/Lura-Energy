@@ -7,8 +7,8 @@ async function main() {
 
   const settings: Record<string, unknown> = {
     'contact.email': 'info@luraenergy.com',
-    'contact.phone': '+234 800 000 0000',
-    'contact.whatsapp': '2348000000000',
+    'contact.phone': '+234 913 508 7288',
+    'contact.whatsapp': '2349135087288',
     'company.intro':
       'Lura Energy delivers premium solar power systems for homes, businesses, and industrial clients across Nigeria. We partner with Litharv, Huihang, and Vestwood to bring verified hardware and installation expertise to every project.',
     'impact.eyebrow': 'Our Impact',

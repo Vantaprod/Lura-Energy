@@ -8575,3 +8575,29 @@ body {
   content: '↓';
   font-weight: 900;
 }
+/* --- Footer social (2026-10-12) --- */
+.footer-social {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.footer-social a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.08);
+  transition: background 150ms ease, color 150ms ease;
+}
+.footer-social a:hover,
+.footer-social a:focus-visible {
+  background: #F58220;
+  color: #FFFFFF;
+  outline: none;
+}
+.footer-social a svg { display: block; }

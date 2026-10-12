@@ -22,31 +22,26 @@ export type ImpactContent = {
   stats: ImpactStat[];
 };
 
-/**
- * English-only fallback for legacy consumers that import this constant
- * directly. Prefer passing content via props so translation applies.
- */
 export const DEFAULT_IMPACT: ImpactContent = {
   eyebrow: 'Our Impact',
   headingWhite: 'Powering',
   headingAccent: 'Possibility',
   body1:
-    'What started with a vision for more accessible and reliable energy is becoming a growing presence across Nigeria. Lura continues to expand through successful solar projects, strategic distributor partnerships, and an increasing operational footprint across key regions.',
+    'What started with a vision for more accessible and reliable energy is becoming a growing presence across Nigeria. Lura continues to expand through successful solar projects, strategic installer partnerships, and an increasing operational footprint across key regions.',
   body2:
     'Every project represents more than an installation \u2014 it represents a home, business, or organization gaining greater access to dependable energy.',
   ctaLabel: 'Learn more',
   ctaHref: '/projects',
   stats: [
     { label: 'Operating Regions in Nigeria', value: 90, suffix: '+' },
-    { label: 'Successful Projects', value: 5, suffix: '' },
-    { label: 'Distribution Partners', value: 5000, suffix: '+' },
+    { label: 'Successful Projects', value: 2000, suffix: '+' },
+    { label: 'Installer Network', value: 1000, suffix: '+' },
   ],
 };
 
 export function ImpactSection({ content }: { content?: Partial<ImpactContent> }) {
   const { t } = useTranslation();
 
-  // Translated defaults: used only when the DB settings have no value.
   const translatedDefaults: ImpactContent = {
     eyebrow: t('impact.eyebrow'),
     headingWhite: t('impact.headingWhite'),
@@ -57,8 +52,8 @@ export function ImpactSection({ content }: { content?: Partial<ImpactContent> })
     ctaHref: '/projects',
     stats: [
       { label: t('impact.stat1Label'), value: 90, suffix: '+' },
-      { label: t('impact.stat2Label'), value: 5, suffix: '' },
-      { label: t('impact.stat3Label'), value: 5000, suffix: '+' },
+      { label: t('impact.stat2Label'), value: 2000, suffix: '+' },
+      { label: t('impact.stat3Label'), value: 1000, suffix: '+' },
     ],
   };
 
