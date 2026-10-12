@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { getCurrentUser } from '@/lib/auth/session';
@@ -10,7 +10,7 @@ const schema = z.object({
   body: z.string().trim().max(2000).optional().default(''),
 });
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const me = await getCurrentUser();
   if (!me?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (!isMasterEmail(me.email)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -30,7 +30,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, delivered: 0 });
   }
 
-  // Bulk insert notifications, one per active admin (including the sender).
   await prisma.notification.createMany({
     data: recipients.map((u) => ({
       userId: u.id,
