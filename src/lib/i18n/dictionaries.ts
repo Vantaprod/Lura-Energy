@@ -878,6 +878,7 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
 'admin.notifications.bell': 'Notifications',
 'admin.notifications.empty': 'No notifications yet.',
     'admin.notifications.emptySub': 'When something happens, you will see it here.',
+    'admin.audit.exportCsv': 'Export CSV',
     'master.digest.title': 'Email digest',
     'master.digest.subtitle': 'Send a daily or weekly summary of unread notifications.',
     'master.digest.on': 'Enabled',

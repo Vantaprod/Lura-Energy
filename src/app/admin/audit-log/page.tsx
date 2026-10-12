@@ -108,6 +108,15 @@ export default async function AuditLogPage({
     return '/admin/audit-log' + (qs ? '?' + qs : '');
   }
 
+  function exportHref(): string {
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (range !== 'all') params.set('range', range);
+    if (actorId) params.set('actor', actorId);
+    const qs = params.toString();
+    return '/api/admin/audit-log/export' + (qs ? '?' + qs : '');
+  }
+
   const hasFilters = Boolean(q) || range !== 'all' || Boolean(actorId);
 
   return (
@@ -122,7 +131,16 @@ export default async function AuditLogPage({
         {t('admin.audit.intro')}
       </p>
 
-      <AuditLogFilters actors={actorRecords} />
+      <div className="audit-export-bar">
+        <AuditLogFilters actors={actorRecords} />
+        <a
+          href={exportHref()}
+          className="audit-export-link"
+          download
+        >
+          {t('admin.audit.exportCsv')}
+        </a>
+      </div>
 
       <p
         className="form-note"

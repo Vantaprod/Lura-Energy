@@ -8548,3 +8548,30 @@ body {
   font-size: 12px;
   color: #97A1B2;
 }
+/* --- Audit log export (2026-10-12) --- */
+.audit-export-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.audit-export-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: #1428A0;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 150ms ease;
+}
+.audit-export-link:hover { background: #0A1550; }
+.audit-export-link::before {
+  content: '↓';
+  font-weight: 900;
+}
