@@ -46,7 +46,6 @@ export function NotificationsBell() {
 
   useEffect(() => {
     let cancelled = false;
-
     async function poll() {
       if (cancelled) return;
       try {
@@ -58,9 +57,8 @@ export function NotificationsBell() {
         setUnread(data.unread);
       } catch {}
     }
-
     poll();
-    const id = setInterval(poll, 30_000);
+    const id = setInterval(poll, 60_000);
     function onFocus() { poll(); }
     window.addEventListener('focus', onFocus);
     return () => {
@@ -93,11 +91,30 @@ export function NotificationsBell() {
     await load();
   }
 
+  const bellStyle: React.CSSProperties = {
+    position: 'relative',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    background: '#EEF1F7',
+    color: '#0A1550',
+    border: 'none',
+    padding: 0,
+    margin: 0,
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    boxShadow: 'none',
+    outline: 'none',
+  };
+
   return (
-    <div className="notif-root" ref={rootRef}>
+    <div style={{ position: 'relative' }} ref={rootRef}>
       <button
         type="button"
-        className="notif-bell"
+        style={bellStyle}
         aria-label={t('admin.notifications.bell')}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
@@ -112,42 +129,129 @@ export function NotificationsBell() {
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
+          style={{ display: 'block', color: 'inherit' }}
         >
           <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
           <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
         </svg>
         {unread > 0 && (
-          <span className="notif-bell__badge">{unread > 9 ? '9+' : unread}</span>
+          <span
+            style={{
+              position: 'absolute',
+              top: -4,
+              right: -4,
+              minWidth: 18,
+              height: 18,
+              padding: '0 5px',
+              borderRadius: 9,
+              background: '#DC2626',
+              color: '#fff',
+              fontSize: 10.5,
+              fontWeight: 700,
+              display: 'grid',
+              placeItems: 'center',
+              border: '2px solid #fff',
+            }}
+          >
+            {unread > 9 ? '9+' : unread}
+          </span>
         )}
       </button>
 
       {open && (
-        <div className="notif-panel" role="dialog" aria-label={t('admin.notifications.title')}>
-          <header className="notif-panel__head">
+        <div
+          role="dialog"
+          aria-label={t('admin.notifications.title')}
+          style={{
+            position: 'absolute',
+            top: 44,
+            right: 0,
+            width: 340,
+            maxWidth: '90vw',
+            background: '#fff',
+            border: '1px solid #E3E7EF',
+            borderRadius: 12,
+            boxShadow: '0 12px 32px rgba(5,14,31,0.14)',
+            zIndex: 60,
+            overflow: 'hidden',
+          }}
+        >
+          <header
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px 14px',
+              borderBottom: '1px solid #F1F3F8',
+              fontSize: 13.5,
+              color: '#0A1550',
+            }}
+          >
             <strong>{t('admin.notifications.title')}</strong>
             {unread > 0 && (
-              <button type="button" className="notif-panel__mark" onClick={markAllRead}>
+              <button
+                type="button"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#1428A0',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+                onClick={markAllRead}
+              >
                 {t('admin.notifications.markAll')}
               </button>
             )}
           </header>
 
           {items.length === 0 ? (
-            <p className="notif-panel__empty">{t('admin.notifications.empty')}</p>
+            <p
+              style={{
+                padding: '24px 16px',
+                margin: 0,
+                textAlign: 'center',
+                color: '#97A1B2',
+                fontSize: 13,
+              }}
+            >
+              {t('admin.notifications.empty')}
+            </p>
           ) : (
-            <ul className="notif-list">
+            <ul
+              style={{
+                listStyle: 'none',
+                margin: 0,
+                padding: 0,
+                maxHeight: 400,
+                overflowY: 'auto',
+              }}
+            >
               {items.slice(0, 8).map((n) => {
                 const inner = (
-                  <>
-                    <span className="notif-item__title">{n.title}</span>
-                    {n.body && <span className="notif-item__body">{n.body}</span>}
-                    <span className="notif-item__time">{fmt(n.createdAt)}</span>
-                  </>
+                  <span style={{ display: 'block', padding: '12px 14px', textDecoration: 'none', color: 'inherit' }}>
+                    <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0A1550' }}>
+                      {n.title}
+                    </span>
+                    {n.body && (
+                      <span style={{ display: 'block', fontSize: 12, color: '#6B7686', marginTop: 2 }}>
+                        {n.body}
+                      </span>
+                    )}
+                    <span style={{ display: 'block', fontSize: 11, color: '#97A1B2', marginTop: 4 }}>
+                      {fmt(n.createdAt)}
+                    </span>
+                  </span>
                 );
                 return (
                   <li
                     key={n.id}
-                    className={'notif-item' + (n.readAt ? '' : ' is-unread')}
+                    style={{
+                      borderBottom: '1px solid #F1F3F8',
+                      background: n.readAt ? 'transparent' : '#F7F9FF',
+                    }}
                   >
                     {n.href ? (
                       <Link href={n.href} onClick={() => setOpen(false)}>
@@ -162,8 +266,18 @@ export function NotificationsBell() {
             </ul>
           )}
 
-          <footer className="notif-panel__foot">
-            <Link href="/admin/notifications" onClick={() => setOpen(false)}>
+          <footer
+            style={{
+              padding: '10px 14px',
+              textAlign: 'center',
+              borderTop: '1px solid #F1F3F8',
+            }}
+          >
+            <Link
+              href="/admin/notifications"
+              onClick={() => setOpen(false)}
+              style={{ color: '#1428A0', fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}
+            >
               {t('admin.notifications.viewAll')} →
             </Link>
           </footer>

@@ -8420,3 +8420,30 @@ body {
   .np-card-actions { justify-content: stretch; }
   .np-btn { flex: 1; }
 }
+/* --- Notif bell override: beat global button styles (2026-10-12) --- */
+.admin-top .notif-bell,
+.admin-shell .notif-bell {
+  background: #EEF1F7 !important;
+  color: #0A1550 !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border-radius: 8px !important;
+  width: 36px !important;
+  height: 36px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+}
+.admin-top .notif-bell:hover,
+.admin-shell .notif-bell:hover {
+  background: #DCE3F1 !important;
+  color: #1428A0 !important;
+}
+.admin-top .notif-bell svg,
+.admin-shell .notif-bell svg {
+  stroke: currentColor !important;
+  fill: none !important;
+  display: block;
+}

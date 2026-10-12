@@ -12,7 +12,11 @@ import type { Lang } from '@/lib/i18n/dictionaries';
 
 type User = { name: string; role: string } | null;
 
-const POLL_MS = 1000;
+const POLL_MS = 300_000;
+const IS_DEV =
+  typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1');
 
 export function AdminShell({
   user,
@@ -29,10 +33,12 @@ export function AdminShell({
 
   const langRef = useRef<Lang>(lang);
   useEffect(() => {
+    if (IS_DEV) return;
     langRef.current = lang;
   }, [lang]);
 
   useEffect(() => {
+    if (IS_DEV) return;
     let cancelled = false;
     let timer: number | null = null;
 
