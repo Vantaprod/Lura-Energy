@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Lura Energy">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1428A0"/>
+      <stop offset="1" stop-color="#0A1550"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#g)"/>
+  <path d="M132 118h52v228h134v52H132z" fill="#ffffff"/>
+  <path d="M300 118h80v52h-28v70h28v52h-80v-52h28v-70h-28z" fill="#F58220"/>
+</svg>

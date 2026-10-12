@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteFooter } from '@/components/layout/site-footer';
@@ -6,6 +6,7 @@ import { FloatingWhatsApp } from '@/components/public/floating-whatsapp';
 import { LanguageProvider } from '@/lib/i18n/context';
 import { JsonLd } from '@/components/public/json-ld';
 import { organizationSchema } from '@/lib/seo/schemas';
+import { PwaRegister } from '@/components/pwa/pwa-register';
 
 export const metadata: Metadata = {
   title: { default: 'Lura Energy', template: '%s | Lura Energy' },
@@ -14,6 +15,16 @@ export const metadata: Metadata = {
   other: {
     google: 'notranslate',
   },
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    title: 'Lura Admin',
+    statusBarStyle: 'black-translucent',
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#1428A0',
 };
 
 export default function RootLayout({
@@ -29,6 +40,7 @@ export default function RootLayout({
           <SiteFooter />
           <FloatingWhatsApp />
         </LanguageProvider>
+        <PwaRegister />
       </body>
     </html>
   );
