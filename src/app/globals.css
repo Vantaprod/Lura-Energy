@@ -6747,18 +6747,10 @@ details[open] ul li > button.admin-action:hover {
   opacity: 0.75;
 }
 
-.partner-marquee__logo {
-  height: 40px;
-  width: auto;
-  max-width: 200px;
-  object-fit: contain;
-  display: block;
-  filter: grayscale(0%);
-  transition: filter 200ms ease;
-}
+
 
 @media (max-width: 700px) {
-  .partner-marquee__logo { height: 32px; max-width: 140px; }
+  
   .partner-marquee__item { padding: 0 32px; }
   .partner-marquee-section { padding: 56px 0 72px; }
 }
@@ -6788,17 +6780,10 @@ details[open] ul li > button.admin-action:hover {
    1400px-wide hero. Bumping to 64px desktop, 48px tablet, 40px
    mobile, with more breathing room and a touch more contrast. */
 
-.partner-marquee__logo {
-  height: 64px !important;
-  max-width: 260px !important;
-  opacity: 0.92;
-  transition: opacity 200ms ease, filter 200ms ease;
-}
+
 
 .partner-marquee__link:hover .partner-marquee__logo,
-.partner-marquee__link:focus-visible .partner-marquee__logo {
-  opacity: 1;
-}
+.partner-marquee__link:focus-visible 
 
 .partner-marquee__item {
   padding: 0 64px !important;
@@ -6834,10 +6819,7 @@ details[open] ul li > button.admin-action:hover {
 
 /* Tablet */
 @media (max-width: 1024px) {
-  .partner-marquee__logo {
-    height: 56px !important;
-    max-width: 220px !important;
-  }
+  
   .partner-marquee__item {
     padding: 0 48px !important;
   }
@@ -6845,10 +6827,7 @@ details[open] ul li > button.admin-action:hover {
 
 /* Mobile */
 @media (max-width: 700px) {
-  .partner-marquee__logo {
-    height: 44px !important;
-    max-width: 160px !important;
-  }
+  
   .partner-marquee__item {
     padding: 0 36px !important;
   }
@@ -8644,44 +8623,46 @@ body {
   height: 96px;
 }
 
-.partner-marquee__logo {
-  max-height: 44px;
-  width: auto;
-  object-fit: contain;
-  filter: grayscale(100%);
-  opacity: 0.7;
-  transition: filter 200ms ease, opacity 200ms ease;
-  user-select: none;
-  pointer-events: none;
-}
 
-.partner-marquee__item:hover .partner-marquee__logo,
-.partner-marquee__link:focus-visible .partner-marquee__logo {
-  filter: grayscale(0%);
-  opacity: 1;
-}
 
-@media (prefers-reduced-motion: reduce) {
-  .partner-marquee__track { animation: none; }
+
 }
 
 @media (max-width: 640px) {
   .partner-marquee__item { padding: 0 28px; height: 76px; }
-  .partner-marquee__logo { max-height: 34px; }
+  
 }
 /* --- Partner marquee: force uniform logo height (2026-10-12) --- */
-.partner-marquee__logo {
-  height: 44px !important;
-  width: auto !important;
-  max-height: 44px !important;
-  max-width: 200px !important;
-  object-fit: contain;
+
+
+@media (max-width: 640px) {
+  
+}
+
+/* --- Partner marquee: definitive uniform sizing (2026-10-12 v2) --- */
+.partner-marquee .partner-marquee__item .partner-marquee__logo {
+  display: block;
+  width: 180px !important;
+  height: 60px !important;
+  max-width: 180px !important;
+  max-height: 60px !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  filter: grayscale(100%);
+  opacity: 0.78;
+  transition: filter 200ms ease, opacity 200ms ease;
+}
+
+.partner-marquee .partner-marquee__item:hover .partner-marquee__logo {
+  filter: grayscale(0%);
+  opacity: 1;
 }
 
 @media (max-width: 640px) {
-  .partner-marquee__logo {
-    height: 40px !important;
-    max-height: 40px !important;
-    max-width: 140px !important;
+  .partner-marquee .partner-marquee__item .partner-marquee__logo {
+    width: 130px !important;
+    height: 44px !important;
+    max-width: 130px !important;
+    max-height: 44px !important;
   }
 }

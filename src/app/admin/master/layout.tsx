@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { requireMaster } from '@/lib/auth/require-master';
 import { PresenceHeartbeat } from '@/components/admin/presence-heartbeat';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
+import { AdminLogout } from '@/components/admin/admin-logout';
 import { getServerT } from '@/lib/i18n/server';
 
 export default async function MasterLayout({ children }: { children: React.ReactNode }) {
@@ -29,9 +30,7 @@ export default async function MasterLayout({ children }: { children: React.React
             <span>{me.name ?? me.email}</span>
           </span>
           <Link href="/admin" className="button button-quiet">{t('master.siteAdmin')}</Link>
-          <form action="/api/auth/logout" method="post">
-            <button className="button">{t('master.signOut')}</button>
-          </form>
+          <AdminLogout />
         </div>
       </header>
       <nav className="master-nav" aria-label="Master navigation">
