@@ -3,7 +3,6 @@ import { requireMaster } from '@/lib/auth/require-master';
 import { PresenceHeartbeat } from '@/components/admin/presence-heartbeat';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { AdminLogout } from '@/components/admin/admin-logout';
-import { AdminLogout } from '@/components/admin/admin-logout';
 import { getServerT } from '@/lib/i18n/server';
 
 export default async function MasterLayout({ children }: { children: React.ReactNode }) {
