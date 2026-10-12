@@ -14,18 +14,16 @@ type Props = {
 };
 
 /**
- * Seamless left-to-right marquee. The list is rendered 4 times inside a
- * single track; the CSS animation translates from -75% to 0%, which
- * produces an infinite loop with no visible reset (since all 4 copies
- * are identical). Reduced-motion pauses the animation.
+ * Seamless infinite marquee. The list is rendered TWICE inside a single
+ * flex track with width:max-content. The CSS animation translates from
+ * 0 to -50%, so when it loops the second copy is at exactly the same
+ * position the first copy started from — no gap, no jump.
  */
 export function PartnerMarquee({ partners, eyebrow, heading, body }: Props) {
   if (partners.length === 0) return null;
 
-  const copies = 4;
-  const track = Array.from({ length: copies }, (_, copyIndex) =>
-    partners.map((p, itemIndex) => ({ partner: p, key: `${copyIndex}-${itemIndex}` })),
-  ).flat();
+  // Two identical copies → the animation can translate -50% and loop cleanly.
+  const track = [...partners, ...partners];
 
   return (
     <section className="partner-marquee-section">
@@ -37,7 +35,7 @@ export function PartnerMarquee({ partners, eyebrow, heading, body }: Props) {
 
       <div className="partner-marquee" aria-label={heading}>
         <div className="partner-marquee__track">
-          {track.map(({ partner, key }, index) => {
+          {track.map((partner, index) => {
             const firstCopy = index < partners.length;
             const content = (
               // eslint-disable-next-line @next/next/no-img-element
@@ -48,10 +46,10 @@ export function PartnerMarquee({ partners, eyebrow, heading, body }: Props) {
                 loading="lazy"
               />
             );
-            const item = (
+            return (
               <div
                 className="partner-marquee__item"
-                key={key}
+                key={`${index}-${partner.id}`}
                 aria-hidden={!firstCopy ? 'true' : undefined}
               >
                 {partner.websiteUrl && firstCopy ? (
@@ -69,7 +67,6 @@ export function PartnerMarquee({ partners, eyebrow, heading, body }: Props) {
                 )}
               </div>
             );
-            return item;
           })}
         </div>
       </div>
