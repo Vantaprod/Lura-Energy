@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db/prisma';
 import { requireMaster } from '@/lib/auth/require-master';
 import { getServerT } from '@/lib/i18n/server';
 import { BroadcastCard } from '@/components/admin/broadcast-card';
+import { DigestSettingsCard } from '@/components/admin/digest-settings-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,6 +73,8 @@ export default async function MasterOverviewPage() {
       </div>
 
       <BroadcastCard />
+
+      <DigestSettingsCard />
 
       <section className="master-section">
         <h3 className="master-h3">{t('master.onlineNow')}</h3>
