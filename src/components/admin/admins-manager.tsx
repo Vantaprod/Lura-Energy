@@ -29,6 +29,8 @@ export function AdminsManager() {
   const [invite, setInvite] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   async function load() {
     const response = await fetch('/api/admin/administrators');
@@ -36,6 +38,13 @@ export function AdminsManager() {
       const result: Payload = await response.json();
       setData(result);
       setCapacity(result.capacity);
+      // Prune selection to still-existing ids.
+      setSelected((prev) => {
+        const ids = new Set(result.users.map((u) => u.id));
+        const next = new Set<string>();
+        for (const id of prev) if (ids.has(id)) next.add(id);
+        return next;
+      });
     } else setError(t('admin.admins.error.load'));
   }
   useEffect(() => { void load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
@@ -147,6 +156,79 @@ export function AdminsManager() {
     await load();
   }
 
+  // ----- bulk helpers -----
+  const selectableIds: string[] = (data?.users ?? [])
+    .filter((u) => u.id !== data?.currentUserId)
+    .map((u) => u.id);
+
+  function toggleRow(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    setSelected((prev) => {
+      if (prev.size === selectableIds.length && selectableIds.length > 0) {
+        return new Set();
+      }
+      return new Set(selectableIds);
+    });
+  }
+
+  async function runBulk(action: 'deactivate' | 'activate' | 'remove') {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+
+    const confirmMsg =
+      action === 'remove'
+        ? t('admin.admins.bulk.confirmRemove').replace('{n}', String(ids.length))
+        : action === 'deactivate'
+        ? t('admin.admins.bulk.confirmDeactivate').replace('{n}', String(ids.length))
+        : t('admin.admins.bulk.confirmActivate').replace('{n}', String(ids.length));
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setBulkBusy(true);
+    setError('');
+    setMessage('');
+    try {
+      const res = await fetch('/api/admin/administrators/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, action }),
+      });
+      const result = (await res.json().catch(() => ({}))) as {
+        ok?: number;
+        skipped?: number;
+        errors?: string[];
+        error?: string;
+      };
+      if (!res.ok) {
+        setError(result.error ?? t('admin.admins.bulk.errorGeneric'));
+        return;
+      }
+      setMessage(
+        t('admin.admins.bulk.result')
+          .replace('{ok}', String(result.ok ?? 0))
+          .replace('{skipped}', String(result.skipped ?? 0)),
+      );
+      if (result.errors && result.errors.length > 0) {
+        setError(result.errors.slice(0, 5).join(' · '));
+      }
+      setSelected(new Set());
+      await load();
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  const allSelected =
+    selectableIds.length > 0 && selected.size === selectableIds.length;
+
   return (
     <>
       <div className="stats">
@@ -213,11 +295,62 @@ export function AdminsManager() {
         {t('admin.admins.accounts.title')}
       </h2>
 
+      {selected.size > 0 && (
+        <div className="bulk-bar" role="region" aria-label={t('admin.admins.bulk.label')}>
+          <span className="bulk-bar__count">
+            {t('admin.admins.bulk.selected').replace('{n}', String(selected.size))}
+          </span>
+          <div className="bulk-bar__actions">
+            <button
+              type="button"
+              className="admin-action"
+              disabled={bulkBusy}
+              onClick={() => void runBulk('deactivate')}
+            >
+              {t('admin.admins.bulk.deactivate')}
+            </button>
+            <button
+              type="button"
+              className="admin-action"
+              disabled={bulkBusy}
+              onClick={() => void runBulk('activate')}
+            >
+              {t('admin.admins.bulk.activate')}
+            </button>
+            <button
+              type="button"
+              className="admin-action admin-action--danger"
+              disabled={bulkBusy}
+              onClick={() => void runBulk('remove')}
+            >
+              {t('admin.admins.bulk.remove')}
+            </button>
+            <button
+              type="button"
+              className="admin-action admin-action--ghost"
+              disabled={bulkBusy}
+              onClick={() => setSelected(new Set())}
+            >
+              {t('admin.admins.bulk.clear')}
+            </button>
+          </div>
+        </div>
+      )}
+
       {data?.users.length ? (
         <div style={{ overflowX: 'auto' }}>
           <table className="admin-table">
             <thead>
               <tr>
+                <th style={{ width: 36 }}>
+                  <input
+                    type="checkbox"
+                    aria-label={t('admin.admins.bulk.selectAll')}
+                    checked={allSelected}
+                    onChange={toggleAll}
+                    disabled={selectableIds.length === 0}
+                  />
+                </th>
                 <th>{t('admin.admins.col.administrator')}</th>
                 <th>{t('admin.admins.col.role')}</th>
                 <th>{t('admin.admins.col.status')}</th>
@@ -226,63 +359,80 @@ export function AdminsManager() {
               </tr>
             </thead>
             <tbody>
-              {data.users.map((account) => (
-                <tr key={account.id}>
-                  <td>
-                    <Link
-                      href={`/admin/administrators/${account.id}`}
-                      style={{
-                        color: '#1428A0',
-                        fontWeight: 700,
-                        textDecoration: 'none',
-                      }}
-                    >
-                      {account.name}
-                    </Link>
-                    <br />
-                    <span className="form-note">{account.email}</span>
-                  </td>
-                  <td>{account.role}</td>
-                  <td>
-                    {account.active
-                      ? t('admin.admins.status.active')
-                      : t('admin.admins.status.disabled')}
-                  </td>
-                  <td>
-                    {account.lastLoginAt
-                      ? new Date(account.lastLoginAt).toLocaleString()
-                      : t('admin.admins.status.never')}
-                  </td>
-                  <td>
-                    {account.id !== data.currentUserId && (
-                      <>
-                        <button
-                          className="admin-action"
-                          onClick={() => void changeRole(account)}
-                        >
-                          {account.role === 'ADMIN'
-                            ? t('admin.admins.action.makeOwner')
-                            : t('admin.admins.action.makeAdmin')}
-                        </button>{' '}
-                        <button
-                          className="admin-action"
-                          onClick={() => void toggle(account)}
-                        >
-                          {account.active
-                            ? t('admin.admins.action.disable')
-                            : t('admin.admins.action.reactivate')}
-                        </button>{' '}
-                        <button
-                          className="admin-action"
-                          onClick={() => void remove(account)}
-                        >
-                          {t('admin.admins.action.remove')}
-                        </button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {data.users.map((account) => {
+                const isMe = account.id === data.currentUserId;
+                const isSel = selected.has(account.id);
+                return (
+                  <tr key={account.id} className={isSel ? 'is-selected' : ''}>
+                    <td>
+                      {!isMe && (
+                        <input
+                          type="checkbox"
+                          aria-label={t('admin.admins.bulk.selectOne').replace(
+                            '{name}',
+                            account.name,
+                          )}
+                          checked={isSel}
+                          onChange={() => toggleRow(account.id)}
+                        />
+                      )}
+                    </td>
+                    <td>
+                      <Link
+                        href={`/admin/administrators/${account.id}`}
+                        style={{
+                          color: '#1428A0',
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                        }}
+                      >
+                        {account.name}
+                      </Link>
+                      <br />
+                      <span className="form-note">{account.email}</span>
+                    </td>
+                    <td>{account.role}</td>
+                    <td>
+                      {account.active
+                        ? t('admin.admins.status.active')
+                        : t('admin.admins.status.disabled')}
+                    </td>
+                    <td>
+                      {account.lastLoginAt
+                        ? new Date(account.lastLoginAt).toLocaleString()
+                        : t('admin.admins.status.never')}
+                    </td>
+                    <td>
+                      {!isMe && (
+                        <>
+                          <button
+                            className="admin-action"
+                            onClick={() => void changeRole(account)}
+                          >
+                            {account.role === 'ADMIN'
+                              ? t('admin.admins.action.makeOwner')
+                              : t('admin.admins.action.makeAdmin')}
+                          </button>{' '}
+                          <button
+                            className="admin-action"
+                            onClick={() => void toggle(account)}
+                          >
+                            {account.active
+                              ? t('admin.admins.action.disable')
+                              : t('admin.admins.action.reactivate')}
+                          </button>{' '}
+                          <button
+                            className="admin-action"
+                            onClick={() => void remove(account)}
+                          >
+                            {t('admin.admins.action.remove')}
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

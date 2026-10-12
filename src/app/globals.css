@@ -8447,3 +8447,51 @@ body {
   fill: none !important;
   display: block;
 }
+/* --- Bulk admin actions (2026-10-12) --- */
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: #EEF1F7;
+  border: 1px solid #C8D0E0;
+  border-radius: 10px;
+  margin: 1rem 0;
+}
+.bulk-bar__count {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0A1550;
+}
+.bulk-bar__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.admin-action--danger {
+  background: #DC2626 !important;
+  color: #fff !important;
+  border-color: #DC2626 !important;
+}
+.admin-action--danger:hover {
+  background: #B91C1C !important;
+}
+.admin-action--ghost {
+  background: transparent !important;
+  color: #0A1550 !important;
+  border-color: #C8D0E0 !important;
+}
+.admin-action--ghost:hover {
+  background: #fff !important;
+}
+.admin-table tr.is-selected {
+  background: #F7F9FF;
+}
+.admin-table input[type='checkbox'] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: #1428A0;
+}
