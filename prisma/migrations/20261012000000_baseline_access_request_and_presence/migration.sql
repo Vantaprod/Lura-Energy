@@ -3,6 +3,7 @@
 -- is NOT executed — it is a record-keeping file only.
 
 ALTER TABLE "User" ADD COLUMN "avatarUrl" TEXT;
+ALTER TABLE "User" ADD COLUMN "displayName" TEXT;
 ALTER TABLE "User" ADD COLUMN "lastSeenAt" TIMESTAMP(3);
 
 CREATE TABLE "AccessRequest" (

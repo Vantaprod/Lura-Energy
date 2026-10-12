@@ -10,10 +10,12 @@ type User = { name: string; role: string } | null;
 export function AdminGate({
   user,
   adminLang,
+  isMaster,
   children,
 }: {
   user: User;
   adminLang: Lang;
+  isMaster: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -29,7 +31,13 @@ export function AdminGate({
 
   return (
     <LanguageProvider scope={scope} initialLang={adminLang}>
-      {noShell ? children : <AdminShell user={user}>{children}</AdminShell>}
+      {noShell ? (
+        children
+      ) : (
+        <AdminShell user={user} isMaster={isMaster}>
+          {children}
+        </AdminShell>
+      )}
     </LanguageProvider>
   );
 }

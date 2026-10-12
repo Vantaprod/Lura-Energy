@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { getServerLang } from '@/lib/i18n/server';
 import { AdminGate } from '@/components/layout/admin-gate';
 import { PresenceBeacon } from '@/components/admin/presence-beacon';
+import { isMasterEmail } from '@/lib/auth/masters';
 
 export default async function AdminLayout({
   children,
@@ -13,10 +14,12 @@ export default async function AdminLayout({
     getServerLang('admin'),
   ]);
 
+  const isMaster = isMasterEmail(user?.email ?? null);
+
   return (
     <>
       <PresenceBeacon />
-      <AdminGate user={user} adminLang={adminLang}>
+      <AdminGate user={user} adminLang={adminLang} isMaster={isMaster}>
         {children}
       </AdminGate>
     </>

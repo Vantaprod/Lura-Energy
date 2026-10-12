@@ -14,9 +14,11 @@ const POLL_MS = 1000;
 
 export function AdminShell({
   user,
+  isMaster,
   children,
 }: {
   user: User;
+  isMaster: boolean;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -106,6 +108,10 @@ export function AdminShell({
     { href: '/admin/system', label: t('admin.nav.system') },
   ];
 
+  const MASTER_LINKS = [
+    { href: '/admin/master', label: t('admin.nav.master') },
+  ];
+
   return (
     <div className="admin-shell">
       <div className="admin-top">
@@ -149,6 +155,17 @@ export function AdminShell({
           ))}
           {user.role === 'OWNER' &&
             OWNER_LINKS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={isActive(item.href) ? 'is-active' : ''}
+                aria-current={isActive(item.href) ? 'page' : undefined}
+              >
+                {item.label}
+              </Link>
+            ))}
+          {isMaster &&
+            MASTER_LINKS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

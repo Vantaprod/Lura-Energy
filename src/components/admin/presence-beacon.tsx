@@ -2,10 +2,6 @@
 
 import { useEffect } from 'react';
 
-/**
- * Fires POST /api/admin/heartbeat every 45s while the admin panel is open.
- * Also pings immediately on mount and on window focus.
- */
 export function PresenceBeacon() {
   useEffect(() => {
     let cancelled = false;
@@ -13,18 +9,13 @@ export function PresenceBeacon() {
     async function ping() {
       if (cancelled) return;
       try {
-        await fetch('/api/admin/heartbeat', { method: 'POST' });
-      } catch {
-        /* ignore network blips */
-      }
+        await fetch('/api/presence', { method: 'POST' });
+      } catch {}
     }
 
     ping();
     const id = setInterval(ping, 45_000);
-
-    function onFocus() {
-      ping();
-    }
+    function onFocus() { ping(); }
     window.addEventListener('focus', onFocus);
 
     return () => {
