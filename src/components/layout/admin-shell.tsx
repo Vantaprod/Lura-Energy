@@ -7,6 +7,7 @@ import { useTranslation } from '@/lib/i18n/context';
 import { AdminLogout } from '@/components/admin/admin-logout';
 import { LanguageSwitcher } from './language-switcher';
 import { MessagesBell } from '@/components/admin/messages-bell';
+import { NotificationsBell } from '@/components/admin/notifications-bell';
 import type { Lang } from '@/lib/i18n/dictionaries';
 
 type User = { name: string; role: string } | null;
@@ -37,12 +38,10 @@ export function AdminShell({
 
     async function poll() {
       if (cancelled) return;
-
       if (typeof document !== 'undefined' && document.hidden) {
         schedule();
         return;
       }
-
       try {
         const res = await fetch('/api/admin/language', { cache: 'no-store' });
         if (res.ok) {
@@ -53,7 +52,7 @@ export function AdminShell({
           }
         }
       } catch {
-        // next tick retries
+        /* next tick retries */
       }
       schedule();
     }
@@ -129,13 +128,17 @@ export function AdminShell({
             flexWrap: 'wrap',
           }}
         >
-          {user && <MessagesBell />}
+          {user && (<><MessagesBell /><NotificationsBell /></>)}
           <LanguageSwitcher />
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span className="form-note">
+              <Link
+                href="/admin/account"
+                className="admin-user-link"
+                title={t('admin.account.heading')}
+              >
                 {user.name} - {user.role.toLowerCase()}
-              </span>
+              </Link>
               <AdminLogout />
             </div>
           ) : (

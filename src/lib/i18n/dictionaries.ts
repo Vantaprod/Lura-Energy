@@ -859,6 +859,15 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
 'admin.messages.you': 'You',
 'admin.messages.owner': 'Master',
 'admin.messages.bell': 'Messages',
+'admin.notifications.eyebrow': 'Notifications',
+'admin.notifications.title': 'Notifications',
+'admin.notifications.subtitle': 'Updates on your account and admin activity.',
+'admin.notifications.bell': 'Notifications',
+'admin.notifications.empty': 'No notifications yet.',
+'admin.notifications.markAll': 'Mark all read',
+'admin.notifications.markOne': 'Mark read',
+'admin.notifications.viewAll': 'View all',
+'admin.notifications.open': 'Open',
 
     // ---- ADMIN INVITE / LOGIN / AUDIT ----
     'admin.invite.eyebrow': 'Administrator invitation',
@@ -1372,6 +1381,15 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.dashboard.contentNoteTitle': '内容由此工作区管理',
     'admin.dashboard.contentNoteBody': '草稿记录仅对员工可见。仅发布经过验证的 Lura 内容。',
     'admin.dashboard.seatCapacity': '管理员席位容量',
+    'admin.notifications.eyebrow': '通知',
+'admin.notifications.title': '通知',
+'admin.notifications.subtitle': '账户与管理员活动的更新。',
+'admin.notifications.bell': '通知',
+'admin.notifications.empty': '暂无通知。',
+'admin.notifications.markAll': '全部标为已读',
+'admin.notifications.markOne': '标为已读',
+'admin.notifications.viewAll': '查看全部',
+'admin.notifications.open': '打开',
 
     // ---- ADMIN ACTIONS ----
         'admin.actions.feature': '设为精选',
@@ -3050,6 +3068,15 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'admin.admins.notice.removed': 'Compte administrateur définitivement supprimé.',
     'admin.admins.notice.roleChanged': 'Rôle changé en {role}.',
     'admin.admins.error.load': 'Impossible de charger les enregistrements d\u2019administrateurs.',
+'admin.notifications.eyebrow': 'Notifications',
+'admin.notifications.title': 'Notifications',
+'admin.notifications.subtitle': 'Mises à jour sur votre compte et l’activité des administrateurs.',
+'admin.notifications.bell': 'Notifications',
+'admin.notifications.empty': 'Aucune notification pour le moment.',
+'admin.notifications.markAll': 'Tout marquer comme lu',
+'admin.notifications.markOne': 'Marquer comme lu',
+'admin.notifications.viewAll': 'Voir tout',
+'admin.notifications.open': 'Ouvrir',
 
     // ---- ADMIN INVITE / LOGIN / AUDIT ----
     'admin.invite.eyebrow': 'Invitation administrateur',

@@ -46,6 +46,7 @@ model User {
   displayName        String?
   sentMessages       Message[]         @relation("SentMessages")
   receivedMessages   Message[]         @relation("ReceivedMessages")
+  notifications      Notification[]
 }
 
 model Session {
@@ -351,4 +352,19 @@ model Message {
 
   @@index([recipientId, readAt])
   @@index([senderId, recipientId, createdAt])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String
+  title     String
+  body      String?
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
 }
