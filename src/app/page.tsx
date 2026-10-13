@@ -8,7 +8,7 @@ import { getServerT } from '@/lib/i18n/server';
 import { JsonLd } from '@/components/public/json-ld';
 import { websiteSchema } from '@/lib/seo/schemas';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 const ROTATION_WINDOW_MS = 30 * 60 * 1000;
 const ROTATION_COUNT = 3;

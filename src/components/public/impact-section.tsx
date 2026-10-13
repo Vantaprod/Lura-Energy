@@ -2,7 +2,12 @@
 
 import CountUp from 'react-countup';
 import { useInView } from 'react-intersection-observer';
-import { HolographicGlobe } from '@/components/public/holographic-globe';
+import dynamic from 'next/dynamic';
+
+const HolographicGlobe = dynamic(
+  () => import('@/components/public/holographic-globe').then((m) => m.HolographicGlobe),
+  { ssr: false, loading: () => null },
+);
 import { useTranslation } from '@/lib/i18n/context';
 
 export type ImpactStat = {

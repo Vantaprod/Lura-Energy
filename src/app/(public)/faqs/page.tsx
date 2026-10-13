@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db/prisma';
 import { getServerT } from '@/lib/i18n/server';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export default async function FaqPage() {
   const isPreview =

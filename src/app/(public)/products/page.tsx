@@ -2,7 +2,7 @@ import { prisma } from '@/lib/db/prisma';
 import { getServerT } from '@/lib/i18n/server';
 import { SeriesCard, SeriesFeaturedCard } from '@/components/public/series-card';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export default async function ProductsPage() {
   const isPreview =

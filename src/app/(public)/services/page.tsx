@@ -2,7 +2,7 @@ import { prisma } from '@/lib/db/prisma';
 import { ContentIndex } from '@/components/public/content-index';
 import { getServerT } from '@/lib/i18n/server';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export default async function ServicesPage() {
   const isPreview =

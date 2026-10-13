@@ -58,7 +58,7 @@ export function NotificationsBell() {
       } catch {}
     }
     poll();
-    const id = setInterval(poll, 60_000);
+    const id = setInterval(poll, 120_000);
     function onFocus() { poll(); }
     window.addEventListener('focus', onFocus);
     return () => {

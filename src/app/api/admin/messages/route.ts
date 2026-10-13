@@ -75,7 +75,7 @@ export async function GET() {
 
   const totalUnread = msgs.filter((m) => m.recipientId === me.id && !m.readAt).length;
 
-  return NextResponse.json({ threads: list, totalUnread });
+  return NextResponse.json({ threads: list, totalUnread }, { headers: { 'Cache-Control': 'private, max-age=10, stale-while-revalidate=30' } });
 }
 
 /** POST /api/admin/messages — send a message to another admin. */

@@ -23,7 +23,7 @@ export function MessagesBell() {
     }
 
     poll();
-    const id = setInterval(poll, 45_000);
+    const id = setInterval(poll, 120_000);
 
     function onFocus() {
       poll();
