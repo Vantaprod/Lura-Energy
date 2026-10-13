@@ -14,6 +14,9 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,
+  experimental: {
+    optimizePackageImports: ['react-countup', 'three', '@react-three/fiber', '@react-three/drei'],
+  },
 };
 
 export default nextConfig;
