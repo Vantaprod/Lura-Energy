@@ -172,12 +172,12 @@ export default async function HomePage() {
       },
       {
         label: resolve('impact.stat2Label', 'impact.stat2Label'),
-        value: parseNumber(String(content['impact.stat2Value'] ?? '5'), 5),
-        suffix: String(content['impact.stat2Suffix'] ?? ''),
+        value: parseNumber(String(content['impact.stat2Value'] ?? '2000'), 2000),
+        suffix: String(content['impact.stat2Suffix'] ?? '+'),
       },
       {
         label: resolve('impact.stat3Label', 'impact.stat3Label'),
-        value: parseNumber(String(content['impact.stat3Value'] ?? '5000'), 5000),
+        value: parseNumber(String(content['impact.stat3Value'] ?? '1000'), 1000),
         suffix: String(content['impact.stat3Suffix'] ?? '+'),
       },
     ],
@@ -386,7 +386,25 @@ export default async function HomePage() {
           <Link className="button" href="/contact">
             {t('cta.quote')}
           </Link>
-          <Link className="button button-ghost" href="/products">
+          <Link
+            href="/products"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '14px 28px',
+              borderRadius: 6,
+              fontSize: 14,
+              fontWeight: 700,
+              textDecoration: 'none',
+              color: '#FFFFFF',
+              background: 'transparent',
+              border: '1px solid rgba(255,255,255,0.75)',
+              transition: 'background 150ms ease, color 150ms ease, border-color 150ms ease',
+              fontFamily: 'inherit',
+              minHeight: 48,
+            }}
+          >
             {t('cta.exploreProducts')}
           </Link>
         </div>

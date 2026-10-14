@@ -9202,3 +9202,38 @@ html body .partner-marquee .partner-marquee__track.partner-marquee__track {
     background: transparent !important;
   }
 }
+/* ============================================================
+   MARQUEE — mobile speed FORCE fast (2026-10-14 v2)
+   ============================================================ */
+@media (max-width: 900px) {
+  .partner-marquee__track,
+  html body .partner-marquee .partner-marquee__track.partner-marquee__track {
+    animation: partner-marquee-scroll 8s linear infinite !important;
+    animation-duration: 8s !important;
+  }
+}
+@media (max-width: 640px) {
+  .partner-marquee__track,
+  html body .partner-marquee .partner-marquee__track.partner-marquee__track {
+    animation: partner-marquee-scroll 8s linear infinite !important;
+    animation-duration: 8s !important;
+  }
+  .partner-marquee__item {
+    flex: 0 0 140px !important;
+    width: 140px !important;
+    min-width: 140px !important;
+    max-width: 140px !important;
+    height: 60px !important;
+  }
+  .partner-marquee__logo {
+    max-width: 100px !important;
+    max-height: 36px !important;
+  }
+}
+@media (max-width: 400px) {
+  .partner-marquee__track,
+  html body .partner-marquee .partner-marquee__track.partner-marquee__track {
+    animation: partner-marquee-scroll 9s linear infinite !important;
+    animation-duration: 9s !important;
+  }
+}
