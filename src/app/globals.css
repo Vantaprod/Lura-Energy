@@ -9075,3 +9075,50 @@ body {
     animation-duration: 7s !important;
   }
 }
+/* ============================================================
+   CTA section — button contrast on blue background (2026-10-14)
+   ============================================================ */
+.section-blue .button-ghost,
+.section-blue .button.button-ghost {
+  color: #FFFFFF !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  background: transparent !important;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease !important;
+}
+
+.section-blue .button-ghost:hover,
+.section-blue .button-ghost:focus-visible,
+.section-blue .button.button-ghost:hover,
+.section-blue .button.button-ghost:focus-visible {
+  color: #0A1550 !important;
+  background: #FFFFFF !important;
+  border-color: #FFFFFF !important;
+  outline: none !important;
+}
+
+/* Also catch any ghost buttons sitting inside the blue CTA wrapper,
+   in case the section class differs (fallback selectors) */
+.cta-section .button-ghost,
+.section-cta .button-ghost {
+  color: #FFFFFF !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+}
+.cta-section .button-ghost:hover,
+.section-cta .button-ghost:hover {
+  color: #0A1550 !important;
+  background: #FFFFFF !important;
+}
+/* ============================================================
+   MARQUEE — FINAL FORCE (2026-10-14)
+   Absolute last rule in the file — wins every specificity tie
+   ============================================================ */
+html body .partner-marquee .partner-marquee__track.partner-marquee__track {
+  animation: partner-marquee-scroll 12s linear infinite !important;
+  animation-duration: 12s !important;
+}
+
+html body .partner-marquee .partner-marquee__track.partner-marquee__track {
+  animation-name: partner-marquee-scroll !important;
+  animation-timing-function: linear !important;
+  animation-iteration-count: infinite !important;
+}
