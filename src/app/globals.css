@@ -9237,3 +9237,42 @@ html body .partner-marquee .partner-marquee__track.partner-marquee__track {
     animation-duration: 9s !important;
   }
 }
+/* ============================================================
+   MARQUEE — mobile color + speed tuning (2026-10-14 v3)
+   ============================================================ */
+@media (max-width: 900px) {
+  .partner-marquee__logo {
+    filter: grayscale(0%) !important;
+    opacity: 1 !important;
+  }
+  .partner-marquee__track,
+  html body .partner-marquee .partner-marquee__track.partner-marquee__track {
+    animation: partner-marquee-scroll 14s linear infinite !important;
+    animation-duration: 14s !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .partner-marquee__logo {
+    filter: grayscale(0%) !important;
+    opacity: 1 !important;
+  }
+  .partner-marquee__track,
+  html body .partner-marquee .partner-marquee__track.partner-marquee__track {
+    animation: partner-marquee-scroll 16s linear infinite !important;
+    animation-duration: 16s !important;
+  }
+  .partner-marquee__item {
+    flex: 0 0 140px !important;
+    width: 140px !important;
+    min-width: 140px !important;
+    max-width: 140px !important;
+    height: 62px !important;
+  }
+  .partner-marquee__logo {
+    max-width: 105px !important;
+    max-height: 38px !important;
+    height: auto !important;
+    width: auto !important;
+  }
+}
