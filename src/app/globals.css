@@ -9122,3 +9122,83 @@ html body .partner-marquee .partner-marquee__track.partner-marquee__track {
   animation-timing-function: linear !important;
   animation-iteration-count: infinite !important;
 }
+/* ============================================================
+   MARQUEE — mobile speed override (2026-10-14)
+   ============================================================ */
+@media (max-width: 900px) {
+  .partner-marquee__track,
+  html body .partner-marquee .partner-marquee__track.partner-marquee__track {
+    animation-duration: 20s !important;
+    animation: partner-marquee-scroll 20s linear infinite !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .partner-marquee__track,
+  html body .partner-marquee .partner-marquee__track.partner-marquee__track {
+    animation-duration: 20s !important;
+    animation: partner-marquee-scroll 20s linear infinite !important;
+  }
+
+  /* Smaller items so more logos fit on screen */
+  .partner-marquee__item {
+    flex: 0 0 140px !important;
+    width: 140px !important;
+    min-width: 140px !important;
+    max-width: 140px !important;
+    height: 60px !important;
+  }
+
+  .partner-marquee__logo {
+    max-width: 100px !important;
+    max-height: 36px !important;
+    height: auto !important;
+    width: auto !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .partner-marquee__track,
+  html body .partner-marquee .partner-marquee__track.partner-marquee__track {
+    animation-duration: 32s !important;
+    animation: partner-marquee-scroll 32s linear infinite !important;
+  }
+}
+/* ============================================================
+   Split CTA — ghost button contrast fix (2026-10-14)
+   Actual class is .split-cta, not .section-blue
+   ============================================================ */
+.split-cta .button-ghost,
+.split-cta .button.button-ghost,
+.split-cta a.button-ghost,
+.split-cta a.button.button-ghost {
+  color: #FFFFFF !important;
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.65) !important;
+  text-shadow: none !important;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease !important;
+}
+
+.split-cta .button-ghost:hover,
+.split-cta .button-ghost:focus-visible,
+.split-cta .button.button-ghost:hover,
+.split-cta .button.button-ghost:focus-visible,
+.split-cta a.button-ghost:hover,
+.split-cta a.button.button-ghost:hover {
+  color: #0A1550 !important;
+  background: #FFFFFF !important;
+  border-color: #FFFFFF !important;
+  outline: none !important;
+}
+
+/* Mobile — force white text on blue too */
+@media (max-width: 900px) {
+  .split-cta .button-ghost,
+  .split-cta .button.button-ghost,
+  .split-cta a.button-ghost,
+  .split-cta a.button.button-ghost {
+    color: #FFFFFF !important;
+    border-color: rgba(255, 255, 255, 0.75) !important;
+    background: transparent !important;
+  }
+}
