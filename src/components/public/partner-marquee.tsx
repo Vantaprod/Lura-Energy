@@ -16,16 +16,22 @@ type Props = {
 /**
  * Seamless infinite marquee.
  *
- * Key detail: the track has NO `gap` — spacing comes ONLY from symmetric
- * item `padding`. That makes the distance between the last item of copy 1
- * and the first item of copy 2 identical to the distance between any two
- * adjacent items. Translation of exactly -50% therefore lands on a pixel-
- * perfect seam and the loop is invisible.
+ * KEY REQUIREMENT: the track must be at least 2× the viewport width,
+ * otherwise the empty space on the far side of the animation becomes
+ * visible. We render the partner list 6 times, so even on a 4K monitor
+ * (3840px) the track is 6 × content-width ≥ 3840px.
+ *
+ * Translate -50% = shift by exactly half the track = 3 copies.
+ * Because copies 1-3 and 4-6 are identical, the seam is invisible.
  */
 export function PartnerMarquee({ partners, eyebrow, heading, body }: Props) {
   if (partners.length === 0) return null;
 
-  const track = [...partners, ...partners];
+  const COPIES = 6;
+  const track: Partner[] = [];
+  for (let i = 0; i < COPIES; i++) {
+    track.push(...partners);
+  }
 
   return (
     <section className="partner-marquee-section">
@@ -38,14 +44,25 @@ export function PartnerMarquee({ partners, eyebrow, heading, body }: Props) {
       <div className="partner-marquee" aria-label={heading}>
         <div className="partner-marquee__track">
           {track.map((partner, index) => {
-            const firstCopy = index < partners.length;
+            const isFirstCopy = index < partners.length;
+            const img = (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={partner.logoUrl}
+                alt={partner.logoAlt ?? partner.name}
+                className="partner-marquee__logo"
+                loading="eager"
+                decoding="sync"
+                draggable={false}
+              />
+            );
             return (
               <div
                 className="partner-marquee__item"
                 key={`${index}-${partner.id}`}
-                aria-hidden={!firstCopy ? 'true' : undefined}
+                aria-hidden={!isFirstCopy ? 'true' : undefined}
               >
-                {partner.websiteUrl && firstCopy ? (
+                {partner.websiteUrl && isFirstCopy ? (
                   <a
                     href={partner.websiteUrl}
                     target="_blank"
@@ -53,22 +70,10 @@ export function PartnerMarquee({ partners, eyebrow, heading, body }: Props) {
                     className="partner-marquee__link"
                     aria-label={partner.name}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={partner.logoUrl}
-                      alt={partner.logoAlt ?? partner.name}
-                      className="partner-marquee__logo"
-                      loading="lazy"
-                    />
+                    {img}
                   </a>
                 ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={partner.logoUrl}
-                    alt={partner.logoAlt ?? partner.name}
-                    className="partner-marquee__logo"
-                    loading="lazy"
-                  />
+                  img
                 )}
               </div>
             );

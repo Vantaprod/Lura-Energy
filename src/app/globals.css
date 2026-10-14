@@ -8605,7 +8605,7 @@ body {
   display: flex;
   flex-wrap: nowrap;
   width: max-content;
-  animation: partner-marquee-scroll 6s linear infinite;
+  animation: partner-marquee-scroll 12s linear infinite;
   will-change: transform;
 }
 
@@ -8832,8 +8832,8 @@ body {
 }
 
 @keyframes partner-marquee-scroll {
-  from { transform: translate3d(0, 0, 0); }
-  to   { transform: translate3d(-50%, 0, 0); }
+  from { transform: translate3d(-50%, 0, 0); }
+  to   { transform: translate3d(0, 0, 0); }
 }
 
 .partner-marquee__item {
@@ -8879,4 +8879,199 @@ body {
   .partner-marquee__item { padding: 0 32px; height: 70px; }
   .partner-marquee__logo { height: 36px; max-height: 36px; max-width: 130px; }
   .partner-marquee__track { animation-duration: 10s; }
+}
+/* ============================================================
+   PARTNER MARQUEE — FINAL FIX (2026-10-14)
+   Every item has fixed width -> track is perfectly symmetric
+   !important defeats all earlier styles in the file
+   ============================================================ */
+.partner-marquee {
+  overflow: hidden !important;
+  width: 100% !important;
+  position: relative;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 6%, #000 94%, transparent 100%) !important;
+  mask-image: linear-gradient(to right, transparent 0, #000 6%, #000 94%, transparent 100%) !important;
+}
+
+.partner-marquee__track {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  width: max-content !important;
+  gap: 0 !important;
+  animation: partner-marquee-scroll 12s linear infinite !important;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+@keyframes partner-marquee-scroll {
+  from { transform: translate3d(-50%, 0, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+
+.partner-marquee__item {
+  flex: 0 0 240px !important;
+  width: 240px !important;
+  min-width: 240px !important;
+  max-width: 240px !important;
+  height: 100px !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+
+.partner-marquee__link {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.partner-marquee__logo {
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: 170px !important;
+  max-height: 60px !important;
+  object-fit: contain !important;
+  filter: grayscale(100%);
+  opacity: 0.75;
+  user-select: none;
+  pointer-events: none;
+  transition: filter 200ms ease, opacity 200ms ease;
+}
+
+.partner-marquee__item:hover .partner-marquee__logo,
+.partner-marquee__link:focus-visible .partner-marquee__logo {
+  filter: grayscale(0%) !important;
+  opacity: 1 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .partner-marquee__track { animation: none !important; }
+}
+
+@media (max-width: 640px) {
+  .partner-marquee__item {
+    flex: 0 0 180px !important;
+    width: 180px !important;
+    min-width: 180px !important;
+    max-width: 180px !important;
+    height: 80px !important;
+  }
+  .partner-marquee__logo {
+    max-width: 130px !important;
+    max-height: 44px !important;
+  }
+}
+/* ============================================================
+   MARQUEE — final speed + edge fade tuning (2026-10-14 v3)
+   ============================================================ */
+.partner-marquee {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 4%, #000 96%, transparent 100%) !important;
+  mask-image: linear-gradient(to right, transparent 0, #000 4%, #000 96%, transparent 100%) !important;
+}
+
+.partner-marquee__track {
+  animation: partner-marquee-scroll 12s linear infinite !important;
+}
+
+@media (max-width: 640px) {
+  .partner-marquee__track {
+    animation-duration: 5s !important;
+  }
+}
+/* ============================================================
+   MARQUEE — full-width coverage (2026-10-14 v4)
+   ============================================================ */
+.partner-marquee {
+  overflow: hidden !important;
+  width: 100vw !important;
+  max-width: 100% !important;
+  position: relative;
+  padding: 0 !important;
+  margin: 0 !important;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 5%, #000 95%, transparent 100%) !important;
+  mask-image: linear-gradient(to right, transparent 0, #000 5%, #000 95%, transparent 100%) !important;
+}
+
+.partner-marquee__track {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  width: max-content !important;
+  gap: 0 !important;
+  animation: partner-marquee-scroll 12s linear infinite !important;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+@keyframes partner-marquee-scroll {
+  from { transform: translate3d(-50%, 0, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+
+.partner-marquee__item {
+  flex: 0 0 240px !important;
+  width: 240px !important;
+  min-width: 240px !important;
+  max-width: 240px !important;
+  height: 100px !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+
+.partner-marquee__link {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.partner-marquee__logo {
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: 170px !important;
+  max-height: 60px !important;
+  object-fit: contain !important;
+  filter: grayscale(100%);
+  opacity: 0.75;
+  user-select: none;
+  pointer-events: none;
+  transition: filter 200ms ease, opacity 200ms ease;
+}
+
+.partner-marquee__item:hover .partner-marquee__logo,
+.partner-marquee__link:focus-visible .partner-marquee__logo {
+  filter: grayscale(0%) !important;
+  opacity: 1 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .partner-marquee__track { animation: none !important; }
+}
+
+@media (max-width: 640px) {
+  .partner-marquee__item {
+    flex: 0 0 180px !important;
+    width: 180px !important;
+    min-width: 180px !important;
+    max-width: 180px !important;
+    height: 80px !important;
+  }
+  .partner-marquee__logo {
+    max-width: 130px !important;
+    max-height: 44px !important;
+  }
+  .partner-marquee__track {
+    animation-duration: 7s !important;
+  }
 }
