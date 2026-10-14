@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import { ProductGallery } from '@/components/public/product-gallery';
 
 export type ProductMedia = {
@@ -229,7 +230,7 @@ export function ProductDetail({
         <section className="pdp-banners">
           {featureBanners.map((banner, i) => (
             // eslint-disable-next-line @next/next/no-img-element
-            <img key={i} src={banner.url} alt={banner.alt || name} loading="lazy" />
+            <OptimizedImage key={i} src={banner.url} alt={banner.alt || name} loading="lazy" />
           ))}
         </section>
       )}

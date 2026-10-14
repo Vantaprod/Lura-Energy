@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useTranslation } from '@/lib/i18n/context';
 
 type Media = {
@@ -66,7 +67,7 @@ export function ProductGallery({ items, emptyLabel }: Props) {
             aria-hidden={i !== index}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <OptimizedImage
               src={img.url}
               alt={img.alt}
               loading={i === 0 ? 'eager' : 'lazy'}
@@ -125,7 +126,7 @@ export function ProductGallery({ items, emptyLabel }: Props) {
               aria-label={`Show image ${i + 1}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.url} alt="" />
+              <OptimizedImage src={img.url} alt="" />
             </button>
           ))}
         </div>
