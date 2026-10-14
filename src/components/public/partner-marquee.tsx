@@ -14,15 +14,17 @@ type Props = {
 };
 
 /**
- * Seamless infinite marquee. The list is rendered TWICE inside a single
- * flex track with width:max-content. The CSS animation translates from
- * 0 to -50%, so when it loops the second copy is at exactly the same
- * position the first copy started from — no gap, no jump.
+ * Seamless infinite marquee.
+ *
+ * Key detail: the track has NO `gap` — spacing comes ONLY from symmetric
+ * item `padding`. That makes the distance between the last item of copy 1
+ * and the first item of copy 2 identical to the distance between any two
+ * adjacent items. Translation of exactly -50% therefore lands on a pixel-
+ * perfect seam and the loop is invisible.
  */
 export function PartnerMarquee({ partners, eyebrow, heading, body }: Props) {
   if (partners.length === 0) return null;
 
-  // Two identical copies → the animation can translate -50% and loop cleanly.
   const track = [...partners, ...partners];
 
   return (
@@ -37,15 +39,6 @@ export function PartnerMarquee({ partners, eyebrow, heading, body }: Props) {
         <div className="partner-marquee__track">
           {track.map((partner, index) => {
             const firstCopy = index < partners.length;
-            const content = (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={partner.logoUrl}
-                alt={partner.logoAlt ?? partner.name}
-                className="partner-marquee__logo"
-                loading="lazy"
-              />
-            );
             return (
               <div
                 className="partner-marquee__item"
@@ -60,10 +53,22 @@ export function PartnerMarquee({ partners, eyebrow, heading, body }: Props) {
                     className="partner-marquee__link"
                     aria-label={partner.name}
                   >
-                    {content}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={partner.logoUrl}
+                      alt={partner.logoAlt ?? partner.name}
+                      className="partner-marquee__logo"
+                      loading="lazy"
+                    />
                   </a>
                 ) : (
-                  content
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={partner.logoUrl}
+                    alt={partner.logoAlt ?? partner.name}
+                    className="partner-marquee__logo"
+                    loading="lazy"
+                  />
                 )}
               </div>
             );

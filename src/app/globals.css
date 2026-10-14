@@ -6724,7 +6724,7 @@ details[open] ul li > button.admin-action:hover {
   display: flex;
   align-items: center;
   width: max-content;
-  animation: partner-marquee-move 60s linear infinite;
+  animation: partner-marquee-move 8s linear infinite;
   will-change: transform;
 }
 
@@ -6927,7 +6927,7 @@ details[open] ul li > button.admin-action:hover {
 
 /* --- Force partner marquee animation, override OS reduce-motion (2026-10-10) --- */
 .partner-marquee__track {
-  animation: partner-marquee-move 60s linear infinite !important;
+  animation: partner-marquee-move 8s linear infinite !important;
 }
 .partner-marquee {
   overflow: hidden !important;
@@ -6941,7 +6941,7 @@ details[open] ul li > button.admin-action:hover {
 
 /* --- Force partner marquee animation, override OS reduce-motion (2026-10-10) --- */
 .partner-marquee__track {
-  animation: partner-marquee-move 60s linear infinite !important;
+  animation: partner-marquee-move 8s linear infinite !important;
 }
 .partner-marquee {
   overflow: hidden !important;
@@ -8605,7 +8605,7 @@ body {
   display: flex;
   flex-wrap: nowrap;
   width: max-content;
-  animation: partner-marquee-scroll 40s linear infinite;
+  animation: partner-marquee-scroll 6s linear infinite;
   will-change: transform;
 }
 
@@ -8795,4 +8795,88 @@ body {
 @media (max-width: 640px) {
   .legal-page { padding: 32px 16px 64px; }
   .legal-container { padding: 32px 24px 48px; }
+}
+/* ============================================================
+   Partner marquee — SEAMLESS loop fix + faster speed
+   (2026-10-14, supersedes earlier rules)
+   ============================================================ */
+.partner-marquee {
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 6%,
+    #000 94%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 6%,
+    #000 94%,
+    transparent 100%
+  );
+}
+
+.partner-marquee__track {
+  display: flex;
+  flex-wrap: nowrap;
+  width: max-content;
+  gap: 0;                     /* ⬅ critical: no gap, spacing via padding */
+  animation: partner-marquee-scroll 12s linear infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+@keyframes partner-marquee-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+
+.partner-marquee__item {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 60px;            /* ⬅ symmetric — makes seam invisible */
+  height: 90px;
+}
+
+.partner-marquee__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.partner-marquee__logo {
+  display: block;
+  height: 50px;
+  width: auto;
+  max-height: 50px;
+  max-width: 180px;
+  object-fit: contain;
+  filter: grayscale(100%);
+  opacity: 0.75;
+  user-select: none;
+  pointer-events: none;
+  transition: filter 200ms ease, opacity 200ms ease;
+}
+
+.partner-marquee__item:hover .partner-marquee__logo,
+.partner-marquee__link:focus-visible .partner-marquee__logo {
+  filter: grayscale(0%);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .partner-marquee__track { animation: none; }
+}
+
+@media (max-width: 640px) {
+  .partner-marquee__item { padding: 0 32px; height: 70px; }
+  .partner-marquee__logo { height: 36px; max-height: 36px; max-width: 130px; }
+  .partner-marquee__track { animation-duration: 10s; }
 }
