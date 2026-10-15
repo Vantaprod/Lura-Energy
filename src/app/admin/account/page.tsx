@@ -32,6 +32,15 @@ export default function AdminAccountPage() {
   const [err, setErr] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // --- password change state ---
+  const [pwCurrent, setPwCurrent] = useState('');
+  const [pwNew, setPwNew] = useState('');
+  const [pwConfirm, setPwConfirm] = useState('');
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwMsg, setPwMsg] = useState('');
+  const [pwErr, setPwErr] = useState('');
+  const [showPw, setShowPw] = useState(false);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -84,6 +93,52 @@ export default function AdminAccountPage() {
       setErr(t('admin.account.imageError'));
     } finally {
       if (fileRef.current) fileRef.current.value = '';
+    }
+  }
+
+  async function changePassword(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setPwErr('');
+    setPwMsg('');
+
+    if (pwNew.length < 12) {
+      setPwErr('New password must be at least 12 characters.');
+      return;
+    }
+    if (pwNew !== pwConfirm) {
+      setPwErr('New passwords do not match.');
+      return;
+    }
+    if (pwNew === pwCurrent) {
+      setPwErr('New password must be different from your current password.');
+      return;
+    }
+
+    setPwBusy(true);
+    try {
+      const res = await fetch('/api/admin/account/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: pwCurrent,
+          newPassword: pwNew,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setPwErr(
+          (data as { error?: string }).error ?? 'Could not change password.',
+        );
+        return;
+      }
+      setPwCurrent('');
+      setPwNew('');
+      setPwConfirm('');
+      setPwMsg('Password changed. All other sessions have been signed out.');
+    } catch {
+      setPwErr('Network error.');
+    } finally {
+      setPwBusy(false);
     }
   }
 
@@ -178,6 +233,118 @@ export default function AdminAccountPage() {
       >
         {busy ? t('admin.account.saving') : t('admin.account.save')}
       </button>
+
+      {/* ============================================================
+          PASSWORD CHANGE
+          ============================================================ */}
+      <hr
+        style={{
+          margin: '40px 0 24px',
+          border: 0,
+          borderTop: '1px solid #E4E7EC',
+        }}
+      />
+
+      <h2 style={{ fontSize: '1.25rem', margin: 0, color: '#0A1550' }}>
+        Change password
+      </h2>
+      <p
+        className="form-note"
+        style={{ marginTop: 6, marginBottom: 8 }}
+      >
+        You can change your password once every 14 days. Changing it signs you
+        out of all other devices.
+      </p>
+
+      <form onSubmit={changePassword} style={{ marginTop: 16 }}>
+        <div className="field" style={{ marginTop: '1rem' }}>
+          <label htmlFor="currentPassword">Current password</label>
+          <input
+            id="currentPassword"
+            type={showPw ? 'text' : 'password'}
+            value={pwCurrent}
+            onChange={(e) => setPwCurrent(e.target.value)}
+            autoComplete="current-password"
+            required
+            maxLength={200}
+          />
+        </div>
+
+        <div className="field" style={{ marginTop: '1rem' }}>
+          <label htmlFor="newPassword">New password</label>
+          <input
+            id="newPassword"
+            type={showPw ? 'text' : 'password'}
+            value={pwNew}
+            onChange={(e) => setPwNew(e.target.value)}
+            autoComplete="new-password"
+            required
+            minLength={12}
+            maxLength={200}
+          />
+          <p
+            style={{
+              fontSize: 12,
+              color: '#6B7280',
+              margin: '4px 0 0',
+            }}
+          >
+            At least 12 characters.
+          </p>
+        </div>
+
+        <div className="field" style={{ marginTop: '1rem' }}>
+          <label htmlFor="confirmPassword">Confirm new password</label>
+          <input
+            id="confirmPassword"
+            type={showPw ? 'text' : 'password'}
+            value={pwConfirm}
+            onChange={(e) => setPwConfirm(e.target.value)}
+            autoComplete="new-password"
+            required
+            minLength={12}
+            maxLength={200}
+          />
+        </div>
+
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            marginTop: 14,
+            fontSize: 13,
+            color: '#2B3441',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={showPw}
+            onChange={(e) => setShowPw(e.target.checked)}
+          />
+          Show passwords
+        </label>
+
+        {pwErr && (
+          <p className="form-error" role="alert" style={{ marginTop: 12 }}>
+            {pwErr}
+          </p>
+        )}
+        {pwMsg && (
+          <p className="form-success" style={{ marginTop: 12 }}>
+            {pwMsg}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          className="button"
+          style={{ marginTop: '1.2rem' }}
+          disabled={pwBusy}
+        >
+          {pwBusy ? 'Changing…' : 'Change password'}
+        </button>
+      </form>
     </div>
   );
 }
