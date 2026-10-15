@@ -1,0 +1,4174 @@
+﻿=== PART 2 DUMP 10/15/2026 23:17:48 ===
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\lib\auth\session.ts
+============================================================
+import { createHmac, randomBytes } from 'node:crypto';
+import { cookies } from 'next/headers';
+import { prisma } from '@/lib/db/prisma';
+
+export const SESSION_COOKIE = 'lura_session';
+const sessionHash = (token: string) => {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret || Buffer.byteLength(secret) < 32) throw new Error('SESSION_SECRET must contain at least 32 bytes.');
+  return createHmac('sha256', secret).update(token).digest('hex');
+};
+
+export async function createSession(userId: string) {
+  const token = randomBytes(32).toString('base64url');
+  await prisma.session.create({ data: { userId, tokenHash: sessionHash(token), expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000) } });
+  const jar = await cookies();
+  jar.set(SESSION_COOKIE, token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 8 * 60 * 60 });
+}
+
+export async function getCurrentUser() {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  if (!token) return null;
+  const session = await prisma.session.findUnique({ where: { tokenHash: sessionHash(token) }, include: { user: true } });
+  if (!session || session.expiresAt <= new Date() || !session.user.active) return null;
+  return session.user;
+}
+
+export async function deleteCurrentSession() {
+  const jar = await cookies();
+  const token = jar.get(SESSION_COOKIE)?.value;
+  if (token) await prisma.session.deleteMany({ where: { tokenHash: sessionHash(token) } });
+  jar.delete(SESSION_COOKIE);
+}
+
+export function hashOpaqueToken(token: string) { return sessionHash(token); }
+
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\lib\auth\require-master.ts
+============================================================
+import { cache } from 'react';
+import { redirect } from 'next/navigation';
+import { getCurrentUser } from '@/lib/auth/session';
+import { isMasterEmail } from '@/lib/auth/masters';
+
+export const requireMaster = cache(async () => {
+  const user = await getCurrentUser();
+  if (!user || !user.active) redirect('/admin/login');
+  if (user.role !== 'OWNER' || !isMasterEmail(user.email)) redirect('/admin');
+  return user;
+});
+
+export const requireAdmin = cache(async () => {
+  const user = await getCurrentUser();
+  if (!user || !user.active) redirect('/admin/login');
+  if (user.role !== 'OWNER' && user.role !== 'ADMIN') redirect('/admin/login');
+  return user;
+});
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\lib\auth\admin-capacity.ts
+============================================================
+export const INITIAL_ADMIN_SEAT_LIMIT = 6;
+
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\access-requests\[id]\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import bcrypt from 'bcryptjs';
+import { randomBytes } from 'node:crypto';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { isMasterEmail } from '@/lib/auth/masters';
+import { sameOrigin } from '@/lib/security/origin';
+
+export const runtime = 'nodejs';
+
+const schema = z.object({
+  action: z.enum(['approve', 'reject']),
+  rejectionReason: z.string().trim().max(400).optional(),
+});
+
+async function requireMaster() {
+  const user = await getCurrentUser();
+  if (!user || !user.active || user.role !== 'OWNER' || !isMasterEmail(user.email)) {
+    return null;
+  }
+  return user;
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+
+  const me = await requireMaster();
+  if (!me) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  const { id } = await params;
+  const body = await request.json().catch(() => null);
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
+
+  const req = await prisma.accessRequest.findUnique({ where: { id } });
+  if (!req) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (req.status !== 'PENDING') {
+    return NextResponse.json({ error: 'Already reviewed' }, { status: 409 });
+  }
+
+  if (parsed.data.action === 'reject') {
+    await prisma.accessRequest.update({
+      where: { id },
+      data: {
+        status: 'REJECTED',
+        reviewedAt: new Date(),
+        reviewedById: me.id,
+        rejectionReason: parsed.data.rejectionReason ?? null,
+      },
+    });
+    await prisma.auditLog.create({
+      data: { actorId: me.id, action: 'accessRequest.rejected', entityType: 'accessRequest', entityId: id },
+    }).catch(() => {});
+    return NextResponse.json({ ok: true });
+  }
+
+  // approve: create user (or reset existing) and return temp password
+  const tempPassword = randomBytes(9).toString('base64url');
+  const hash = await bcrypt.hash(tempPassword, 12);
+
+  const existingUser = await prisma.user.findUnique({ where: { email: req.email } });
+  let created;
+  if (existingUser) {
+    created = await prisma.user.update({
+      where: { id: existingUser.id },
+      data: { passwordHash: hash, active: true, role: existingUser.role === 'OWNER' ? 'OWNER' : 'ADMIN' },
+    });
+  } else {
+    created = await prisma.user.create({
+      data: {
+        email: req.email,
+        name: req.fullName,
+        passwordHash: hash,
+        role: 'ADMIN',
+        active: true,
+      },
+    });
+  }
+
+  await prisma.accessRequest.update({
+    where: { id },
+    data: { status: 'APPROVED', reviewedAt: new Date(), reviewedById: me.id },
+  });
+
+  await prisma.auditLog.create({
+    data: { actorId: me.id, action: 'accessRequest.approved', entityType: 'accessRequest', entityId: id, metadata: { newUserId: created.id } },
+  }).catch(() => {});
+
+  return NextResponse.json({ ok: true, tempPassword, email: req.email });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\admin\master\requests\page.tsx
+============================================================
+import { prisma } from '@/lib/db/prisma';
+import { requireMaster } from '@/lib/auth/require-master';
+import { AccessRequestRow } from '@/components/admin/access-request-row';
+import { getServerT } from '@/lib/i18n/server';
+
+export const dynamic = 'force-dynamic';
+
+function fill(template: string, vars: Record<string, string | number>): string {
+  return Object.entries(vars).reduce(
+    (acc, [k, v]) => acc.replaceAll(`{${k}}`, String(v)),
+    template,
+  );
+}
+
+export default async function RequestsPage() {
+  await requireMaster();
+  const { t } = await getServerT('admin');
+
+  const [pending, resolved] = await Promise.all([
+    prisma.accessRequest.findMany({
+      where: { status: 'PENDING' },
+      orderBy: { createdAt: 'asc' },
+    }),
+    prisma.accessRequest.findMany({
+      where: { status: { in: ['APPROVED', 'REJECTED'] } },
+      orderBy: { reviewedAt: 'desc' },
+      take: 30,
+    }),
+  ]);
+
+  const toItem = (r: typeof pending[number]) => ({
+    id: r.id,
+    fullName: r.fullName,
+    email: r.email,
+    phone: r.phone,
+    role: r.role,
+    reason: r.reason,
+    status: r.status as 'PENDING' | 'APPROVED' | 'REJECTED',
+    rejectionReason: r.rejectionReason,
+    createdAt: r.createdAt.toISOString(),
+    reviewedAt: r.reviewedAt ? r.reviewedAt.toISOString() : null,
+  });
+
+  return (
+    <>
+      <p className="eyebrow">{t('master.requests.eyebrow')}</p>
+      <h2 className="master-h2">{t('master.requests.title')}</h2>
+      <p className="master-meta">{t('master.requests.subtitle')}</p>
+
+      <section className="master-section">
+        <h3 className="master-h3">{fill(t('master.requests.pending'), { n: pending.length })}</h3>
+        {pending.length === 0 ? (
+          <p className="master-empty">{t('master.requests.nonePending')}</p>
+        ) : (
+          <ul className="ar-list">
+            {pending.map((r) => <AccessRequestRow key={r.id} item={toItem(r)} />)}
+          </ul>
+        )}
+      </section>
+
+      <section className="master-section">
+        <h3 className="master-h3">{fill(t('master.requests.reviewed'), { n: resolved.length })}</h3>
+        {resolved.length === 0 ? (
+          <p className="master-empty">{t('master.requests.noneReviewed')}</p>
+        ) : (
+          <ul className="ar-list">
+            {resolved.map((r) => <AccessRequestRow key={r.id} item={toItem(r)} />)}
+          </ul>
+        )}
+      </section>
+    </>
+  );
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\admin\request-access\page.tsx
+============================================================
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n/context';
+import { LanguageSwitcher } from '@/components/layout/language-switcher';
+import { LuraSelect } from '@/components/ui/lura-select';
+
+export default function RequestAccessPage() {
+  const { t } = useTranslation();
+  const [error, setError] = useState('');
+  const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    setError('');
+    const form = new FormData(e.currentTarget);
+    try {
+      const res = await fetch('/api/access-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: form.get('fullName'),
+          email: form.get('email'),
+          phone: form.get('phone'),
+          role: form.get('role'),
+          reason: form.get('reason'),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError((data as { error?: string }).error ?? t('admin.requestAccess.error'));
+        return;
+      }
+      setDone(true);
+    } catch {
+      setError(t('admin.requestAccess.error'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (done) {
+    return (
+      <div className="admin-shell" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px 0' }}>
+          <LanguageSwitcher />
+        </div>
+        <div className="admin-login">
+          <p className="eyebrow">{t('admin.requestAccess.eyebrow')}</p>
+          <h1 style={{ fontSize: '2.2rem' }}>{t('admin.requestAccess.thanksTitle')}</h1>
+          <p className="form-note">{t('admin.requestAccess.thanksBody')}</p>
+          <p style={{ marginTop: '1.5rem' }}>
+            <Link href="/admin/login" className="button" style={{ display: 'inline-block', textDecoration: 'none' }}>
+              {t('admin.requestAccess.backToLogin')}
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-shell" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px 0' }}>
+        <LanguageSwitcher />
+      </div>
+      <form className="admin-login" onSubmit={submit}>
+        <p className="eyebrow">{t('admin.requestAccess.eyebrow')}</p>
+        <h1 style={{ fontSize: '2.2rem' }}>{t('admin.requestAccess.heading')}</h1>
+        <p className="form-note">{t('admin.requestAccess.subtitle')}</p>
+
+        <div className="field" style={{ marginTop: '1rem' }}>
+          <label htmlFor="fullName">{t('admin.requestAccess.fullName')}</label>
+          <input id="fullName" name="fullName" type="text" autoComplete="name" required maxLength={120} />
+        </div>
+
+        <div className="field" style={{ marginTop: '1rem' }}>
+          <label htmlFor="email">{t('admin.requestAccess.email')}</label>
+          <input id="email" name="email" type="email" autoComplete="email" required maxLength={254} />
+        </div>
+
+        <div className="field" style={{ marginTop: '1rem' }}>
+          <label htmlFor="phone">{t('admin.requestAccess.phone')}</label>
+          <input id="phone" name="phone" type="tel" autoComplete="tel" maxLength={40} />
+        </div>
+
+        <div className="field" style={{ marginTop: '1rem' }}>
+          <label>{t('admin.requestAccess.role')}</label>
+          <LuraSelect
+            name="role"
+            required
+            placeholder={t('admin.requestAccess.rolePlaceholder')}
+            options={[
+              { value: 'Customer Service', label: 'Customer Service' },
+              { value: 'Sales Representative', label: 'Sales Representative' },
+              { value: 'Social Media Manager', label: 'Social Media Manager' },
+              { value: 'Marketing', label: 'Marketing' },
+              { value: 'Operations', label: 'Operations' },
+              { value: 'Warehouse / Logistics', label: 'Warehouse / Logistics' },
+              { value: 'Technical / Engineering', label: 'Technical / Engineering' },
+              { value: 'Management', label: 'Management' },
+              { value: 'Other', label: 'Other' },
+            ]}
+          />
+        </div>
+
+        <div className="field" style={{ marginTop: '1rem' }}>
+          <label htmlFor="reason">{t('admin.requestAccess.reason')}</label>
+          <textarea
+            id="reason"
+            name="reason"
+            required
+            minLength={20}
+            maxLength={800}
+            rows={4}
+            className="lura-textarea"
+          />
+        </div>
+
+        {error && (
+          <p className="form-error" role="alert">{error}</p>
+        )}
+
+        <button className="button" style={{ marginTop: '1.2rem' }} disabled={busy}>
+          {busy ? t('admin.requestAccess.submitting') : t('admin.requestAccess.submit')}
+        </button>
+
+        <p style={{ marginTop: '1.25rem', textAlign: 'center' }}>
+          <Link href="/admin/login" style={{ color: '#1428A0', textDecoration: 'none', fontWeight: 600, fontSize: '14px' }}>
+            {t('admin.requestAccess.backToLogin')}
+          </Link>
+        </p>
+      </form>
+    </div>
+  );
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\admin\administrators\page.tsx
+============================================================
+import { redirect } from 'next/navigation';
+import { getCurrentUser } from '@/lib/auth/session';
+import { AdminsManager } from '@/components/admin/admins-manager';
+import { getServerT } from '@/lib/i18n/server';
+
+export default async function AdministratorsPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect('/admin/login');
+  if (user.role !== 'OWNER') redirect('/admin');
+
+  const { t } = await getServerT('admin');
+
+  return (
+    <section>
+      <p className="eyebrow">{t('admin.admins.eyebrow')}</p>
+      <h1 style={{ fontSize: '3rem' }}>{t('admin.admins.title')}</h1>
+      <p className="form-note">{t('admin.admins.intro')}</p>
+      <AdminsManager />
+    </section>
+  );
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\account\route.ts
+============================================================
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+
+const MAX_AVATAR_CHARS = 400_000;
+
+export async function PATCH(req: Request) {
+  const user = await getCurrentUser();
+  if (!user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const body = (await req.json().catch(() => ({}))) as {
+    displayName?: string | null;
+    avatarUrl?: string | null;
+  };
+
+  const data: { displayName?: string | null; avatarUrl?: string | null } = {};
+
+  if (body.displayName !== undefined) {
+    const name = (body.displayName ?? '').toString().trim().slice(0, 60);
+    data.displayName = name.length ? name : null;
+  }
+
+  if (body.avatarUrl !== undefined) {
+    const url = body.avatarUrl;
+    if (url === null) {
+      data.avatarUrl = null;
+    } else if (typeof url === 'string' && url.startsWith('data:image/')) {
+      if (url.length > MAX_AVATAR_CHARS) {
+        return NextResponse.json(
+          { error: 'Image too large. Please pick a smaller file.' },
+          { status: 413 },
+        );
+      }
+      data.avatarUrl = url;
+    } else {
+      return NextResponse.json({ error: 'Invalid image data.' }, { status: 400 });
+    }
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: user.id },
+    data,
+    select: { id: true, displayName: true, avatarUrl: true, email: true },
+  });
+
+  return NextResponse.json({ ok: true, user: updated });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\administrators\route.ts
+============================================================
+import { randomBytes,createHash } from 'node:crypto';import { NextRequest,NextResponse } from 'next/server';import { z } from 'zod';import { prisma } from '@/lib/db/prisma';import { getCurrentUser } from '@/lib/auth/session';import { can } from '@/lib/permissions/policy';import { sameOrigin } from '@/lib/security/origin';import { INITIAL_ADMIN_SEAT_LIMIT } from '@/lib/auth/admin-capacity';
+const schema=z.object({email:z.email().max(254)});const hash=(value:string)=>createHash('sha256').update(value).digest('hex');
+export async function GET(){const user=await getCurrentUser();if(!user||!can(user.role,'admin.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});const [users,pending,setting]=await Promise.all([prisma.user.findMany({select:{id:true,email:true,name:true,role:true,active:true,createdAt:true,lastLoginAt:true},orderBy:{createdAt:'asc'}}),prisma.adminInvitation.findMany({where:{usedAt:null,expiresAt:{gt:new Date()}},select:{id:true,email:true,role:true,expiresAt:true}}),prisma.setting.findUnique({where:{key:'adminSeatLimit'}})]);return NextResponse.json({users,pending,capacity:typeof setting?.value==='number'?setting.value:INITIAL_ADMIN_SEAT_LIMIT,used:users.filter(x=>x.active).length,currentUserId:user.id});}
+export async function POST(request:NextRequest){const user=await getCurrentUser();if(!user||user.role!=='OWNER')return NextResponse.json({error:'Owner access required.'},{status:403});if(!sameOrigin(request))return NextResponse.json({error:'Invalid origin'},{status:403});const parsed=schema.safeParse(await request.json().catch(()=>null));if(!parsed.success)return NextResponse.json({error:'Invalid invitation email.'},{status:400});const email=parsed.data.email.toLowerCase();const token=randomBytes(32).toString('base64url');try{await prisma.$transaction(async tx=>{await tx.$queryRaw`SELECT pg_advisory_xact_lock(7319201)`;const[active,pending,setting,existing]=await Promise.all([tx.user.count({where:{active:true}}),tx.adminInvitation.count({where:{usedAt:null,expiresAt:{gt:new Date()}}}),tx.setting.findUnique({where:{key:'adminSeatLimit'}}),tx.user.findUnique({where:{email}})]);const capacity=typeof setting?.value==='number'?setting.value:6;if(active+pending>=capacity)throw new Error('SEATS_FULL');if(existing)throw new Error('USER_EXISTS');await tx.adminInvitation.create({data:{email,role:'ADMIN',tokenHash:hash(token),expiresAt:new Date(Date.now()+48*60*60*1000),inviterId:user.id}});await tx.auditLog.create({data:{actorId:user.id,action:'admin.invite',entityType:'user',metadata:{email,role:'ADMIN'}}});});}catch(e){const error=e instanceof Error?e.message:'';return NextResponse.json({error:error==='SEATS_FULL'?'All administrator seats are in use.':error==='USER_EXISTS'?'An account already exists for that email.':'Invitation could not be created.'},{status:409});}return NextResponse.json({invitationUrl:`${process.env.APP_URL??'http://localhost:3000'}/admin/accept-invitation#token=${encodeURIComponent(token)}`,expiresInHours:48},{status:201});}
+
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\administrators\bulk\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { sameOrigin } from '@/lib/security/origin';
+import { INITIAL_ADMIN_SEAT_LIMIT } from '@/lib/auth/admin-capacity';
+import { adminAccountChangeError } from '@/lib/auth/admin-account-policy';
+
+const schema = z.object({
+  ids: z.array(z.string().min(1)).min(1).max(50),
+  action: z.enum(['deactivate', 'activate', 'remove']),
+});
+
+export async function POST(req: NextRequest) {
+  const actor = await getCurrentUser();
+  if (!actor || actor.role !== 'OWNER') {
+    return NextResponse.json({ error: 'Owner access required.' }, { status: 403 });
+  }
+  if (!sameOrigin(req)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const parsed = schema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid bulk request.' }, { status: 400 });
+  }
+
+  const { ids, action } = parsed.data;
+  if (ids.includes(actor.id)) {
+    return NextResponse.json(
+      { error: 'You cannot include your own account.' },
+      { status: 400 },
+    );
+  }
+
+  const results = { ok: 0, skipped: 0, errors: [] as string[] };
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(7319201)`;
+      const setting = await tx.setting.findUnique({ where: { key: 'adminSeatLimit' } });
+      const seatLimit =
+        typeof setting?.value === 'number' ? setting.value : INITIAL_ADMIN_SEAT_LIMIT;
+
+      for (const id of ids) {
+        try {
+          const target = await tx.user.findUnique({ where: { id } });
+          if (!target) {
+            results.skipped++;
+            continue;
+          }
+          const [activeOwnerCount, activeAccountCount] = await Promise.all([
+            tx.user.count({ where: { role: 'OWNER', active: true } }),
+            tx.user.count({ where: { active: true } }),
+          ]);
+
+          const change =
+            action === 'remove'
+              ? ({ remove: true } as const)
+              : ({ active: action === 'activate' } as const);
+
+          const reason = adminAccountChangeError({
+            actorId: actor.id,
+            targetId: target.id,
+            currentRole: target.role,
+            currentActive: target.active,
+            activeOwnerCount,
+            activeAccountCount,
+            seatLimit,
+            change,
+          });
+          if (reason) {
+            results.errors.push(`${target.email}: ${reason}`);
+            results.skipped++;
+            continue;
+          }
+
+          if (action === 'remove') {
+            await tx.user.delete({ where: { id } });
+            await tx.auditLog.create({
+              data: {
+                actorId: actor.id,
+                action: 'admin.bulk.remove',
+                entityType: 'user',
+                entityId: id,
+                metadata: { email: target.email },
+              },
+            });
+          } else {
+            const newActive = action === 'activate';
+            if (target.active === newActive) {
+              results.skipped++;
+              continue;
+            }
+            await tx.user.update({
+              where: { id },
+              data: {
+                active: newActive,
+                ...(!newActive ? { sessions: { deleteMany: {} } } : {}),
+              },
+            });
+            await tx.auditLog.create({
+              data: {
+                actorId: actor.id,
+                action: newActive ? 'admin.bulk.activate' : 'admin.bulk.deactivate',
+                entityType: 'user',
+                entityId: id,
+              },
+            });
+            await tx.notification.create({
+              data: {
+                userId: id,
+                kind: newActive ? 'admin.reactivated' : 'admin.deactivated',
+                title: newActive
+                  ? 'Your account was reactivated'
+                  : 'Your account was deactivated',
+                body: `By ${actor.name}.`,
+                href: '/admin/account',
+              },
+            });
+          }
+          results.ok++;
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : 'unknown';
+          results.errors.push(`${id}: ${msg}`);
+          results.skipped++;
+        }
+      }
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Bulk action failed.';
+    return NextResponse.json({ error: msg }, { status: 409 });
+  }
+
+  return NextResponse.json(results);
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\administrators\capacity\route.ts
+============================================================
+import { NextRequest,NextResponse } from 'next/server';import { z } from 'zod';import { prisma } from '@/lib/db/prisma';import { getCurrentUser } from '@/lib/auth/session';import { sameOrigin } from '@/lib/security/origin';
+const schema=z.object({capacity:z.number().int().min(1).max(100)});
+export async function PATCH(request:NextRequest){const user=await getCurrentUser();if(!user||user.role!=='OWNER')return NextResponse.json({error:'Owner access required.'},{status:403});if(!sameOrigin(request))return NextResponse.json({error:'Invalid origin'},{status:403});const parsed=schema.safeParse(await request.json().catch(()=>null));if(!parsed.success)return NextResponse.json({error:'Capacity must be between 1 and 100.'},{status:400});try{await prisma.$transaction(async tx=>{await tx.$queryRaw`SELECT pg_advisory_xact_lock(7319201)`;const [active,pending]=await Promise.all([tx.user.count({where:{active:true}}),tx.adminInvitation.count({where:{usedAt:null,expiresAt:{gt:new Date()}}})]);if(parsed.data.capacity<active+pending)throw new Error('CAPACITY_TOO_LOW');await tx.setting.upsert({where:{key:'adminSeatLimit'},create:{key:'adminSeatLimit',value:parsed.data.capacity},update:{value:parsed.data.capacity}});await tx.auditLog.create({data:{actorId:user.id,action:'admin.capacity.update',entityType:'setting',entityId:'adminSeatLimit',metadata:{capacity:parsed.data.capacity}}});});}catch(e){if(e instanceof Error&&e.message==='CAPACITY_TOO_LOW')return NextResponse.json({error:'Reduce active accounts and open invitations before lowering capacity.'},{status:409});return NextResponse.json({error:'Capacity update failed.'},{status:500});}return NextResponse.json({ok:true,capacity:parsed.data.capacity});}
+
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\administrators\[id]\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { sameOrigin } from '@/lib/security/origin';
+import { INITIAL_ADMIN_SEAT_LIMIT } from '@/lib/auth/admin-capacity';
+import { adminAccountChangeError } from '@/lib/auth/admin-account-policy';
+import { notify } from '@/lib/notifications/notify';
+
+const schema = z.union([
+  z.object({ active: z.boolean() }),
+  z.object({ role: z.enum(['OWNER', 'ADMIN']) }),
+]);
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const actor = await getCurrentUser();
+  if (!actor || actor.role !== 'OWNER') {
+    return NextResponse.json({ error: 'Owner access required.' }, { status: 403 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const parsed = schema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid account change.' }, { status: 400 });
+  }
+  const { id } = await params;
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(7319201)`;
+      const target = await tx.user.findUnique({ where: { id } });
+      if (!target) throw new Error('NOT_FOUND');
+      const [activeOwnerCount, activeAccountCount, setting] = await Promise.all([
+        tx.user.count({ where: { role: 'OWNER', active: true } }),
+        tx.user.count({ where: { active: true } }),
+        tx.setting.findUnique({ where: { key: 'adminSeatLimit' } }),
+      ]);
+      const reason = adminAccountChangeError({
+        actorId: actor.id,
+        targetId: target.id,
+        currentRole: target.role,
+        currentActive: target.active,
+        activeOwnerCount,
+        activeAccountCount,
+        seatLimit:
+          typeof setting?.value === 'number'
+            ? setting.value
+            : INITIAL_ADMIN_SEAT_LIMIT,
+        change: parsed.data,
+      });
+      if (reason) throw new Error(reason);
+
+      if ('role' in parsed.data) {
+        if (target.role === parsed.data.role) return;
+        await tx.user.update({
+          where: { id },
+          data: { role: parsed.data.role, sessions: { deleteMany: {} } },
+        });
+        await tx.auditLog.create({
+          data: {
+            actorId: actor.id,
+            action: 'admin.role.change',
+            entityType: 'user',
+            entityId: id,
+            metadata: { from: target.role, to: parsed.data.role },
+          },
+        });
+        await tx.notification.create({
+          data: {
+            userId: id,
+            kind: 'admin.role.changed',
+            title:
+              parsed.data.role === 'OWNER'
+                ? 'You were promoted to owner'
+                : 'Your role changed to admin',
+            body: `Changed by ${actor.name}.`,
+            href: '/admin/account',
+          },
+        });
+        return;
+      }
+
+      if (target.active === parsed.data.active) return;
+      await tx.user.update({
+        where: { id },
+        data: {
+          active: parsed.data.active,
+          ...(!parsed.data.active ? { sessions: { deleteMany: {} } } : {}),
+        },
+      });
+      await tx.auditLog.create({
+        data: {
+          actorId: actor.id,
+          action: parsed.data.active ? 'admin.activate' : 'admin.deactivate',
+          entityType: 'user',
+          entityId: id,
+        },
+      });
+      await tx.notification.create({
+        data: {
+          userId: id,
+          kind: parsed.data.active ? 'admin.reactivated' : 'admin.deactivated',
+          title: parsed.data.active
+            ? 'Your account was reactivated'
+            : 'Your account was deactivated',
+          body: `By ${actor.name}.`,
+          href: '/admin/account',
+        },
+      });
+    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : '';
+    const messages: Record<string, string> = {
+      NOT_FOUND: 'Account not found.',
+      SELF: 'You cannot change your own role or disable your account.',
+      NO_SEATS: 'No administrator seats are available.',
+      LAST_OWNER: 'At least one active owner must remain.',
+    };
+    return NextResponse.json(
+      { error: messages[reason] ?? 'Account change could not be saved.' },
+      { status: reason === 'NOT_FOUND' ? 404 : 409 },
+    );
+  }
+  return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const actor = await getCurrentUser();
+  if (!actor || actor.role !== 'OWNER') {
+    return NextResponse.json({ error: 'Owner access required.' }, { status: 403 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const { id } = await params;
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(7319201)`;
+      const target = await tx.user.findUnique({ where: { id } });
+      if (!target) throw new Error('NOT_FOUND');
+      const [activeOwnerCount, activeAccountCount, setting] = await Promise.all([
+        tx.user.count({ where: { role: 'OWNER', active: true } }),
+        tx.user.count({ where: { active: true } }),
+        tx.setting.findUnique({ where: { key: 'adminSeatLimit' } }),
+      ]);
+      const reason = adminAccountChangeError({
+        actorId: actor.id,
+        targetId: target.id,
+        currentRole: target.role,
+        currentActive: target.active,
+        activeOwnerCount,
+        activeAccountCount,
+        seatLimit:
+          typeof setting?.value === 'number'
+            ? setting.value
+            : INITIAL_ADMIN_SEAT_LIMIT,
+        change: { remove: true },
+      });
+      if (reason) throw new Error(reason);
+      await tx.user.delete({ where: { id } });
+      await tx.auditLog.create({
+        data: {
+          actorId: actor.id,
+          action: 'admin.remove',
+          entityType: 'user',
+          entityId: id,
+          metadata: { email: target.email, role: target.role },
+        },
+      });
+    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : '';
+    const messages: Record<string, string> = {
+      NOT_FOUND: 'Account not found.',
+      SELF: 'You cannot remove your own account.',
+      LAST_OWNER: 'At least one active owner must remain.',
+    };
+    return NextResponse.json(
+      { error: messages[reason] ?? 'Account could not be removed.' },
+      { status: reason === 'NOT_FOUND' ? 404 : 409 },
+    );
+  }
+  return NextResponse.json({ ok: true });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\audit-log\route.ts
+============================================================
+import { NextResponse } from 'next/server';import { prisma } from '@/lib/db/prisma';import { getCurrentUser } from '@/lib/auth/session';import { can } from '@/lib/permissions/policy';
+export async function GET(){const user=await getCurrentUser();if(!user||!can(user.role,'audit.read'))return NextResponse.json({error:'Unauthorized'},{status:401});return NextResponse.json(await prisma.auditLog.findMany({include:{actor:{select:{name:true,email:true}}},orderBy:{createdAt:'desc'},take:200}));}
+
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\audit-log\export\route.ts
+============================================================
+import { NextRequest } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+
+function rangeToDate(range: string | undefined): Date | null {
+  if (!range || range === 'all') return null;
+  const now = Date.now();
+  if (range === '24h') return new Date(now - 24 * 60 * 60 * 1000);
+  if (range === '7d') return new Date(now - 7 * 24 * 60 * 60 * 1000);
+  if (range === '30d') return new Date(now - 30 * 24 * 60 * 60 * 1000);
+  return null;
+}
+
+function csvCell(v: unknown): string {
+  if (v === null || v === undefined) return '';
+  let s = typeof v === 'string' ? v : JSON.stringify(v);
+  if (s.includes('"') || s.includes(',') || s.includes('\n') || s.includes('\r')) {
+    s = '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+export async function GET(req: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user) return new Response('Unauthorized', { status: 401 });
+  if (user.role !== 'OWNER') return new Response('Forbidden', { status: 403 });
+
+  const sp = req.nextUrl.searchParams;
+  const q = (sp.get('q') ?? '').trim().slice(0, 120);
+  const range = sp.get('range') ?? 'all';
+  const actorId = sp.get('actor') ?? '';
+
+  const where: Record<string, unknown> = {};
+  const since = rangeToDate(range);
+  if (since) where.createdAt = { gte: since };
+  if (actorId) where.actorId = actorId;
+  if (q) {
+    where.OR = [
+      { action: { contains: q, mode: 'insensitive' } },
+      { entityType: { contains: q, mode: 'insensitive' } },
+      { entityId: { contains: q, mode: 'insensitive' } },
+      { actor: { name: { contains: q, mode: 'insensitive' } } },
+      { actor: { email: { contains: q, mode: 'insensitive' } } },
+    ];
+  }
+
+  const rows = await prisma.auditLog.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    include: { actor: { select: { name: true, email: true } } },
+    take: 50_000,
+  });
+
+  const header = [
+    'createdAt',
+    'action',
+    'entityType',
+    'entityId',
+    'actorName',
+    'actorEmail',
+    'ipAddress',
+    'metadata',
+  ];
+
+  const lines: string[] = [header.join(',')];
+
+  for (const r of rows) {
+    lines.push(
+      [
+        r.createdAt.toISOString(),
+        r.action,
+        r.entityType ?? '',
+        r.entityId ?? '',
+        r.actor?.name ?? '',
+        r.actor?.email ?? '',
+        r.ipAddress ?? '',
+        r.metadata === null || r.metadata === undefined ? '' : r.metadata,
+      ]
+        .map(csvCell)
+        .join(','),
+    );
+  }
+
+  const csv = '\uFEFF' + lines.join('\r\n');
+
+  const stamp = new Date().toISOString().slice(0, 10);
+  const filename = `lura-audit-log-${stamp}.csv`;
+
+  return new Response(csv, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Cache-Control': 'no-store',
+    },
+  });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\content\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { Prisma } from '@prisma/client';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { can } from '@/lib/permissions/policy';
+import { sameOrigin } from '@/lib/security/origin';
+
+const slug = z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+const secureUrl = z
+  .string()
+  .refine((v) => v.startsWith('https://') || v.startsWith('/'), 'URL must be https:// or a site path.');
+
+const collections = [
+  'product-categories',
+  'services',
+  'solutions',
+  'testimonials',
+  'faqs',
+  'resources',
+  'media',
+] as const;
+type Collection = (typeof collections)[number];
+
+const createSchema = z.discriminatedUnion('collection', [
+  z.object({
+    collection: z.literal('product-categories'),
+    name: z.string().trim().min(1).max(140),
+    slug,
+    summary: z.string().max(500).optional(),
+    description: z.string().max(4000).optional(),
+    coverUrl: secureUrl.optional(),
+    coverAlt: z.string().max(200).optional(),
+    sortOrder: z.coerce.number().int().min(0).max(9999).optional(),
+    translations: z.record(z.string(), z.record(z.string(), z.unknown())).nullable().optional(),
+  }),
+  z.object({
+    collection: z.enum(['services', 'solutions']),
+    name: z.string().trim().min(1).max(180),
+    slug,
+    summary: z.string().max(500).optional(),
+    description: z.string().max(12000).optional(),
+  }),
+  z.object({
+    collection: z.literal('testimonials'),
+    name: z.string().trim().min(1).max(140),
+    role: z.string().max(140).optional(),
+    company: z.string().max(160).optional(),
+    quote: z.string().trim().min(1).max(2500),
+  }),
+  z.object({
+    collection: z.literal('faqs'),
+    question: z.string().trim().min(1).max(300),
+    answer: z.string().trim().min(1).max(5000),
+  }),
+  z.object({
+    collection: z.literal('resources'),
+    title: z.string().trim().min(1).max(180),
+    slug,
+    summary: z.string().max(500).optional(),
+    body: z.string().max(20000).optional(),
+  }),
+  z.object({
+    collection: z.literal('media'),
+    kind: z.enum(['IMAGE', 'VIDEO', 'DOCUMENT']),
+    url: secureUrl,
+    title: z.string().max(180).optional(),
+    alt: z.string().max(300).optional(),
+    productId: z.string().nullable().optional(),
+    projectId: z.string().nullable().optional(),
+    serviceId: z.string().nullable().optional(),
+    solutionId: z.string().nullable().optional(),
+  }),
+]);
+
+const updateSchema = z.discriminatedUnion('collection', [
+  z.object({
+    collection: z.literal('product-categories'),
+    id: z.string().min(1),
+    name: z.string().trim().min(1).max(140).optional(),
+    slug: slug.optional(),
+    summary: z.string().max(500).optional(),
+    description: z.string().max(4000).optional(),
+    coverUrl: secureUrl.optional(),
+    coverAlt: z.string().max(200).optional(),
+    sortOrder: z.coerce.number().int().min(0).max(9999).optional(),
+    published: z.boolean().optional(),
+    translations: z.record(z.string(), z.record(z.string(), z.unknown())).nullable().optional(),
+  }),
+  z.object({
+    collection: z.enum(['services', 'solutions']),
+    id: z.string().min(1),
+    name: z.string().trim().min(1).max(180).optional(),
+    slug: slug.optional(),
+    summary: z.string().max(500).optional(),
+    description: z.string().max(12000).optional(),
+    published: z.boolean().optional(),
+  }),
+  z.object({
+    collection: z.literal('testimonials'),
+    id: z.string().min(1),
+    name: z.string().trim().min(1).max(140).optional(),
+    role: z.string().max(140).optional(),
+    company: z.string().max(160).optional(),
+    quote: z.string().trim().min(1).max(2500).optional(),
+    published: z.boolean().optional(),
+  }),
+  z.object({
+    collection: z.literal('faqs'),
+    id: z.string().min(1),
+    question: z.string().trim().min(1).max(300).optional(),
+    answer: z.string().trim().min(1).max(5000).optional(),
+    published: z.boolean().optional(),
+  }),
+  z.object({
+    collection: z.literal('resources'),
+    id: z.string().min(1),
+    title: z.string().trim().min(1).max(180).optional(),
+    slug: slug.optional(),
+    summary: z.string().max(500).optional(),
+    body: z.string().max(20000).optional(),
+    published: z.boolean().optional(),
+  }),
+  z.object({
+    collection: z.literal('media'),
+    id: z.string().min(1),
+    kind: z.enum(['IMAGE', 'VIDEO', 'DOCUMENT']).optional(),
+    url: secureUrl.optional(),
+    title: z.string().max(180).optional(),
+    alt: z.string().max(300).optional(),
+    productId: z.string().nullable().optional(),
+    projectId: z.string().nullable().optional(),
+    serviceId: z.string().nullable().optional(),
+    solutionId: z.string().nullable().optional(),
+  }),
+]);
+
+async function list(collection: Collection): Promise<unknown> {
+  switch (collection) {
+    case 'product-categories':
+      return prisma.productCategory.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] });
+    case 'services':
+      return prisma.service.findMany({
+        orderBy: { sortOrder: 'asc' },
+        include: { media: { orderBy: { createdAt: 'asc' } } },
+      });
+    case 'solutions':
+      return prisma.solution.findMany({
+        orderBy: { sortOrder: 'asc' },
+        include: { media: { orderBy: { createdAt: 'asc' } } },
+      });
+    case 'testimonials':
+      return prisma.testimonial.findMany({ orderBy: { sortOrder: 'asc' } });
+    case 'faqs':
+      return prisma.fAQ.findMany({ orderBy: { sortOrder: 'asc' } });
+    case 'resources':
+      return prisma.resource.findMany({ orderBy: { createdAt: 'desc' } });
+    case 'media':
+      return prisma.media.findMany({ orderBy: { createdAt: 'desc' } });
+  }
+}
+
+async function ensureSingleMediaLink(input: {
+  productId?: string | null;
+  projectId?: string | null;
+  serviceId?: string | null;
+  solutionId?: string | null;
+}): Promise<string | null> {
+  const set = [input.productId, input.projectId, input.serviceId, input.solutionId].filter(
+    (v): v is string => typeof v === 'string' && v.length > 0,
+  );
+  if (set.length > 1) return 'Link media to one record at a time.';
+  if (input.productId) {
+    const exists = await prisma.product.findUnique({
+      where: { id: input.productId },
+      select: { id: true },
+    });
+    if (!exists) return 'Product record not found.';
+  }
+  if (input.projectId) {
+    const exists = await prisma.project.findUnique({
+      where: { id: input.projectId },
+      select: { id: true },
+    });
+    if (!exists) return 'Project record not found.';
+  }
+  if (input.serviceId) {
+    const exists = await prisma.service.findUnique({
+      where: { id: input.serviceId },
+      select: { id: true },
+    });
+    if (!exists) return 'Service record not found.';
+  }
+  if (input.solutionId) {
+    const exists = await prisma.solution.findUnique({
+      where: { id: input.solutionId },
+      select: { id: true },
+    });
+    if (!exists) return 'Solution record not found.';
+  }
+  return null;
+}
+
+export async function GET(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.read')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const params = request.nextUrl.searchParams;
+  const collection = params.get('collection');
+  if (!collections.includes(collection as Collection)) {
+    return NextResponse.json({ error: 'Unknown content type.' }, { status: 400 });
+  }
+  if (collection === 'resources') {
+    const parsed = z
+      .object({
+        q: z.string().trim().max(120).default(''),
+        state: z.enum(['PUBLISHED', 'DRAFT']).optional(),
+        page: z.coerce.number().int().min(1).max(100000).default(1),
+      })
+      .safeParse(Object.fromEntries(params));
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid resource filters.' }, { status: 400 });
+    }
+    const { q, state } = parsed.data;
+    const where = {
+      ...(state ? { published: state === 'PUBLISHED' } : {}),
+      ...(q
+        ? {
+            OR: [
+              { title: { contains: q, mode: 'insensitive' as const } },
+              { slug: { contains: q, mode: 'insensitive' as const } },
+              { summary: { contains: q, mode: 'insensitive' as const } },
+              { body: { contains: q, mode: 'insensitive' as const } },
+            ],
+          }
+        : {}),
+    };
+    const total = await prisma.resource.count({ where });
+    const pageSize = 20;
+    const pageCount = Math.max(1, Math.ceil(total / pageSize));
+    const page = Math.min(parsed.data.page, pageCount);
+    const items = await prisma.resource.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
+    return NextResponse.json({ items, total, page, pageSize, pageCount });
+  }
+  return NextResponse.json(await list(collection as Collection));
+}
+
+export async function POST(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const parsed = createSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: 'Review the content fields and try again.' },
+      { status: 400 },
+    );
+  }
+  const input = parsed.data;
+  if (input.collection === 'media') {
+    const linkError = await ensureSingleMediaLink(input);
+    if (linkError) {
+      return NextResponse.json({ error: linkError }, { status: 400 });
+    }
+  }
+  try {
+    let record: unknown;
+    switch (input.collection) {
+      case 'product-categories':
+        record = await prisma.productCategory.create({
+          data: {
+            name: input.name,
+            slug: input.slug,
+            summary: input.summary,
+            description: input.description,
+            coverUrl: input.coverUrl,
+            coverAlt: input.coverAlt,
+            sortOrder: input.sortOrder ?? 0,
+            translations: (input.translations ?? undefined) as Prisma.InputJsonValue | undefined,
+          },
+        });
+        break;
+      case 'services':
+        record = await prisma.service.create({
+          data: {
+            name: input.name,
+            slug: input.slug,
+            summary: input.summary,
+            description: input.description,
+          },
+        });
+        break;
+      case 'solutions':
+        record = await prisma.solution.create({
+          data: {
+            name: input.name,
+            slug: input.slug,
+            summary: input.summary,
+            description: input.description,
+          },
+        });
+        break;
+      case 'testimonials':
+        record = await prisma.testimonial.create({
+          data: {
+            name: input.name,
+            role: input.role,
+            company: input.company,
+            quote: input.quote,
+          },
+        });
+        break;
+      case 'faqs':
+        record = await prisma.fAQ.create({
+          data: { question: input.question, answer: input.answer },
+        });
+        break;
+      case 'resources':
+        record = await prisma.resource.create({
+          data: {
+            title: input.title,
+            slug: input.slug,
+            summary: input.summary,
+            body: input.body,
+          },
+        });
+        break;
+      case 'media':
+        record = await prisma.media.create({
+          data: {
+            kind: input.kind,
+            url: input.url,
+            title: input.title,
+            alt: input.alt,
+            productId: input.productId ?? null,
+            projectId: input.projectId ?? null,
+            serviceId: input.serviceId ?? null,
+            solutionId: input.solutionId ?? null,
+          },
+        });
+        break;
+    }
+    const id =
+      record && typeof record === 'object' && 'id' in record ? String(record.id) : null;
+    await prisma.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: input.collection + '.create',
+        entityType: input.collection,
+        entityId: id,
+      },
+    });
+    return NextResponse.json(record, { status: 201 });
+  } catch {
+    return NextResponse.json(
+      { error: 'Could not save the record. Check for a duplicate URL slug.' },
+      { status: 409 },
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const parsed = updateSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: 'Review the update fields and try again.' },
+      { status: 400 },
+    );
+  }
+  const input = parsed.data;
+  if (input.collection === 'media') {
+    const linkError = await ensureSingleMediaLink(input);
+    if (linkError) {
+      return NextResponse.json({ error: linkError }, { status: 400 });
+    }
+  }
+  try {
+    switch (input.collection) {
+      case 'product-categories':
+        await prisma.productCategory.update({
+          where: { id: input.id },
+          data: {
+            name: input.name,
+            slug: input.slug,
+            summary: input.summary,
+            description: input.description,
+            coverUrl: input.coverUrl,
+            coverAlt: input.coverAlt,
+            sortOrder: input.sortOrder,
+            published: input.published,
+            translations: (input.translations ?? undefined) as Prisma.InputJsonValue | undefined,
+          },
+        });
+        break;
+      case 'services':
+        await prisma.service.update({
+          where: { id: input.id },
+          data: {
+            name: input.name,
+            slug: input.slug,
+            summary: input.summary,
+            description: input.description,
+            published: input.published,
+          },
+        });
+        break;
+      case 'solutions':
+        await prisma.solution.update({
+          where: { id: input.id },
+          data: {
+            name: input.name,
+            slug: input.slug,
+            summary: input.summary,
+            description: input.description,
+            published: input.published,
+          },
+        });
+        break;
+      case 'testimonials':
+        await prisma.testimonial.update({
+          where: { id: input.id },
+          data: {
+            name: input.name,
+            role: input.role,
+            company: input.company,
+            quote: input.quote,
+            published: input.published,
+          },
+        });
+        break;
+      case 'faqs':
+        await prisma.fAQ.update({
+          where: { id: input.id },
+          data: {
+            question: input.question,
+            answer: input.answer,
+            published: input.published,
+          },
+        });
+        break;
+      case 'resources':
+        await prisma.resource.update({
+          where: { id: input.id },
+          data: {
+            title: input.title,
+            slug: input.slug,
+            summary: input.summary,
+            body: input.body,
+            published: input.published,
+            ...(input.published === undefined
+              ? {}
+              : { publishedAt: input.published ? new Date() : null }),
+          },
+        });
+        break;
+      case 'media':
+        await prisma.media.update({
+          where: { id: input.id },
+          data: {
+            kind: input.kind,
+            url: input.url,
+            title: input.title,
+            alt: input.alt,
+            productId: input.productId ?? null,
+            projectId: input.projectId ?? null,
+            serviceId: input.serviceId ?? null,
+            solutionId: input.solutionId ?? null,
+          },
+        });
+        break;
+    }
+    await prisma.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: input.collection + '.update',
+        entityType: input.collection,
+        entityId: input.id,
+      },
+    });
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: 'Record could not be updated.' }, { status: 404 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const parsed = z
+    .object({ collection: z.enum(collections), id: z.string().min(1) })
+    .safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid delete request.' }, { status: 400 });
+  }
+  const { collection, id } = parsed.data;
+  try {
+    switch (collection) {
+      case 'product-categories':
+        await prisma.productCategory.delete({ where: { id } });
+        break;
+      case 'services':
+        await prisma.service.delete({ where: { id } });
+        break;
+      case 'solutions':
+        await prisma.solution.delete({ where: { id } });
+        break;
+      case 'testimonials':
+        await prisma.testimonial.delete({ where: { id } });
+        break;
+      case 'faqs':
+        await prisma.fAQ.delete({ where: { id } });
+        break;
+      case 'resources':
+        await prisma.resource.delete({ where: { id } });
+        break;
+      case 'media':
+        await prisma.media.delete({ where: { id } });
+        break;
+    }
+    await prisma.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: collection + '.delete',
+        entityType: collection,
+        entityId: id,
+      },
+    });
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: 'Record not found.' }, { status: 404 });
+  }
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\language\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { sameOrigin } from '@/lib/security/origin';
+
+export const dynamic = 'force-dynamic';
+
+const schema = z.object({
+  lang: z.enum(['en', 'zh', 'fr']),
+});
+
+async function readCurrentLang(): Promise<'en' | 'zh' | 'fr'> {
+  try {
+    const row = await prisma.setting.findUnique({
+      where: { key: 'admin.language' },
+    });
+    const v = row?.value;
+    return v === 'zh' || v === 'fr' ? v : 'en';
+  } catch {
+    return 'en';
+  }
+}
+
+export async function GET() {
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const lang = await readCurrentLang();
+  return NextResponse.json({ lang });
+}
+
+export async function POST(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+
+  const parsed = schema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid language.' }, { status: 400 });
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.setting.upsert({
+      where: { key: 'admin.language' },
+      create: { key: 'admin.language', value: parsed.data.lang },
+      update: { value: parsed.data.lang },
+    });
+    await tx.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: 'admin.language.change',
+        entityType: 'setting',
+        entityId: 'admin.language',
+        metadata: { lang: parsed.data.lang },
+      },
+    });
+  });
+
+  return NextResponse.json({ ok: true, lang: parsed.data.lang });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\leads\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { can } from '@/lib/permissions/policy';
+
+const querySchema = z.object({ q: z.string().trim().max(120).default(''), status: z.enum(['NEW', 'CONTACTED', 'QUALIFIED', 'QUOTED', 'WON', 'LOST']).optional(), page: z.coerce.number().int().min(1).max(100000).default(1) });
+const pageSize = 20;
+
+export async function GET(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'lead.read')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const parsed = querySchema.safeParse(Object.fromEntries(request.nextUrl.searchParams));
+  if (!parsed.success) return NextResponse.json({ error: 'Invalid lead filters.' }, { status: 400 });
+  const { q, status } = parsed.data;
+  const where = {
+    ...(status ? { status } : {}),
+    ...(q ? { OR: [
+      { name: { contains: q, mode: 'insensitive' as const } },
+      { email: { contains: q, mode: 'insensitive' as const } },
+      { phone: { contains: q, mode: 'insensitive' as const } },
+      { location: { contains: q, mode: 'insensitive' as const } },
+      { company: { contains: q, mode: 'insensitive' as const } },
+      { interestedSolution: { contains: q, mode: 'insensitive' as const } },
+      { interestedProduct: { contains: q, mode: 'insensitive' as const } },
+      { message: { contains: q, mode: 'insensitive' as const } },
+    ] } : {}),
+  };
+  const total = await prisma.lead.count({ where });
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(parsed.data.page, pageCount);
+  const items = await prisma.lead.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize });
+  return NextResponse.json({ items, total, page, pageSize, pageCount });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\leads\export\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { can } from '@/lib/permissions/policy';
+
+export const runtime = 'nodejs';
+
+const VALID_STATUSES = ['NEW', 'CONTACTED', 'QUALIFIED', 'QUOTED', 'WON', 'LOST'] as const;
+
+function csvEscape(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  const s = String(value);
+  // Wrap in quotes if the field contains a comma, quote, or newline.
+  if (/[",\n\r]/.test(s)) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+export async function GET(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.read')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const params = request.nextUrl.searchParams;
+  const q = (params.get('q') ?? '').trim().slice(0, 120);
+  const statusRaw = params.get('status') ?? '';
+  const status = (VALID_STATUSES as readonly string[]).includes(statusRaw)
+    ? statusRaw
+    : '';
+
+  const where: Record<string, unknown> = {};
+  if (status) where.status = status;
+  if (q) {
+    where.OR = [
+      { name: { contains: q, mode: 'insensitive' } },
+      { email: { contains: q, mode: 'insensitive' } },
+      { phone: { contains: q, mode: 'insensitive' } },
+      { company: { contains: q, mode: 'insensitive' } },
+      { location: { contains: q, mode: 'insensitive' } },
+      { message: { contains: q, mode: 'insensitive' } },
+      { interestedProduct: { contains: q, mode: 'insensitive' } },
+      { interestedSolution: { contains: q, mode: 'insensitive' } },
+    ];
+  }
+
+  const leads = await prisma.lead.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const header = [
+    'Reference',
+    'Received (ISO)',
+    'Status',
+    'Name',
+    'Email',
+    'Phone',
+    'Location',
+    'Company',
+    'Interested Product',
+    'Interested Solution',
+    'Intent',
+    'Message',
+    'Consent',
+  ];
+
+  const rows = leads.map((l) => [
+    l.id.slice(-8).toUpperCase(),
+    l.createdAt.toISOString(),
+    l.status,
+    l.name,
+    l.email,
+    l.phone ?? '',
+    l.location ?? '',
+    l.company ?? '',
+    l.interestedProduct ?? '',
+    l.interestedSolution ?? '',
+    l.intent ?? '',
+    l.message,
+    l.consent ? 'Yes' : 'No',
+  ]);
+
+  const csv = [header, ...rows]
+    .map((row) => row.map(csvEscape).join(','))
+    .join('\r\n');
+
+  // UTF-8 BOM so Excel opens accents and non-Latin characters correctly.
+  const bom = '\uFEFF';
+  const date = new Date().toISOString().slice(0, 10);
+  const filename = `lura-leads-${date}.csv`;
+
+  return new NextResponse(bom + csv, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Cache-Control': 'no-store',
+    },
+  });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\leads\[id]\route.ts
+============================================================
+import { NextRequest,NextResponse } from 'next/server';import { z } from 'zod';import { prisma } from '@/lib/db/prisma';import { getCurrentUser } from '@/lib/auth/session';import { can } from '@/lib/permissions/policy';import { sameOrigin } from '@/lib/security/origin';
+const schema=z.object({status:z.enum(['NEW','CONTACTED','QUALIFIED','QUOTED','WON','LOST'])});
+export async function PATCH(request:NextRequest,{params}:{params:Promise<{id:string}>}){const user=await getCurrentUser();if(!user||!can(user.role,'lead.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});if(!sameOrigin(request))return NextResponse.json({error:'Invalid origin'},{status:403});const parsed=schema.safeParse(await request.json().catch(()=>null));if(!parsed.success)return NextResponse.json({error:'Invalid status.'},{status:400});const{id}=await params;const lead=await prisma.lead.update({where:{id},data:parsed.data});await prisma.auditLog.create({data:{actorId:user.id,action:'lead.status.update',entityType:'lead',entityId:id,metadata:parsed.data}});return NextResponse.json(lead);}
+
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\master\broadcast\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { isMasterEmail } from '@/lib/auth/masters';
+import { sameOrigin } from '@/lib/security/origin';
+
+const schema = z.object({
+  title: z.string().trim().min(1).max(120),
+  body: z.string().trim().max(2000).optional().default(''),
+});
+
+export async function POST(req: NextRequest) {
+  const me = await getCurrentUser();
+  if (!me?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!isMasterEmail(me.email)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!sameOrigin(req)) return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+
+  const parsed = schema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid broadcast payload.' }, { status: 400 });
+  }
+
+  const recipients = await prisma.user.findMany({
+    where: { active: true },
+    select: { id: true },
+  });
+
+  if (recipients.length === 0) {
+    return NextResponse.json({ ok: true, delivered: 0 });
+  }
+
+  await prisma.notification.createMany({
+    data: recipients.map((u) => ({
+      userId: u.id,
+      kind: 'master.broadcast',
+      title: parsed.data.title,
+      body: parsed.data.body || null,
+      href: '/admin/notifications',
+    })),
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      actorId: me.id,
+      action: 'master.broadcast',
+      entityType: 'notification',
+      metadata: {
+        title: parsed.data.title,
+        recipients: recipients.length,
+      },
+    },
+  });
+
+  return NextResponse.json({ ok: true, delivered: recipients.length });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\master\digest\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { isMasterEmail } from '@/lib/auth/masters';
+import { sameOrigin } from '@/lib/security/origin';
+
+export async function GET() {
+  const me = await getCurrentUser();
+  if (!me?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!isMasterEmail(me.email)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  const [enabledRow, freqRow, lastRunRow] = await Promise.all([
+    prisma.setting.findUnique({ where: { key: 'digest.enabled' } }),
+    prisma.setting.findUnique({ where: { key: 'digest.frequency' } }),
+    prisma.setting.findUnique({ where: { key: 'digest.lastRunAt' } }),
+  ]);
+
+  return NextResponse.json({
+    enabled: enabledRow?.value === true,
+    frequency: freqRow?.value === 'weekly' ? 'weekly' : 'daily',
+    lastRunAt: typeof lastRunRow?.value === 'string' ? lastRunRow.value : null,
+  });
+}
+
+const schema = z.object({
+  enabled: z.boolean().optional(),
+  frequency: z.enum(['daily', 'weekly']).optional(),
+});
+
+export async function PATCH(req: NextRequest) {
+  const me = await getCurrentUser();
+  if (!me?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!isMasterEmail(me.email)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!sameOrigin(req)) return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+
+  const parsed = schema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: 'Invalid payload.' }, { status: 400 });
+
+  const ops: Promise<unknown>[] = [];
+  if (parsed.data.enabled !== undefined) {
+    ops.push(
+      prisma.setting.upsert({
+        where: { key: 'digest.enabled' },
+        create: { key: 'digest.enabled', value: parsed.data.enabled },
+        update: { value: parsed.data.enabled },
+      }),
+    );
+  }
+  if (parsed.data.frequency !== undefined) {
+    ops.push(
+      prisma.setting.upsert({
+        where: { key: 'digest.frequency' },
+        create: { key: 'digest.frequency', value: parsed.data.frequency },
+        update: { value: parsed.data.frequency },
+      }),
+    );
+  }
+  await Promise.all(ops);
+
+  await prisma.auditLog.create({
+    data: {
+      actorId: me.id,
+      action: 'digest.settings.update',
+      entityType: 'setting',
+      metadata: parsed.data,
+    },
+  });
+
+  return NextResponse.json({ ok: true });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\master\digest\run\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentUser } from '@/lib/auth/session';
+import { isMasterEmail } from '@/lib/auth/masters';
+import { sameOrigin } from '@/lib/security/origin';
+import { runDigest } from '@/lib/mail/digest';
+
+export const dynamic = 'force-dynamic';
+
+export async function POST(req: NextRequest) {
+  const me = await getCurrentUser();
+  if (!me?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!isMasterEmail(me.email)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!sameOrigin(req)) return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+
+  // force=true runs even if disabled, so masters can test.
+  const result = await runDigest({ force: true });
+
+  return NextResponse.json({
+    ok: true,
+    sent: result.sent,
+    total: result.total,
+    failures: result.failures,
+    frequency: result.frequency,
+  });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\master\messages\route.ts
+============================================================
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { isMasterEmail } from '@/lib/auth/masters';
+
+export async function GET() {
+  const me = await getCurrentUser();
+  if (!me?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!isMasterEmail(me.email)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  const msgs = await prisma.message.findMany({
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      senderId: true,
+      recipientId: true,
+      body: true,
+      readAt: true,
+      createdAt: true,
+      sender: { select: { id: true, name: true, email: true, avatarUrl: true, role: true } },
+      recipient: { select: { id: true, name: true, email: true, avatarUrl: true, role: true } },
+    },
+  });
+
+  type Participant = {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl: string | null;
+    role: string;
+  };
+  type Pair = {
+    pairKey: string;
+    a: Participant;
+    b: Participant;
+    messageCount: number;
+    unreadCount: number;
+    lastMessage: { body: string; createdAt: string; fromId: string };
+    lastActivity: string;
+  };
+
+  const pairs = new Map<string, Pair>();
+
+  for (const m of msgs) {
+    const [lo, hi] =
+      m.senderId < m.recipientId
+        ? [m.senderId, m.recipientId]
+        : [m.recipientId, m.senderId];
+    const key = `${lo}--${hi}`;
+    const existing = pairs.get(key);
+
+    if (!existing) {
+      const a = m.senderId === lo ? m.sender : m.recipient;
+      const b = m.senderId === hi ? m.sender : m.recipient;
+      pairs.set(key, {
+        pairKey: key,
+        a: { id: a.id, name: a.name, email: a.email, avatarUrl: a.avatarUrl, role: a.role },
+        b: { id: b.id, name: b.name, email: b.email, avatarUrl: b.avatarUrl, role: b.role },
+        messageCount: 1,
+        unreadCount: !m.readAt ? 1 : 0,
+        lastMessage: {
+          body: m.body.slice(0, 140),
+          createdAt: m.createdAt.toISOString(),
+          fromId: m.senderId,
+        },
+        lastActivity: m.createdAt.toISOString(),
+      });
+    } else {
+      existing.messageCount += 1;
+      if (!m.readAt) existing.unreadCount += 1;
+    }
+  }
+
+  const list = Array.from(pairs.values()).sort(
+    (x, y) =>
+      new Date(y.lastActivity).getTime() - new Date(x.lastActivity).getTime(),
+  );
+
+  return NextResponse.json({
+    pairs: list,
+    totalMessages: msgs.length,
+    totalPairs: list.length,
+  });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\master\messages\[pair]\route.ts
+============================================================
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { isMasterEmail } from '@/lib/auth/masters';
+
+export async function GET(
+  _req: Request,
+  ctx: { params: Promise<{ pair: string }> },
+) {
+  const me = await getCurrentUser();
+  if (!me?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!isMasterEmail(me.email)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  const { pair } = await ctx.params;
+  const [a, b] = pair.split('--');
+  if (!a || !b) return NextResponse.json({ error: 'Invalid pair.' }, { status: 400 });
+
+  // Read-only — do NOT mark anything as read.
+  const messages = await prisma.message.findMany({
+    where: {
+      OR: [
+        { senderId: a, recipientId: b },
+        { senderId: b, recipientId: a },
+      ],
+    },
+    orderBy: { createdAt: 'asc' },
+    select: {
+      id: true,
+      senderId: true,
+      recipientId: true,
+      body: true,
+      readAt: true,
+      createdAt: true,
+    },
+  });
+
+  const [ua, ub] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: a },
+      select: { id: true, name: true, email: true, avatarUrl: true, role: true },
+    }),
+    prisma.user.findUnique({
+      where: { id: b },
+      select: { id: true, name: true, email: true, avatarUrl: true, role: true },
+    }),
+  ]);
+
+  return NextResponse.json({
+    a: ua,
+    b: ub,
+    messages: messages.map((m) => ({
+      id: m.id,
+      fromId: m.senderId,
+      body: m.body,
+      readAt: m.readAt ? m.readAt.toISOString() : null,
+      createdAt: m.createdAt.toISOString(),
+    })),
+  });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\me\route.ts
+============================================================
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+
+export async function GET() {
+  const user = await getCurrentUser();
+  if (!user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const me = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { email: true, displayName: true, avatarUrl: true },
+  });
+  if (!me) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+  return NextResponse.json(me);
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\media\route.ts
+============================================================
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { can } from '@/lib/permissions/policy';
+import { syncPublicMedia } from '@/lib/media-sync';
+
+export async function GET() {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Auto-import any files dropped into watched public folders
+  // (e.g. public/hero/) so they appear in the library without a manual script.
+  try {
+    await syncPublicMedia();
+  } catch {
+    // Non-fatal — continue returning whatever is already in the DB.
+  }
+
+  const items = await prisma.media.findMany({
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const images = items
+    .filter((m) => m.kind === 'IMAGE')
+    .map((m) => {
+      const segs = m.url.split('/');
+      return { url: m.url, name: segs[segs.length - 1] ?? m.url };
+    });
+
+  return NextResponse.json({ items, images });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\media\reorder\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { can } from '@/lib/permissions/policy';
+import { sameOrigin } from '@/lib/security/origin';
+
+const schema = z.object({
+  ids: z.array(z.string().min(1)).min(1).max(200),
+});
+
+export async function PATCH(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const parsed = schema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid reorder payload.' }, { status: 400 });
+  }
+  const { ids } = parsed.data;
+  try {
+    await prisma.$transaction(
+      ids.map((id, index) =>
+        prisma.media.update({
+          where: { id },
+          data: { sortOrder: index },
+        }),
+      ),
+    );
+    await prisma.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: 'media.reorder',
+        entityType: 'media',
+        metadata: { count: ids.length },
+      },
+    });
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: 'Could not reorder media.' }, { status: 404 });
+  }
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\media\upload\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { can } from '@/lib/permissions/policy';
+import { sameOrigin } from '@/lib/security/origin';
+import { saveMediaUpload } from '@/lib/storage/upload';
+
+export const runtime = 'nodejs';
+
+export async function POST(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json(
+      { errorKey: 'upload.error.unauthorized', error: 'Unauthorized' },
+      { status: 401 },
+    );
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json(
+      { errorKey: 'upload.error.invalidOrigin', error: 'Invalid origin' },
+      { status: 403 },
+    );
+  }
+
+  let formData: FormData;
+  try {
+    formData = await request.formData();
+  } catch {
+    return NextResponse.json(
+      { errorKey: 'upload.error.invalidPayload', error: 'Invalid upload payload.' },
+      { status: 400 },
+    );
+  }
+
+  const file = formData.get('file');
+  const productId = formData.get('productId');
+  const projectId = formData.get('projectId');
+  const serviceId = formData.get('serviceId');
+  const solutionId = formData.get('solutionId');
+  const alt = formData.get('alt');
+  const subfolder = formData.get('subfolder');
+
+  if (!(file instanceof File)) {
+    return NextResponse.json(
+      { errorKey: 'upload.error.noFile', error: 'No file provided.' },
+      { status: 400 },
+    );
+  }
+
+  const str = (value: FormDataEntryValue | null) =>
+    typeof value === 'string' && value.trim() ? value.trim() : null;
+
+  const pid = str(productId);
+  const prj = str(projectId);
+  const svc = str(serviceId);
+  const sol = str(solutionId);
+
+  const linked = [pid, prj, svc, sol].filter((x) => x !== null);
+  if (linked.length > 1) {
+    return NextResponse.json(
+      { errorKey: 'upload.error.multipleLinks', error: 'Link upload to one record at a time.' },
+      { status: 400 },
+    );
+  }
+
+  const folderFromSub = str(subfolder);
+  const folder =
+    folderFromSub ??
+    (pid ? 'products' : prj ? 'projects' : svc ? 'services' : sol ? 'solutions' : 'library');
+
+  const result = await saveMediaUpload(file, folder);
+  if (!result.ok) {
+    return NextResponse.json(
+      { errorKey: result.errorKey, error: result.error },
+      { status: 400 },
+    );
+  }
+
+  let linkedProductId: string | null = null;
+  if (pid) {
+    const exists = await prisma.product.findUnique({
+      where: { id: pid },
+      select: { id: true },
+    });
+    if (exists) linkedProductId = exists.id;
+  }
+
+  let linkedProjectId: string | null = null;
+  if (prj) {
+    const exists = await prisma.project.findUnique({
+      where: { id: prj },
+      select: { id: true },
+    });
+    if (exists) linkedProjectId = exists.id;
+  }
+
+  let linkedServiceId: string | null = null;
+  if (svc) {
+    const exists = await prisma.service.findUnique({
+      where: { id: svc },
+      select: { id: true },
+    });
+    if (exists) linkedServiceId = exists.id;
+  }
+
+  let linkedSolutionId: string | null = null;
+  if (sol) {
+    const exists = await prisma.solution.findUnique({
+      where: { id: sol },
+      select: { id: true },
+    });
+    if (exists) linkedSolutionId = exists.id;
+  }
+
+  const media = await prisma.media.create({
+    data: {
+      kind: result.kind,
+      url: result.url,
+      alt: typeof alt === 'string' && alt.trim() ? alt.trim() : null,
+      mimeType: result.mimeType,
+      sizeBytes: result.sizeBytes,
+      productId: linkedProductId,
+      projectId: linkedProjectId,
+      serviceId: linkedServiceId,
+      solutionId: linkedSolutionId,
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      actorId: user.id,
+      action: 'media.upload',
+      entityType: 'media',
+      entityId: media.id,
+      metadata: {
+        url: result.url,
+        kind: result.kind,
+        sizeBytes: result.sizeBytes,
+        mimeType: result.mimeType,
+        productId: linkedProductId,
+        projectId: linkedProjectId,
+        serviceId: linkedServiceId,
+        solutionId: linkedSolutionId,
+      },
+    },
+  });
+
+  return NextResponse.json(media, { status: 201 });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\media\[id]\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { can } from '@/lib/permissions/policy';
+import { sameOrigin } from '@/lib/security/origin';
+import { deleteUploadByUrl } from '@/lib/storage/upload';
+
+export const runtime = 'nodejs';
+
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+
+  const { id } = await context.params;
+  const media = await prisma.media.findUnique({ where: { id } });
+  if (!media) {
+    return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+  }
+
+  await prisma.media.delete({ where: { id } });
+
+  if (media.url.startsWith('/uploads/')) {
+    await deleteUploadByUrl(media.url);
+  }
+
+  await prisma.auditLog.create({
+    data: {
+      actorId: user.id,
+      action: 'media.delete',
+      entityType: 'media',
+      entityId: id,
+    },
+  });
+
+  return NextResponse.json({ ok: true });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\messages\route.ts
+============================================================
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+
+/** GET /api/admin/messages — list threads for the current admin. */
+export async function GET() {
+  const me = await getCurrentUser();
+  if (!me?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  // Get all messages where I'm sender or recipient, most recent first.
+  const msgs = await prisma.message.findMany({
+    where: { OR: [{ senderId: me.id }, { recipientId: me.id }] },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      senderId: true,
+      recipientId: true,
+      body: true,
+      readAt: true,
+      createdAt: true,
+      sender: { select: { id: true, name: true, email: true, avatarUrl: true, role: true } },
+      recipient: { select: { id: true, name: true, email: true, avatarUrl: true, role: true } },
+    },
+  });
+
+  // Collapse into threads keyed by counterparty id.
+  type Counterparty = {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl: string | null;
+    role: string;
+  };
+  type Thread = {
+    counterparty: Counterparty;
+    lastMessage: { body: string; createdAt: string; fromMe: boolean };
+    unread: number;
+  };
+
+  const threads = new Map<string, Thread>();
+
+  for (const m of msgs) {
+    const fromMe = m.senderId === me.id;
+    const other = fromMe ? m.recipient : m.sender;
+    const existing = threads.get(other.id);
+    const unreadInc = !fromMe && !m.readAt ? 1 : 0;
+
+    if (!existing) {
+      threads.set(other.id, {
+        counterparty: {
+          id: other.id,
+          name: other.name,
+          email: other.email,
+          avatarUrl: other.avatarUrl,
+          role: other.role,
+        },
+        lastMessage: {
+          body: m.body.slice(0, 120),
+          createdAt: m.createdAt.toISOString(),
+          fromMe,
+        },
+        unread: unreadInc,
+      });
+    } else {
+      existing.unread += unreadInc;
+      // Since messages are sorted desc, the first one we see per thread is the newest.
+    }
+  }
+
+  const list = Array.from(threads.values()).sort(
+    (a, b) =>
+      new Date(b.lastMessage.createdAt).getTime() -
+      new Date(a.lastMessage.createdAt).getTime(),
+  );
+
+  const totalUnread = msgs.filter((m) => m.recipientId === me.id && !m.readAt).length;
+
+  return NextResponse.json({ threads: list, totalUnread }, { headers: { 'Cache-Control': 'private, max-age=10, stale-while-revalidate=30' } });
+}
+
+/** POST /api/admin/messages — send a message to another admin. */
+export async function POST(req: Request) {
+  const me = await getCurrentUser();
+  if (!me?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const body = (await req.json().catch(() => ({}))) as {
+    recipientId?: string;
+    body?: string;
+  };
+
+  const text = (body.body ?? '').toString().trim();
+  if (!text) return NextResponse.json({ error: 'Message is empty.' }, { status: 400 });
+  if (text.length > 4000)
+    return NextResponse.json({ error: 'Message is too long.' }, { status: 413 });
+
+  if (!body.recipientId)
+    return NextResponse.json({ error: 'Missing recipient.' }, { status: 400 });
+
+  if (body.recipientId === me.id)
+    return NextResponse.json({ error: 'Cannot message yourself.' }, { status: 400 });
+
+  const recipient = await prisma.user.findUnique({
+    where: { id: body.recipientId },
+    select: { id: true, active: true },
+  });
+  if (!recipient || !recipient.active)
+    return NextResponse.json({ error: 'Recipient not found.' }, { status: 404 });
+
+  const created = await prisma.message.create({
+    data: {
+      senderId: me.id,
+      recipientId: recipient.id,
+      body: text,
+    },
+    select: { id: true, createdAt: true },
+  });
+
+  return NextResponse.json({ ok: true, message: created });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\messages\contacts\route.ts
+============================================================
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+
+export async function GET() {
+  const me = await getCurrentUser();
+  if (!me?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const contacts = await prisma.user.findMany({
+    where: {
+      active: true,
+      id: { not: me.id },
+      role: { in: ['OWNER', 'ADMIN'] },
+    },
+    select: { id: true, name: true, email: true, avatarUrl: true, role: true },
+    orderBy: [{ role: 'asc' }, { name: 'asc' }],
+  });
+
+  return NextResponse.json({ contacts });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\messages\[userId]\route.ts
+============================================================
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+
+/** GET /api/admin/messages/[userId] — full thread with one counterparty + mark read. */
+export async function GET(
+  _req: Request,
+  ctx: { params: Promise<{ userId: string }> },
+) {
+  const me = await getCurrentUser();
+  if (!me?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const { userId } = await ctx.params;
+  if (!userId) return NextResponse.json({ error: 'Missing user.' }, { status: 400 });
+
+  const other = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, name: true, email: true, avatarUrl: true, role: true },
+  });
+  if (!other) return NextResponse.json({ error: 'User not found.' }, { status: 404 });
+
+  const messages = await prisma.message.findMany({
+    where: {
+      OR: [
+        { senderId: me.id, recipientId: userId },
+        { senderId: userId, recipientId: me.id },
+      ],
+    },
+    orderBy: { createdAt: 'asc' },
+    select: {
+      id: true,
+      senderId: true,
+      body: true,
+      readAt: true,
+      createdAt: true,
+    },
+  });
+
+  // Mark all messages from other as read.
+  await prisma.message.updateMany({
+    where: { senderId: userId, recipientId: me.id, readAt: null },
+    data: { readAt: new Date() },
+  });
+
+  return NextResponse.json({
+    counterparty: other,
+    messages: messages.map((m) => ({
+      id: m.id,
+      fromMe: m.senderId === me.id,
+      body: m.body,
+      readAt: m.readAt ? m.readAt.toISOString() : null,
+      createdAt: m.createdAt.toISOString(),
+    })),
+  });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\notifications\route.ts
+============================================================
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+
+export async function GET() {
+  const me = await getCurrentUser();
+  if (!me?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const [items, unread] = await Promise.all([
+    prisma.notification.findMany({
+      where: { userId: me.id },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: {
+        id: true,
+        kind: true,
+        title: true,
+        body: true,
+        href: true,
+        readAt: true,
+        createdAt: true,
+      },
+    }),
+    prisma.notification.count({ where: { userId: me.id, readAt: null } }),
+  ]);
+
+  return NextResponse.json({
+    unread,
+    items: items.map((n) => ({
+      id: n.id,
+      kind: n.kind,
+      title: n.title,
+      body: n.body,
+      href: n.href,
+      readAt: n.readAt ? n.readAt.toISOString() : null,
+      createdAt: n.createdAt.toISOString(),
+    })),
+  });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\notifications\mark-read\route.ts
+============================================================
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+
+/** Mark all (or a subset) of the current admin's notifications as read. */
+export async function PATCH(req: Request) {
+  const me = await getCurrentUser();
+  if (!me?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const body = (await req.json().catch(() => ({}))) as { ids?: string[] };
+
+  const where = body.ids?.length
+    ? { userId: me.id, id: { in: body.ids }, readAt: null }
+    : { userId: me.id, readAt: null };
+
+  const res = await prisma.notification.updateMany({
+    where,
+    data: { readAt: new Date() },
+  });
+
+  return NextResponse.json({ ok: true, updated: res.count });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\partners\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { can } from '@/lib/permissions/policy';
+import { sameOrigin } from '@/lib/security/origin';
+
+const schema = z.object({
+  name: z.string().trim().min(1).max(180),
+  logoUrl: z.string().trim().min(1).max(2000),
+  logoAlt: z.string().max(200).optional().nullable(),
+  websiteUrl: z.string().max(2000).optional().nullable(),
+  sortOrder: z.coerce.number().int().min(0).max(9999).default(0),
+  published: z.boolean().default(false),
+});
+
+export async function GET() {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.read')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const items = await prisma.partner.findMany({
+    orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+  });
+  return NextResponse.json({ items });
+}
+
+export async function POST(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const parsed = schema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid partner details.' }, { status: 400 });
+  }
+  const partner = await prisma.partner.create({
+    data: {
+      name: parsed.data.name,
+      logoUrl: parsed.data.logoUrl,
+      logoAlt: parsed.data.logoAlt || null,
+      websiteUrl: parsed.data.websiteUrl || null,
+      sortOrder: parsed.data.sortOrder,
+      published: parsed.data.published,
+    },
+  });
+  await prisma.auditLog.create({
+    data: {
+      actorId: user.id,
+      action: 'partner.create',
+      entityType: 'partner',
+      entityId: partner.id,
+    },
+  });
+  return NextResponse.json(partner, { status: 201 });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\partners\[id]\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { can } from '@/lib/permissions/policy';
+import { sameOrigin } from '@/lib/security/origin';
+
+const updateSchema = z.object({
+  name: z.string().trim().min(1).max(180).optional(),
+  logoUrl: z.string().trim().min(1).max(2000).optional(),
+  logoAlt: z.string().max(200).nullable().optional(),
+  websiteUrl: z.string().max(2000).nullable().optional(),
+  sortOrder: z.coerce.number().int().min(0).max(9999).optional(),
+  published: z.boolean().optional(),
+});
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const parsed = updateSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid partner details.' }, { status: 400 });
+  }
+  const { id } = await params;
+  try {
+    const partner = await prisma.partner.update({
+      where: { id },
+      data: parsed.data,
+    });
+    await prisma.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: 'partner.update',
+        entityType: 'partner',
+        entityId: id,
+      },
+    });
+    return NextResponse.json(partner);
+  } catch {
+    return NextResponse.json({ error: 'Partner could not be updated.' }, { status: 404 });
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const { id } = await params;
+  try {
+    await prisma.partner.delete({ where: { id } });
+    await prisma.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: 'partner.delete',
+        entityType: 'partner',
+        entityId: id,
+      },
+    });
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: 'Partner could not be deleted.' }, { status: 404 });
+  }
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\presence\route.ts
+============================================================
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { isMasterEmail } from '@/lib/auth/masters';
+
+export const ONLINE_WINDOW_MS = 2 * 60 * 1000;
+
+type AdminRow = {
+  id: string;
+  email: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  role: string;
+  lastSeenAt: Date | null;
+};
+
+export async function GET() {
+  const user = await getCurrentUser();
+  if (!user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!isMasterEmail(user.email)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const admins = (await prisma.user.findMany({
+    where: { role: { in: ['OWNER', 'ADMIN'] } },
+    select: {
+      id: true,
+      email: true,
+      displayName: true,
+      avatarUrl: true,
+      role: true,
+      lastSeenAt: true,
+    },
+    orderBy: [{ lastSeenAt: 'desc' }],
+  })) as AdminRow[];
+
+  const now = Date.now();
+  const list = admins.map((a: AdminRow) => ({
+    ...a,
+    online: a.lastSeenAt
+      ? now - a.lastSeenAt.getTime() < ONLINE_WINDOW_MS
+      : false,
+  }));
+
+  return NextResponse.json({
+    online: list.filter((a) => a.online).length,
+    total: list.length,
+    admins: list,
+  });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\products\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { can } from '@/lib/permissions/policy';
+import { sameOrigin } from '@/lib/security/origin';
+
+const schema = z.object({
+  name: z.string().trim().min(1).max(160),
+  slug: z.string().trim().min(1).max(180).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  brand: z.string().trim().max(80).optional(),
+  categoryId: z.string().min(1).optional(),
+  summary: z.string().max(500).optional(),
+  description: z.string().max(10000).optional(),
+  status: z.string().max(80).optional(),
+  warranty: z.string().max(300).optional(),
+  seoTitle: z.string().max(180).optional(),
+  seoDescription: z.string().max(320).optional(),
+  published: z.boolean().default(true),
+  featured: z.boolean().default(false),
+});
+
+// Intent patterns, ordered — kwh MUST come before kw because "kwh"
+// contains "kw". First match wins; subsequent matches are ignored.
+const INTENT_PATTERNS: [RegExp, string][] = [
+  [/\bkwh\b/i, 'battery-series'],
+  [/\bkw\b/i, 'inverter-series'],
+  [/\bbatter(?:y|ies)\b/i, 'battery-series'],
+  [/\binverter(?:s)?\b/i, 'inverter-series'],
+  [/\bc&i\b/i, 'commercial-industrial-series'],
+  [/\bcommercial\b/i, 'commercial-industrial-series'],
+  [/\bindustrial\b/i, 'commercial-industrial-series'],
+  [/\ball[\s-]?in[\s-]?one\b/i, 'all-in-one-series'],
+  [/\bvault\b/i, 'all-in-one-series'],
+  [/\bportable\b/i, 'all-in-one-series'],
+  [/\bpanel(?:s)?\b/i, 'solar-panel-series'],
+  [/\bpv\b/i, 'solar-panel-series'],
+  [/\baccessor(?:y|ies)\b/i, 'solar-accessories'],
+  [/\bmount(?:ing|s)?\b/i, 'solar-accessories'],
+  [/\bcable(?:s)?\b/i, 'solar-accessories'],
+];
+
+function detectIntent(rawQ: string): { core: string; seriesSlug: string | null } {
+  let text = rawQ.toLowerCase();
+  let seriesSlug: string | null = null;
+
+  for (const [pattern, slug] of INTENT_PATTERNS) {
+    const re = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
+    const before = text;
+    text = text.replace(re, ' ');
+    if (text !== before && seriesSlug === null) {
+      seriesSlug = slug;
+    }
+  }
+
+  // Drop decoy words so the text match stays tight.
+  text = text.replace(/\b(series|product|products|the|a|an)\b/gi, ' ');
+  text = text.replace(/\s+/g, ' ').trim();
+
+  return { core: text, seriesSlug };
+}
+
+export async function GET(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.read')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const params = request.nextUrl.searchParams;
+  if (!params.has('page')) {
+    return NextResponse.json(
+      await prisma.product.findMany({
+        include: {
+          category: true,
+          specifications: { orderBy: { sortOrder: 'asc' } },
+          media: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
+        },
+        orderBy: [
+          { category: { sortOrder: 'asc' } },
+          { category: { name: 'asc' } },
+          { sortOrder: 'asc' },
+          { name: 'asc' },
+        ],
+      }),
+    );
+  }
+  const parsed = z
+    .object({
+      q: z.string().trim().max(120).default(''),
+      categoryId: z.string().max(100).default(''),
+      state: z.enum(['PUBLISHED', 'DRAFT']).optional(),
+      page: z.coerce.number().int().min(1).max(100000).default(1),
+    })
+    .safeParse(Object.fromEntries(params));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid product filters.' }, { status: 400 });
+  }
+  const { q, categoryId, state } = parsed.data;
+
+  // --- Exact slug fast path: "litharv-5kw-inverter" style queries ---
+  if (q && /^[a-z0-9]+(?:-[a-z0-9]+)+$/.test(q)) {
+    const exact = await prisma.product.findUnique({
+      where: { slug: q },
+      include: {
+        category: true,
+        specifications: { orderBy: { sortOrder: 'asc' } },
+        media: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
+      },
+    });
+    if (exact) {
+      return NextResponse.json({
+        items: [exact],
+        total: 1,
+        page: 1,
+        pageSize: 1,
+        pageCount: 1,
+        matchedBySlug: true,
+      });
+    }
+  }
+
+  // --- Intent-aware fuzzy search ---
+  const { core, seriesSlug } = q ? detectIntent(q) : { core: '', seriesSlug: null };
+
+  const where: Record<string, unknown> = {};
+  if (categoryId) where.categoryId = categoryId;
+  if (state) where.published = state === 'PUBLISHED';
+  if (seriesSlug) where.category = { slug: seriesSlug };
+  if (core) {
+    where.OR = [
+      { name: { contains: core, mode: 'insensitive' } },
+      { slug: { contains: core, mode: 'insensitive' } },
+      { summary: { contains: core, mode: 'insensitive' } },
+      { brand: { contains: core, mode: 'insensitive' } },
+    ];
+  } else if (q && !seriesSlug) {
+    // No intent, no core after stripping — search the raw query as-is.
+    where.OR = [
+      { name: { contains: q, mode: 'insensitive' } },
+      { slug: { contains: q, mode: 'insensitive' } },
+      { summary: { contains: q, mode: 'insensitive' } },
+      { brand: { contains: q, mode: 'insensitive' } },
+    ];
+  }
+
+  const total = await prisma.product.count({ where });
+  const pageSize = 20;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(parsed.data.page, pageCount);
+  const items = await prisma.product.findMany({
+    where,
+    include: {
+      category: true,
+      specifications: { orderBy: { sortOrder: 'asc' } },
+      media: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
+    },
+    orderBy: [
+      { category: { sortOrder: 'asc' } },
+      { category: { name: 'asc' } },
+      { sortOrder: 'asc' },
+      { name: 'asc' },
+    ],
+    skip: (page - 1) * pageSize,
+    take: pageSize,
+  });
+
+  return NextResponse.json({
+    items,
+    total,
+    page,
+    pageSize,
+    pageCount,
+    intent: seriesSlug,
+  });
+}
+
+export async function POST(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const parsed = schema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid product details.' }, { status: 400 });
+  }
+  if (parsed.data.categoryId) {
+    const cat = await prisma.productCategory.findFirst({
+      where: { id: parsed.data.categoryId, published: true },
+    });
+    if (!cat) {
+      return NextResponse.json(
+        { error: 'Choose a published product category.' },
+        { status: 400 },
+      );
+    }
+  }
+  try {
+    const product = await prisma.product.create({ data: parsed.data });
+    await prisma.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: 'product.create',
+        entityType: 'product',
+        entityId: product.id,
+      },
+    });
+    return NextResponse.json(product, { status: 201 });
+  } catch {
+    return NextResponse.json(
+      { error: 'A product with this slug may already exist.' },
+      { status: 409 },
+    );
+  }
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\products\[id]\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { can } from '@/lib/permissions/policy';
+import { sameOrigin } from '@/lib/security/origin';
+
+const featureBanner = z.object({
+  url: z.string().min(1).max(2000),
+  alt: z.string().max(300).default(''),
+});
+
+const schema = z.object({
+  name: z.string().trim().min(1).max(160).optional(),
+  slug: z.string().trim().min(1).max(180).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).optional(),
+  modelNumber: z.string().max(80).nullable().optional(),
+  brand: z.string().max(80).nullable().optional(),
+  categoryId: z.string().nullable().optional(),
+  summary: z.string().max(500).nullable().optional(),
+  description: z.string().max(10000).nullable().optional(),
+  status: z.string().max(80).nullable().optional(),
+  warranty: z.string().max(300).nullable().optional(),
+  seoTitle: z.string().max(180).nullable().optional(),
+  seoDescription: z.string().max(320).nullable().optional(),
+  datasheetUrl: z.string().max(2000).nullable().optional(),
+  heroImageUrl: z.string().max(2000).nullable().optional(),
+  notice: z.string().max(4000).nullable().optional(),
+  featureBanners: z.array(featureBanner).nullable().optional(),
+  keyFeatures: z.array(z.string().max(500)).nullable().optional(),
+  translations: z.record(z.string(), z.record(z.string(), z.unknown())).nullable().optional(),
+  sortOrder: z.coerce.number().int().min(0).max(99999).optional(),
+  published: z.boolean().optional(),
+  featured: z.boolean().optional(),
+});
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const parsed = schema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid product details.' }, { status: 400 });
+  }
+  if (parsed.data.categoryId) {
+    const cat = await prisma.productCategory.findFirst({
+      where: { id: parsed.data.categoryId, published: true },
+    });
+    if (!cat) {
+      return NextResponse.json(
+        { error: 'Choose a published product category.' },
+        { status: 400 },
+      );
+    }
+  }
+  const { id } = await params;
+  try {
+    const product = await prisma.product.update({
+      where: { id },
+      data: parsed.data as Prisma.ProductUncheckedUpdateInput,
+    });
+    await prisma.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: 'product.update',
+        entityType: 'product',
+        entityId: id,
+      },
+    });
+    return NextResponse.json(product);
+  } catch {
+    return NextResponse.json({ error: 'Product could not be updated.' }, { status: 404 });
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const { id } = await params;
+  await prisma.product.delete({ where: { id } });
+  await prisma.auditLog.create({
+    data: {
+      actorId: user.id,
+      action: 'product.delete',
+      entityType: 'product',
+      entityId: id,
+    },
+  });
+  return NextResponse.json({ ok: true });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\products\[id]\specifications\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { can } from '@/lib/permissions/policy';
+import { sameOrigin } from '@/lib/security/origin';
+
+const schema = z.object({
+  label: z.string().trim().min(1).max(120),
+  value: z.string().trim().min(1).max(200),
+  unit: z.string().max(40).optional().nullable(),
+  group: z.string().max(80).optional().nullable(),
+});
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const parsed = schema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: 'Enter a specification label and value.' },
+      { status: 400 },
+    );
+  }
+  const { id } = await params;
+  try {
+    const specification = await prisma.$transaction(async (tx) => {
+      const sortOrder = await tx.productSpecification.count({
+        where: { productId: id },
+      });
+      const result = await tx.productSpecification.create({
+        data: {
+          ...parsed.data,
+          group: parsed.data.group?.trim() || null,
+          unit: parsed.data.unit?.trim() || null,
+          productId: id,
+          sortOrder,
+        },
+      });
+      await tx.auditLog.create({
+        data: {
+          actorId: user.id,
+          action: 'product.specification.create',
+          entityType: 'product-specification',
+          entityId: result.id,
+        },
+      });
+      return result;
+    });
+    return NextResponse.json(specification, { status: 201 });
+  } catch {
+    return NextResponse.json(
+      { error: 'Product not found or specification could not be saved.' },
+      { status: 404 },
+    );
+  }
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\products\[id]\specifications\[specId]\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { can } from '@/lib/permissions/policy';
+import { sameOrigin } from '@/lib/security/origin';
+
+const updateSchema = z.object({
+  group: z.string().max(80).nullable().optional(),
+  label: z.string().trim().min(1).max(120).optional(),
+  value: z.string().trim().min(1).max(200).optional(),
+  unit: z.string().max(40).nullable().optional(),
+  sortOrder: z.coerce.number().int().min(0).max(99999).optional(),
+  translations: z
+    .record(z.string(), z.record(z.string(), z.unknown()))
+    .nullable()
+    .optional(),
+});
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; specId: string }> },
+) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const parsed = updateSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid specification details.' }, { status: 400 });
+  }
+  const { id, specId } = await params;
+
+  const data: Record<string, unknown> = {};
+  if (parsed.data.group !== undefined) {
+    data.group = parsed.data.group?.trim() || null;
+  }
+  if (parsed.data.label !== undefined) data.label = parsed.data.label;
+  if (parsed.data.value !== undefined) data.value = parsed.data.value;
+  if (parsed.data.unit !== undefined) {
+    data.unit = parsed.data.unit?.trim() || null;
+  }
+  if (parsed.data.sortOrder !== undefined) data.sortOrder = parsed.data.sortOrder;
+  if (parsed.data.translations !== undefined) {
+    data.translations = (parsed.data.translations ?? null) as
+      | Prisma.InputJsonValue
+      | Prisma.NullableJsonNullValueInput;
+  }
+
+  try {
+    const spec = await prisma.productSpecification.update({
+      where: { id: specId },
+      data,
+    });
+    if (spec.productId !== id) {
+      return NextResponse.json({ error: 'Specification not found.' }, { status: 404 });
+    }
+    await prisma.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: 'product.specification.update',
+        entityType: 'product-specification',
+        entityId: specId,
+      },
+    });
+    return NextResponse.json(spec);
+  } catch {
+    return NextResponse.json(
+      { error: 'Specification could not be updated.' },
+      { status: 404 },
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; specId: string }> },
+) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const { id, specId } = await params;
+  try {
+    const spec = await prisma.productSpecification.findUnique({
+      where: { id: specId },
+    });
+    if (!spec || spec.productId !== id) {
+      return NextResponse.json({ error: 'Specification not found.' }, { status: 404 });
+    }
+    await prisma.productSpecification.delete({ where: { id: specId } });
+    await prisma.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: 'product.specification.delete',
+        entityType: 'product-specification',
+        entityId: specId,
+      },
+    });
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json(
+      { error: 'Specification could not be removed.' },
+      { status: 404 },
+    );
+  }
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\projects\route.ts
+============================================================
+import { NextRequest,NextResponse } from 'next/server';import { z } from 'zod';import { prisma } from '@/lib/db/prisma';import { getCurrentUser } from '@/lib/auth/session';import { can } from '@/lib/permissions/policy';import { sameOrigin } from '@/lib/security/origin';
+const schema=z.object({title:z.string().trim().min(1).max(180),slug:z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),category:z.string().max(100).optional(),location:z.string().max(160).optional(),description:z.string().max(12000).optional(),systemCapacity:z.string().max(100).optional(),published:z.boolean().default(false)});
+export async function GET(request:NextRequest){
+ const user=await getCurrentUser();if(!user||!can(user.role,'content.read'))return NextResponse.json({error:'Unauthorized'},{status:401});
+ const params=request.nextUrl.searchParams;const pageRaw=params.get('page');
+ if(pageRaw===null)return NextResponse.json(await prisma.project.findMany({orderBy:{createdAt:'desc'}}));
+ const pageInput=Number(pageRaw);if(!Number.isInteger(pageInput)||pageInput<1)return NextResponse.json({error:'Invalid page.'},{status:400});
+ const q=(params.get('q')??'').trim().slice(0,120);const category=(params.get('category')??'').trim().slice(0,100);const state=params.get('state')??'';
+ if(state&&state!=='PUBLISHED'&&state!=='DRAFT')return NextResponse.json({error:'Invalid state.'},{status:400});
+ const where={...(category?{category}:{}),...(state?{published:state==='PUBLISHED'}:{}),...(q?{OR:['title','slug','category','location','description','systemCapacity'].map(field=>({[field]:{contains:q,mode:'insensitive' as const}}))}:{})};
+ const pageSize=20;const [total,categories]=await Promise.all([prisma.project.count({where}),prisma.project.findMany({where:{category:{not:null}},select:{category:true},distinct:['category'],orderBy:{category:'asc'}})]);
+ const pageCount=Math.max(1,Math.ceil(total/pageSize));const page=Math.min(pageInput,pageCount);
+ const items=await prisma.project.findMany({where,orderBy:{createdAt:'desc'},skip:(page-1)*pageSize,take:pageSize});
+ return NextResponse.json({items,total,page,pageSize,pageCount,categories:categories.map(x=>x.category).filter((x):x is string=>Boolean(x))});
+}
+export async function POST(request:NextRequest){const user=await getCurrentUser();if(!user||!can(user.role,'content.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});if(!sameOrigin(request))return NextResponse.json({error:'Invalid origin'},{status:403});const parsed=schema.safeParse(await request.json().catch(()=>null));if(!parsed.success)return NextResponse.json({error:'Invalid project details.'},{status:400});try{const item=await prisma.project.create({data:parsed.data});await prisma.auditLog.create({data:{actorId:user.id,action:'project.create',entityType:'project',entityId:item.id}});return NextResponse.json(item,{status:201});}catch{return NextResponse.json({error:'A project with that slug may already exist.'},{status:409});}}
+
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\projects\[id]\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { can } from '@/lib/permissions/policy';
+import { sameOrigin } from '@/lib/security/origin';
+
+const schema = z.object({
+  title: z.string().trim().min(1).max(180).optional(),
+  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).optional(),
+  category: z.string().max(100).nullable().optional(),
+  location: z.string().max(160).nullable().optional(),
+  clientName: z.string().max(160).nullable().optional(),
+  description: z.string().max(12000).nullable().optional(),
+  systemCapacity: z.string().max(100).nullable().optional(),
+  completionDate: z.coerce.date().nullable().optional(),
+  featured: z.boolean().optional(),
+  sortOrder: z.coerce.number().int().min(0).max(9999).optional(),
+  published: z.boolean().optional(),
+});
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const parsed = schema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid project details.' }, { status: 400 });
+  }
+  const { id } = await params;
+  try {
+    const result = await prisma.project.update({
+      where: { id },
+      data: parsed.data as Prisma.ProjectUncheckedUpdateInput,
+    });
+    await prisma.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: 'project.update',
+        entityType: 'project',
+        entityId: id,
+      },
+    });
+    return NextResponse.json(result);
+  } catch {
+    return NextResponse.json({ error: 'Project could not be updated.' }, { status: 404 });
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+  const { id } = await params;
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.media.updateMany({ where: { projectId: id }, data: { projectId: null } });
+      await tx.project.delete({ where: { id } });
+      await tx.auditLog.create({
+        data: {
+          actorId: user.id,
+          action: 'project.delete',
+          entityType: 'project',
+          entityId: id,
+        },
+      });
+    });
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: 'Project could not be deleted.' }, { status: 404 });
+  }
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\search\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { isMasterEmail } from '@/lib/auth/masters';
+
+export async function GET(req: NextRequest) {
+  const me = await getCurrentUser();
+  if (!me?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const q = (req.nextUrl.searchParams.get('q') ?? '').trim().slice(0, 120);
+  if (q.length < 2) {
+    return NextResponse.json({ messages: [], notifications: [], audit: [], q });
+  }
+
+  const isMaster = isMasterEmail(me.email);
+
+  const [messages, notifications, audit] = await Promise.all([
+    // Messages: only ones I'm part of, unless master.
+    prisma.message.findMany({
+      where: {
+        body: { contains: q, mode: 'insensitive' },
+        ...(isMaster
+          ? {}
+          : { OR: [{ senderId: me.id }, { recipientId: me.id }] }),
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      select: {
+        id: true,
+        body: true,
+        createdAt: true,
+        senderId: true,
+        recipientId: true,
+        sender: { select: { id: true, name: true, email: true } },
+        recipient: { select: { id: true, name: true, email: true } },
+      },
+    }),
+
+    // My notifications.
+    prisma.notification.findMany({
+      where: {
+        userId: me.id,
+        OR: [
+          { title: { contains: q, mode: 'insensitive' } },
+          { body: { contains: q, mode: 'insensitive' } },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      select: {
+        id: true,
+        title: true,
+        body: true,
+        href: true,
+        readAt: true,
+        createdAt: true,
+      },
+    }),
+
+    // Audit log: masters only.
+    isMaster
+      ? prisma.auditLog.findMany({
+          where: {
+            OR: [
+              { action: { contains: q, mode: 'insensitive' } },
+              { entityType: { contains: q, mode: 'insensitive' } },
+              { entityId: { contains: q, mode: 'insensitive' } },
+            ],
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+          select: {
+            id: true,
+            action: true,
+            entityType: true,
+            entityId: true,
+            createdAt: true,
+            actor: { select: { id: true, name: true, email: true } },
+          },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  return NextResponse.json({ q, messages, notifications, audit });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\service-centres\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { can } from '@/lib/permissions/policy';
+import { sameOrigin } from '@/lib/security/origin';
+
+const schema = z.object({
+  name: z.string().trim().min(1).max(160),
+  slug: z.string().trim().min(1).max(180).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  type: z.string().trim().max(40).optional(),
+  address: z.string().trim().min(1).max(400),
+  city: z.string().trim().min(1).max(120),
+  state: z.string().trim().max(120).optional(),
+  phone: z.string().trim().max(60).optional(),
+  email: z.string().trim().max(180).optional(),
+  hours: z.string().trim().max(200).optional(),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
+  description: z.string().trim().max(2000).optional(),
+  imageUrl: z.string().trim().max(500).optional(),
+  published: z.boolean().default(false),
+  sortOrder: z.number().int().min(0).max(100000).default(0),
+});
+
+export async function GET() {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.read')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const items = await prisma.serviceCentre.findMany({
+    orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+  });
+  return NextResponse.json(items);
+}
+
+export async function POST(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+
+  const parsed = schema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid location details.' }, { status: 400 });
+  }
+
+  try {
+    const item = await prisma.serviceCentre.create({ data: parsed.data });
+    await prisma.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: 'service_centre.create',
+        entityType: 'service_centre',
+        entityId: item.id,
+      },
+    });
+    return NextResponse.json(item, { status: 201 });
+  } catch {
+    return NextResponse.json(
+      { error: 'A location with this slug may already exist.' },
+      { status: 409 },
+    );
+  }
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\service-centres\[id]\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { can } from '@/lib/permissions/policy';
+import { sameOrigin } from '@/lib/security/origin';
+
+const patchSchema = z.object({
+  name: z.string().trim().min(1).max(160).optional(),
+  slug: z.string().trim().min(1).max(180).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).optional(),
+  type: z.string().trim().max(40).optional().nullable(),
+  address: z.string().trim().min(1).max(400).optional(),
+  city: z.string().trim().min(1).max(120).optional(),
+  state: z.string().trim().max(120).optional().nullable(),
+  phone: z.string().trim().max(60).optional().nullable(),
+  email: z.string().trim().max(180).optional().nullable(),
+  hours: z.string().trim().max(200).optional().nullable(),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
+  description: z.string().trim().max(2000).optional().nullable(),
+  imageUrl: z.string().trim().max(500).optional().nullable(),
+  published: z.boolean().optional(),
+  sortOrder: z.number().int().min(0).max(100000).optional(),
+});
+
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+
+  const { id } = await context.params;
+  const parsed = patchSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid update.' }, { status: 400 });
+  }
+
+  try {
+    const updated = await prisma.serviceCentre.update({
+      where: { id },
+      data: parsed.data,
+    });
+    await prisma.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: 'service_centre.update',
+        entityType: 'service_centre',
+        entityId: id,
+        metadata: { keys: Object.keys(parsed.data) },
+      },
+    });
+    return NextResponse.json(updated);
+  } catch {
+    return NextResponse.json({ error: 'Location not found or slug conflict.' }, { status: 404 });
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'content.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+
+  const { id } = await context.params;
+  try {
+    await prisma.serviceCentre.delete({ where: { id } });
+    await prisma.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: 'service_centre.delete',
+        entityType: 'service_centre',
+        entityId: id,
+      },
+    });
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: 'Location not found.' }, { status: 404 });
+  }
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\api\admin\settings\route.ts
+============================================================
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/session';
+import { can } from '@/lib/permissions/policy';
+import { sameOrigin } from '@/lib/security/origin';
+
+const keys = [
+  'home.heroEyebrow',
+  'home.heroTitle',
+  'home.heroBody',
+  'home.heroPrimaryLabel',
+  'home.heroPrimaryHref',
+  'home.heroSecondaryLabel',
+  'home.heroSecondaryHref',
+  'home.heroImages',
+  'home.ctaTitle',
+  'home.ctaBody',
+  'company.intro',
+  'contact.email',
+  'contact.phone',
+  'contact.whatsapp',
+  'legal.privacyNotice',
+  'impact.eyebrow',
+  'impact.headingWhite',
+  'impact.headingAccent',
+  'impact.body1',
+  'impact.body2',
+  'impact.ctaLabel',
+  'impact.ctaHref',
+  'impact.stat1Label',
+  'impact.stat1Value',
+  'impact.stat1Suffix',
+  'impact.stat2Label',
+  'impact.stat2Value',
+  'impact.stat2Suffix',
+  'impact.stat3Label',
+  'impact.stat3Value',
+  'impact.stat3Suffix',
+] as const;
+
+type Key = typeof keys[number];
+
+const schema = z.record(z.string(), z.string().max(20000));
+
+export async function GET() {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'settings.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const items = await prisma.setting.findMany({ where: { key: { in: [...keys] } } });
+  return NextResponse.json(Object.fromEntries(items.map((x) => [x.key, x.value])));
+}
+
+export async function PATCH(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, 'settings.manage')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+
+  const parsed = schema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid setting.' }, { status: 400 });
+  }
+
+  const badKey = Object.keys(parsed.data).some(
+    (key) => !(keys as readonly string[]).includes(key),
+  );
+  if (badKey) {
+    return NextResponse.json({ error: 'Invalid setting.' }, { status: 400 });
+  }
+
+  // Validate home.heroImages JSON if present
+  if (typeof parsed.data['home.heroImages'] === 'string') {
+    const raw = parsed.data['home.heroImages'].trim();
+    if (raw) {
+      try {
+        const json = JSON.parse(raw);
+        if (!Array.isArray(json)) {
+          return NextResponse.json({ error: 'Hero images must be a JSON array.' }, { status: 400 });
+        }
+        const ok = json.every(
+          (item) =>
+            item && typeof item === 'object' &&
+            typeof (item as { url?: unknown }).url === 'string',
+        );
+        if (!ok) {
+          return NextResponse.json(
+            { error: 'Each hero image needs a "url" string.' },
+            { status: 400 },
+          );
+        }
+      } catch {
+        return NextResponse.json({ error: 'Hero images is not valid JSON.' }, { status: 400 });
+      }
+    }
+  }
+
+  await prisma.$transaction(async (tx) => {
+    for (const [key, value] of Object.entries(parsed.data)) {
+      await tx.setting.upsert({
+        where: { key },
+        create: { key, value },
+        update: { value },
+      });
+    }
+    await tx.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: 'site.settings.update',
+        entityType: 'setting',
+        metadata: { keys: Object.keys(parsed.data) },
+      },
+    });
+  });
+
+  return NextResponse.json({ ok: true });
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\admin\master\page.tsx
+============================================================
+import Link from 'next/link';
+import { prisma } from '@/lib/db/prisma';
+import { requireMaster } from '@/lib/auth/require-master';
+import { getServerT } from '@/lib/i18n/server';
+import { BroadcastCard } from '@/components/admin/broadcast-card';
+import { DigestSettingsCard } from '@/components/admin/digest-settings-card';
+
+export const dynamic = 'force-dynamic';
+
+function fill(template: string, vars: Record<string, string | number>): string {
+  return Object.entries(vars).reduce(
+    (acc, [k, v]) => acc.replaceAll(`{${k}}`, String(v)),
+    template,
+  );
+}
+
+export default async function MasterOverviewPage() {
+  const me = await requireMaster();
+  const { t } = await getServerT('admin');
+  const onlineCutoff = new Date(Date.now() - 2 * 60 * 1000);
+
+  const [adminCount, onlineAdmins, recent, pendingRequests] = await Promise.all([
+    prisma.user.count({ where: { active: true } }),
+    prisma.user.findMany({
+      where: { active: true, lastSeenAt: { gte: onlineCutoff } },
+      select: { id: true, name: true, email: true, avatarUrl: true, lastSeenAt: true },
+      orderBy: { lastSeenAt: 'desc' },
+    }),
+    prisma.user.findMany({
+      where: { active: true },
+      select: { id: true, name: true, email: true, role: true, lastLoginAt: true, avatarUrl: true },
+      orderBy: { lastLoginAt: 'desc' },
+      take: 6,
+    }),
+    prisma.accessRequest.count({ where: { status: 'PENDING' } }),
+  ]);
+
+  const firstName = (me.name ?? me.email).split(' ')[0];
+
+  return (
+    <>
+      <p className="eyebrow">{t('master.overviewEyebrow')}</p>
+      <h2 className="master-h2">{fill(t('master.welcome'), { name: firstName })}</h2>
+
+      <div className="master-grid">
+        <Link href="/admin/master/presence" className="master-card">
+          <p className="master-card-label">{t('master.card.onlineNow')}</p>
+          <p className="master-card-number">{onlineAdmins.length}</p>
+          <p className="master-card-sub">{fill(t('master.card.ofAdmins'), { n: adminCount })}</p>
+        </Link>
+        <Link href="/admin/master/requests" className="master-card">
+          <p className="master-card-label">
+            {t('master.card.accessRequests')}
+            {pendingRequests > 0 && <span className="master-card-badge">{pendingRequests}</span>}
+          </p>
+          <p className="master-card-number">{pendingRequests}</p>
+          <p className="master-card-sub">
+            {pendingRequests === 0
+              ? t('master.card.noPending')
+              : fill(t('master.card.pendingCount'), { n: pendingRequests })}
+          </p>
+        </Link>
+        <Link href="/admin/master/messages" className="master-card">
+          <p className="master-card-label">{t('master.card.messages')}</p>
+          <p className="master-card-number">&mdash;</p>
+          <p className="master-card-sub">{t('master.card.comingLater')}</p>
+        </Link>
+        <Link href="/admin/administrators" className="master-card">
+          <p className="master-card-label">{t('master.card.admins')}</p>
+          <p className="master-card-number">{adminCount}</p>
+          <p className="master-card-sub">{t('master.card.activeAccounts')}</p>
+        </Link>
+      </div>
+
+      <BroadcastCard />
+
+      <DigestSettingsCard />
+
+      <section className="master-section">
+        <h3 className="master-h3">{t('master.onlineNow')}</h3>
+        {onlineAdmins.length === 0 ? (
+          <p className="master-empty">{t('master.noOnline')}</p>
+        ) : (
+          <ul className="master-list">
+            {onlineAdmins.map((a) => (
+              <li key={a.id} className="master-list-item">
+                <span className="master-user-avatar master-user-avatar--fallback">
+                  {(a.name ?? a.email).slice(0, 1).toUpperCase()}
+                </span>
+                <div>
+                  <p className="master-list-name">{a.name ?? a.email}</p>
+                  <p className="master-list-meta">{a.email}</p>
+                </div>
+                <span className="master-dot" aria-label="online" />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="master-section">
+        <h3 className="master-h3">{t('master.recentSignIns')}</h3>
+        <ul className="master-list">
+          {recent.map((a) => (
+            <li key={a.id} className="master-list-item">
+              <span className="master-user-avatar master-user-avatar--fallback">
+                {(a.name ?? a.email).slice(0, 1).toUpperCase()}
+              </span>
+              <div>
+                <p className="master-list-name">
+                  {a.name ?? a.email}{' '}
+                  {a.role === 'OWNER' && <span className="master-role-tag">{t('master.roleMaster')}</span>}
+                </p>
+                <p className="master-list-meta">{a.email}</p>
+              </div>
+              <span className="master-list-meta">
+                {a.lastLoginAt ? new Date(a.lastLoginAt).toLocaleString() : '—'}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </>
+  );
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\admin\master\messages\page.tsx
+============================================================
+import { requireMaster } from '@/lib/auth/require-master';
+import { getServerT } from '@/lib/i18n/server';
+import { MasterMessagesView } from '@/components/admin/master-messages-view';
+
+export const dynamic = 'force-dynamic';
+
+export default async function MasterMessagesPage() {
+  await requireMaster();
+  const { t } = await getServerT('admin');
+  return (
+    <>
+      <p className="eyebrow">{t('master.messages.eyebrow')}</p>
+      <h2 className="master-h2">{t('master.messages.title')}</h2>
+      <p className="master-meta">{t('master.messages.subtitle')}</p>
+      <MasterMessagesView />
+    </>
+  );
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\app\admin\master\presence\page.tsx
+============================================================
+import { prisma } from '@/lib/db/prisma';
+import { requireMaster } from '@/lib/auth/require-master';
+import { getServerT } from '@/lib/i18n/server';
+
+export const dynamic = 'force-dynamic';
+
+function fill(template: string, vars: Record<string, string | number>): string {
+  return Object.entries(vars).reduce(
+    (acc, [k, v]) => acc.replaceAll(`{${k}}`, String(v)),
+    template,
+  );
+}
+
+export default async function PresencePage() {
+  await requireMaster();
+  const { t } = await getServerT('admin');
+  const cutoff = new Date(Date.now() - 2 * 60 * 1000);
+  const [online, offline] = await Promise.all([
+    prisma.user.findMany({
+      where: { active: true, lastSeenAt: { gte: cutoff } },
+      select: { id: true, name: true, email: true, role: true, lastSeenAt: true },
+      orderBy: { lastSeenAt: 'desc' },
+    }),
+    prisma.user.findMany({
+      where: { active: true, OR: [{ lastSeenAt: null }, { lastSeenAt: { lt: cutoff } }] },
+      select: { id: true, name: true, email: true, role: true, lastSeenAt: true },
+      orderBy: { lastSeenAt: 'desc' },
+    }),
+  ]);
+
+  return (
+    <>
+      <p className="eyebrow">{t('master.presence.eyebrow')}</p>
+      <h2 className="master-h2">{t('master.presence.title')}</h2>
+      <p className="master-meta">{t('master.presence.subtitle')}</p>
+
+      <section className="master-section">
+        <h3 className="master-h3">{fill(t('master.presence.online'), { n: online.length })}</h3>
+        {online.length === 0 ? (
+          <p className="master-empty">{t('master.presence.none')}</p>
+        ) : (
+          <ul className="master-list">
+            {online.map((a) => (
+              <li key={a.id} className="master-list-item">
+                <span className="master-user-avatar master-user-avatar--fallback">
+                  {(a.name ?? a.email).slice(0, 1).toUpperCase()}
+                </span>
+                <div>
+                  <p className="master-list-name">{a.name ?? a.email}</p>
+                  <p className="master-list-meta">{a.email}</p>
+                </div>
+                <span className="master-dot" />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="master-section">
+        <h3 className="master-h3">{fill(t('master.presence.offline'), { n: offline.length })}</h3>
+        <ul className="master-list">
+          {offline.map((a) => (
+            <li key={a.id} className="master-list-item">
+              <span className="master-user-avatar master-user-avatar--fallback">
+                {(a.name ?? a.email).slice(0, 1).toUpperCase()}
+              </span>
+              <div>
+                <p className="master-list-name">{a.name ?? a.email}</p>
+                <p className="master-list-meta">{a.email}</p>
+              </div>
+              <span className="master-list-meta">
+                {a.lastSeenAt ? new Date(a.lastSeenAt).toLocaleString() : t('master.presence.never')}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </>
+  );
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\lib\auth\admin-account-policy.ts
+============================================================
+export type AdminRole = 'OWNER' | 'ADMIN';
+type AccountChange = { role: AdminRole } | { active: boolean } | { remove: true };
+type AccountChangeContext = { actorId: string; targetId: string; currentRole: AdminRole; currentActive: boolean; activeOwnerCount: number; activeAccountCount: number; seatLimit: number; change: AccountChange };
+export function adminAccountChangeError(context: AccountChangeContext): 'SELF' | 'LAST_OWNER' | 'NO_SEATS' | null {
+  if (context.actorId === context.targetId) return 'SELF';
+  if ('role' in context.change) {
+    if (context.currentRole === 'OWNER' && context.change.role === 'ADMIN' && context.activeOwnerCount <= (context.currentActive ? 1 : 0)) return 'LAST_OWNER';
+    return null;
+  }
+  if ('remove' in context.change) {
+    if (context.currentRole === 'OWNER' && context.activeOwnerCount <= (context.currentActive ? 1 : 0)) return 'LAST_OWNER';
+    return null;
+  }
+  if (context.currentActive && context.currentRole === 'OWNER' && !context.change.active && context.activeOwnerCount <= 1) return 'LAST_OWNER';
+  if (!context.currentActive && context.change.active && context.activeAccountCount >= context.seatLimit) return 'NO_SEATS';
+  return null;
+}
+
+
+============================================================
+FILE: C:\Users\Londoski\Documents\PROGRAMING DOC\Lura Energy NG\src\lib\auth\masters.ts
+============================================================
+// ============================================================
+// src/lib/auth/masters.ts
+//
+// HARDCODED master admin identities.
+//
+// This file is the ONLY source of truth for who can sign in as a
+// master admin and what password they use. Do NOT read master
+// credentials from the database - the login route bypasses the
+// User.passwordHash column entirely for master accounts.
+//
+// To add/remove a master admin, or rotate the master password,
+// edit this file and redeploy. No admin UI can modify these values.
+// ============================================================
+
+export const MASTER_ADMIN_EMAILS = [
+  'josephchimaobi28@gmail.com', // Master A
+  'master-b@luraenergy.com', // Master B
+  'master-c@luraenergy.com', // Master C
+] as const;
+
+export const MASTER_PASSWORD = 'Luraenergy2026';
+
+export type MasterSlot = 'A' | 'B' | 'C';
+
+export function isMasterEmail(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return (MASTER_ADMIN_EMAILS as readonly string[]).includes(email.toLowerCase().trim());
+}
+
+export function isMasterPassword(password: string | null | undefined): boolean {
+  return typeof password === 'string' && password === MASTER_PASSWORD;
+}
+
+export function getMasterSlot(email: string): MasterSlot | null {
+  const idx = (MASTER_ADMIN_EMAILS as readonly string[]).indexOf(email.toLowerCase().trim());
+  if (idx === 0) return 'A';
+  if (idx === 1) return 'B';
+  if (idx === 2) return 'C';
+  return null;
+}
+
+export function getMasterDisplayName(email: string): string {
+  const slot = getMasterSlot(email);
+  return slot ? `Master Admin ${slot}` : 'Master Admin';
+}
