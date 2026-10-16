@@ -13,6 +13,7 @@ type Lead = {
   interestedSolution: string | null;
   interestedProduct: string | null;
   message: string;
+  interest: string | null;
   status: string;
   createdAt: string;
 };
@@ -25,6 +26,36 @@ type Result = {
 };
 
 const statuses = ['NEW', 'CONTACTED', 'QUALIFIED', 'QUOTED', 'WON', 'LOST'] as const;
+
+const INTEREST_LABELS: Record<string, string> = {
+  product: 'Product enquiry',
+  partnership: 'Partnership / distribution',
+  support: 'Technical support',
+  visit: 'Request a site visit',
+  other: 'Other',
+};
+
+function InterestBadge({ value }: { value: string | null }) {
+  if (!value) return null;
+  const label = INTEREST_LABELS[value] ?? value;
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        marginTop: 6,
+        padding: '2px 10px',
+        borderRadius: 999,
+        background: '#FFF3E8',
+        color: '#B35A0E',
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: '0.02em',
+      }}
+    >
+      {label}
+    </span>
+  );
+}
 
 function fill(template: string, vars: Record<string, string | number>): string {
   return Object.entries(vars).reduce(
@@ -281,6 +312,7 @@ export function LeadsManager() {
                   </td>
                   <td>
                     {item.message}
+                    <InterestBadge value={item.interest} />
                     <br />
                     <span className="form-note">
                       {[
