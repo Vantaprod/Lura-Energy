@@ -9671,3 +9671,27 @@ select option:hover {
     height: 120vw !important;
   }
 }
+
+
+/* ============================================================
+   Impact section DESKTOP — globe fits without clipping (2026-10-17)
+   Globe is 900px max; previous min-height of 820px was too small
+   and clipped the glow. This raises the section to 1040px so the
+   globe has ~70px breathing room top and bottom.
+   Mobile rules above are untouched.
+   ============================================================ */
+
+@media (min-width: 900px) {
+  .impact-section {
+    min-height: 1040px !important;
+    padding-top: 120px !important;
+    padding-bottom: 60px !important;
+  }
+
+  .impact-section__globe {
+    top: 50% !important;
+    width: clamp(560px, 62vw, 900px) !important;
+    height: clamp(560px, 62vw, 900px) !important;
+    opacity: 1 !important;
+  }
+}
