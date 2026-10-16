@@ -180,6 +180,11 @@ export default async function HomePage() {
         value: parseNumber(String(content['impact.stat3Value'] ?? '1000'), 1000),
         suffix: String(content['impact.stat3Suffix'] ?? '+'),
       },
+      {
+        label: resolve('impact.stat4Label', 'impact.stat4Label'),
+        value: parseNumber(String(content['impact.stat4Value'] ?? '50'), 50),
+        suffix: String(content['impact.stat4Suffix'] ?? ''),
+      },
     ],
   };
 

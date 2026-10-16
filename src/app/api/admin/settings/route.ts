@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { getCurrentUser } from '@/lib/auth/session';
@@ -37,6 +37,9 @@ const keys = [
   'impact.stat3Label',
   'impact.stat3Value',
   'impact.stat3Suffix',
+  'impact.stat4Label',
+  'impact.stat4Value',
+  'impact.stat4Suffix',
 ] as const;
 
 type Key = typeof keys[number];

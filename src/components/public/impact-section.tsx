@@ -38,9 +38,10 @@ export const DEFAULT_IMPACT: ImpactContent = {
   ctaLabel: 'Learn more',
   ctaHref: '/projects',
   stats: [
-    { label: 'Operating Regions in Nigeria', value: 90, suffix: '+' },
-    { label: 'Successful Projects', value: 2000, suffix: '+' },
-    { label: 'Installer Network', value: 1000, suffix: '+' },
+    { label: 'PV installed', value: 30, suffix: '+ MW' },
+    { label: 'Energy storage', value: 20, suffix: '+ MWh' },
+    { label: 'C&I projects', value: 30, suffix: '+' },
+    { label: 'Local team', value: 50, suffix: '' },
   ],
 };
 
@@ -56,9 +57,10 @@ export function ImpactSection({ content }: { content?: Partial<ImpactContent> })
     ctaLabel: t('impact.ctaLabel'),
     ctaHref: '/projects',
     stats: [
-      { label: t('impact.stat1Label'), value: 90, suffix: '+' },
-      { label: t('impact.stat2Label'), value: 2000, suffix: '+' },
-      { label: t('impact.stat3Label'), value: 1000, suffix: '+' },
+      { label: t('impact.stat1Label'), value: 30, suffix: '+ MW' },
+      { label: t('impact.stat2Label'), value: 20, suffix: '+ MWh' },
+      { label: t('impact.stat3Label'), value: 30, suffix: '+' },
+      { label: t('impact.stat4Label'), value: 50, suffix: '' },
     ],
   };
 
@@ -106,10 +108,9 @@ export function ImpactSection({ content }: { content?: Partial<ImpactContent> })
         </div>
 
         <div className="impact-section__stats">
-          <ul className="impact-stats">
+          <ul className="impact-stats impact-stats--grid">
             {data.stats.map((stat, index) => (
               <li className="impact-stat" key={index}>
-                <span className="impact-stat__label">{stat.label}</span>
                 <span className="impact-stat__value">
                   {inView ? (
                     <CountUp
@@ -122,6 +123,7 @@ export function ImpactSection({ content }: { content?: Partial<ImpactContent> })
                     <span aria-hidden="true">0{stat.suffix}</span>
                   )}
                 </span>
+                <span className="impact-stat__label">{stat.label}</span>
               </li>
             ))}
           </ul>
