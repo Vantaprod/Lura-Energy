@@ -9695,3 +9695,18 @@ select option:hover {
     opacity: 1 !important;
   }
 }
+
+
+/* ============================================================
+   Pull Capability Path up closer to the impact globe (2026-10-17)
+   Negative top margin closes the dead space without shrinking
+   the globe. Mobile unaffected.
+   ============================================================ */
+
+@media (min-width: 900px) {
+  .capability-path {
+    margin-top: -120px !important;
+    position: relative;
+    z-index: 2;
+  }
+}
