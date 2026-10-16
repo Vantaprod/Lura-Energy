@@ -13,6 +13,7 @@ export type LeadForEmail = {
   phone: string;
   location: string | null;
   intent: 'install' | 'purchase' | 'both';
+  interest: 'product' | 'partnership' | 'support' | 'visit' | 'other' | null;
   message: string;
   quoteItems: QuoteItem[];
   createdAt: Date;

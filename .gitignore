@@ -1,4 +1,4 @@
-﻿# dependencies
+# dependencies
 node_modules/
 .pnp
 .pnp.js
@@ -55,7 +55,4 @@ next-env.d.ts
 # Local backups + agent dumps
 *.bak
 *.dump
-*-DUMP.txt
-PROJECT-DUMP.txt
-PART2-DUMP.txt
-IMPACT-DUMP.txt
+*DUMP*.txt

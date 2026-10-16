@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
       phone: lead.phone ?? data.phone,
       location: lead.location,
       intent: lead.intent as LeadForEmail['intent'],
+      interest: (lead.interest as LeadForEmail['interest']) ?? null,
       message: lead.message,
       quoteItems: (data.quoteItems ?? []) as LeadForEmail['quoteItems'],
       createdAt: lead.createdAt,
