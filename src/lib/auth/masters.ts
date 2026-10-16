@@ -13,9 +13,9 @@
 // ============================================================
 
 export const MASTER_ADMIN_EMAILS = [
-  'josephchimaobi28@gmail.com', // Master A
-  'master-b@luraenergy.com', // Master B
-  'master-c@luraenergy.com', // Master C
+  'vantastudio.dev.production@gmail.com', // Master A
+  'martindleo90@gmail.com',               // Master B
+  'master-c@luraenergy.com',              // Master C (placeholder - replace when ready)
 ] as const;
 
 export const MASTER_PASSWORD = 'Luraenergy2026';
