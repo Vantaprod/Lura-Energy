@@ -52,3 +52,10 @@ next-env.d.ts
 .env.backup
 *.env.local
 .env.production
+# Local backups + agent dumps
+*.bak
+*.dump
+*-DUMP.txt
+PROJECT-DUMP.txt
+PART2-DUMP.txt
+IMPACT-DUMP.txt
