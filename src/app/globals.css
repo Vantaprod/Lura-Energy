@@ -9742,3 +9742,40 @@ select option:hover {
     height: 120px;
   }
 }
+
+
+/* ============================================================
+   Impact section bottom — stronger fade + taller section
+   (supersedes the 180px fade from the previous commit — 2026-10-17)
+   Previous 180px/55% fade was too weak against the globe's blue
+   glow. This bumps to 320px and ramps to full opacity by 75%.
+   Also raises the section min-height so the globe sits fully
+   inside with margin, and the fade doesn't have to fight the
+   glow's brightest pixels.
+   ============================================================ */
+
+@media (min-width: 900px) {
+  .impact-section {
+    min-height: 1120px !important;
+    padding-bottom: 140px !important;
+  }
+}
+
+/* Kill the previous ::after rule and re-declare a stronger one */
+.impact-section::after {
+  height: 320px !important;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 14, 31, 0) 0%,
+    rgba(5, 14, 31, 0.35) 35%,
+    rgba(5, 14, 31, 0.75) 55%,
+    rgba(5, 14, 31, 0.97) 72%,
+    rgba(5, 14, 31, 1) 100%
+  ) !important;
+}
+
+@media (max-width: 999px) {
+  .impact-section::after {
+    height: 220px !important;
+  }
+}
