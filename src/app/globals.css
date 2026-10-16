@@ -9616,3 +9616,39 @@ select option:hover {
     padding-bottom: 40px !important;
   }
 }
+
+
+/* ============================================================
+   Impact section MOBILE — kill the 260px dead gap (2026-10-17)
+   Old rule `padding-top: 180px` on .impact-section__text was
+   stacking on top of the new section padding, pushing content
+   far below the hero. Override both for mobile.
+   ============================================================ */
+
+@media (max-width: 999px) {
+  .impact-section {
+    min-height: 0 !important;
+    padding-top: 40px !important;
+    padding-bottom: 60px !important;
+  }
+
+  .impact-section__text {
+    padding-top: 0 !important;
+  }
+
+  /* Let the globe sit behind the text without pushing it down */
+  .impact-section__globe {
+    position: absolute !important;
+    top: 30% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 130vw !important;
+    height: 130vw !important;
+    opacity: 0.28 !important;
+    z-index: 0 !important;
+  }
+
+  .impact-section__inner {
+    padding-top: 0 !important;
+  }
+}
