@@ -9594,3 +9594,25 @@ select option:hover {
 .impact-section__inner {
   width: 100% !important;
 }
+
+
+/* ============================================================
+   Impact section: pull Capability Path closer (2026-10-17)
+   Shorter min-height + tighter bottom padding closes the dead
+   space between the globe and the next section. Globe stays
+   at its 900px size; roughly 40px clips top/bottom of the glow.
+   ============================================================ */
+
+.impact-section {
+  min-height: 620px !important;
+  padding-top: 80px !important;
+  padding-bottom: 40px !important;
+}
+
+@media (min-width: 900px) {
+  .impact-section {
+    min-height: 820px !important;
+    padding-top: 110px !important;
+    padding-bottom: 40px !important;
+  }
+}
