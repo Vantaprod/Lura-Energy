@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslation } from '@/lib/i18n/context';
+import { BrandSelect } from '@/components/ui/brand-select';
 
 type CatalogueProduct = {
   id: string;
@@ -28,12 +29,21 @@ type LineItem = {
 
 type Intent = 'install' | 'purchase' | 'both';
 
+const INTEREST_OPTIONS = [
+  { value: 'product', label: 'Product enquiry' },
+  { value: 'partnership', label: 'Partnership / distribution' },
+  { value: 'support', label: 'Technical support' },
+  { value: 'visit', label: 'Request a site visit' },
+  { value: 'other', label: 'Other' },
+];
+
 export function QuoteBuilder({ initialProduct }: { initialProduct?: string }) {
   const { t } = useTranslation();
   const [catalogue, setCatalogue] = useState<CatalogueCategory[]>([]);
   const [loadingCatalogue, setLoadingCatalogue] = useState(true);
   const [items, setItems] = useState<LineItem[]>([]);
   const [intent, setIntent] = useState<Intent>('install');
+  const [interest, setInterest] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
@@ -99,7 +109,7 @@ export function QuoteBuilder({ initialProduct }: { initialProduct?: string }) {
       phone: String(form.get('phone') ?? '').trim(),
       location: String(form.get('location') ?? '').trim() || undefined,
       intent,
-      interest: String(form.get('interest') ?? '').trim() || undefined,
+      interest: interest || undefined,
       message: String(form.get('message') ?? '').trim() || undefined,
       quoteItems: items.map((it) => ({
         productId: it.productId,
@@ -152,19 +162,19 @@ export function QuoteBuilder({ initialProduct }: { initialProduct?: string }) {
             <div className="quote-contact">
               <div className="field">
                 <label htmlFor="q-name">{t('quote.field.name')} *</label>
-                <input id="q-name" name="name" required maxLength={160} autoComplete="name" style={{ backgroundColor: "#F4F6F9", border: "2px solid transparent", borderRadius: "6px", padding: "13px 15px", width: "100%", fontFamily: "inherit", fontSize: "15px", color: "#0A1550" }} />
+                <input id="q-name" name="name" required maxLength={160} autoComplete="name" />
               </div>
               <div className="field">
                 <label htmlFor="q-phone">{t('quote.field.phone')} *</label>
-                <input id="q-phone" name="phone" type="tel" required maxLength={40} autoComplete="tel" placeholder="+234..." style={{ backgroundColor: "#F4F6F9", border: "2px solid transparent", borderRadius: "6px", padding: "13px 15px", width: "100%", fontFamily: "inherit", fontSize: "15px", color: "#0A1550" }} />
+                <input id="q-phone" name="phone" type="tel" required maxLength={40} autoComplete="tel" placeholder="+234..." />
               </div>
               <div className="field">
                 <label htmlFor="q-email">{t('quote.field.email')} *</label>
-                <input id="q-email" name="email" type="email" required maxLength={200} autoComplete="email" style={{ backgroundColor: "#F4F6F9", border: "2px solid transparent", borderRadius: "6px", padding: "13px 15px", width: "100%", fontFamily: "inherit", fontSize: "15px", color: "#0A1550" }} />
+                <input id="q-email" name="email" type="email" required maxLength={200} autoComplete="email" />
               </div>
               <div className="field">
                 <label htmlFor="q-location">{t('quote.field.location')}</label>
-                <input id="q-location" name="location" maxLength={200} autoComplete="address-level2" style={{ backgroundColor: "#F4F6F9", border: "2px solid transparent", borderRadius: "6px", padding: "13px 15px", width: "100%", fontFamily: "inherit", fontSize: "15px", color: "#0A1550" }} />
+                <input id="q-location" name="location" maxLength={200} autoComplete="address-level2" />
               </div>
             </div>
           </section>
@@ -199,38 +209,16 @@ export function QuoteBuilder({ initialProduct }: { initialProduct?: string }) {
             <h3 className="quote-section__title">{t('quote.section.project')}</h3>
             <div className="field" style={{ marginTop: '1rem' }}>
               <label htmlFor="q-interest">I am interested in</label>
-              <select
+              <BrandSelect
                 id="q-interest"
                 name="interest"
-                defaultValue=""
-                style={{
-                  width: '100%',
-                  padding: '13px 40px 13px 15px',
-                  backgroundColor: '#F4F6F9',
-                  border: '2px solid transparent',
-                  borderRadius: 6,
-                  fontFamily: 'inherit',
-                  fontSize: 15,
-                  color: '#0A1550',
-                  backgroundImage:
-                    "url(\"data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231428A0' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e\")",
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'right 12px center',
-                  backgroundSize: '16px',
-                  appearance: 'none',
-                  WebkitAppearance: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="">Select a category</option>
-                <option value="product">Product enquiry</option>
-                <option value="partnership">Partnership / distribution</option>
-                <option value="support">Technical support</option>
-                <option value="visit">Request a site visit</option>
-                <option value="other">Other</option>
-              </select>
+                value={interest}
+                onChange={setInterest}
+                options={INTEREST_OPTIONS}
+                placeholder="Select a category"
+              />
             </div>
-            <div className="field">
+            <div className="field" style={{ marginTop: '1rem' }}>
               <label htmlFor="q-message">{t('quote.field.message')}</label>
               <textarea
                 id="q-message"
@@ -259,53 +247,34 @@ export function QuoteBuilder({ initialProduct }: { initialProduct?: string }) {
             ) : (
               <>
                 <div className="quote-add-grid quote-add-grid--single">
-                  {catalogue.map((cat) => (
-                    <div className="quote-add" key={cat.id}>
-                      <label htmlFor={'cat-' + cat.slug} className="quote-add__label">
-                        {cat.name}
-                      </label>
-                      <select
-                        id={'cat-' + cat.slug}
-                        value=""
-                        disabled={cat.products.length === 0}
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            addItem(cat, e.target.value);
-                            e.target.value = '';
+                  {catalogue.map((cat) => {
+                    const disabled = cat.products.length === 0;
+                    const options = cat.products.map((p) => ({
+                      value: p.id,
+                      label: (p.brand ? p.brand + ' - ' : '') + p.name,
+                    }));
+                    return (
+                      <div className="quote-add" key={cat.id}>
+                        <label htmlFor={'cat-' + cat.slug} className="quote-add__label">
+                          {cat.name}
+                        </label>
+                        <BrandSelect
+                          id={'cat-' + cat.slug}
+                          value=""
+                          onChange={(pid) => {
+                            if (pid) addItem(cat, pid);
+                          }}
+                          options={options}
+                          placeholder={
+                            disabled
+                              ? t('quote.products.noProducts')
+                              : t('quote.products.selectPlaceholder')
                           }
-                        }}
-                        style={{
-                          width: '100%',
-                          padding: '12px 40px 12px 14px',
-                          backgroundColor: cat.products.length === 0 ? '#F4F6F9' : '#EEF2F8',
-                          border: '2px solid transparent',
-                          borderRadius: '6px',
-                          fontFamily: 'inherit',
-                          fontSize: '14px',
-                          color: cat.products.length === 0 ? '#939AA5' : '#0A1550',
-                          backgroundImage:
-                            "url(\"data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231428A0' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e\")",
-                          backgroundRepeat: 'no-repeat',
-                          backgroundPosition: 'right 12px center',
-                          backgroundSize: '16px',
-                          appearance: 'none',
-                          WebkitAppearance: 'none',
-                          cursor: cat.products.length === 0 ? 'not-allowed' : 'pointer',
-                        }}
-                      >
-                        <option value="">
-                          {cat.products.length === 0
-                            ? t('quote.products.noProducts')
-                            : t('quote.products.selectPlaceholder')}
-                        </option>
-                        {cat.products.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.brand ? p.brand + ' - ' : ''}{p.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  ))}
+                          disabled={disabled}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {items.length > 0 && (
