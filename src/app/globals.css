@@ -9652,3 +9652,22 @@ select option:hover {
     padding-top: 0 !important;
   }
 }
+
+
+/* ============================================================
+   Mobile globe: nudge down so it doesn't kiss the hero (2026-10-17)
+   Was top:30% which put the globe's top edge right on the section
+   boundary. Moving to 45% shifts the visual center down.
+   ============================================================ */
+
+@media (max-width: 999px) {
+  .impact-section {
+    padding-top: 60px !important;
+  }
+
+  .impact-section__globe {
+    top: 45% !important;
+    width: 120vw !important;
+    height: 120vw !important;
+  }
+}
