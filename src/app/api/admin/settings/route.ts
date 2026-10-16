@@ -20,6 +20,7 @@ const keys = [
   'contact.email',
   'contact.phone',
   'contact.whatsapp',
+  'contact.address',
   'legal.privacyNotice',
   'impact.eyebrow',
   'impact.headingWhite',

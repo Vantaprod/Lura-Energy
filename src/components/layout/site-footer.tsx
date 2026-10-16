@@ -5,7 +5,12 @@ import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
-type ContactSettings = { email: string; phone: string; whatsapp: string };
+type ContactSettings = {
+  email: string;
+  phone: string;
+  whatsapp: string;
+  address: string;
+};
 
 const SOCIAL_LINKS = [
   { key: 'tiktok', href: 'https://www.tiktok.com/@luraenergy', label: 'TikTok' },
@@ -14,7 +19,7 @@ const SOCIAL_LINKS = [
 ] as const;
 
 async function loadContactSettings(): Promise<ContactSettings> {
-  const empty: ContactSettings = { email: '', phone: '', whatsapp: '' };
+  const empty: ContactSettings = { email: '', phone: '', whatsapp: '', address: '' };
   if (
     process.env.NODE_ENV === 'development' &&
     process.env.PREVIEW_WITHOUT_DATABASE === 'true'
@@ -23,7 +28,11 @@ async function loadContactSettings(): Promise<ContactSettings> {
   }
   try {
     const rows = await prisma.setting.findMany({
-      where: { key: { in: ['contact.email', 'contact.phone', 'contact.whatsapp'] } },
+      where: {
+        key: {
+          in: ['contact.email', 'contact.phone', 'contact.whatsapp', 'contact.address'],
+        },
+      },
     });
     const map = Object.fromEntries(
       rows.map((row) => [row.key, typeof row.value === 'string' ? row.value : '']),
@@ -32,6 +41,7 @@ async function loadContactSettings(): Promise<ContactSettings> {
       email: map['contact.email'] ?? '',
       phone: map['contact.phone'] ?? '',
       whatsapp: (map['contact.whatsapp'] ?? '').replace(/\D/g, ''),
+      address: map['contact.address'] ?? '',
     };
   } catch {
     return empty;
@@ -89,7 +99,7 @@ const footerListStyle: React.CSSProperties = {
 };
 
 export async function SiteFooter() {
-  const [{ email, phone, whatsapp }, { t }] = await Promise.all([
+  const [{ email, phone, whatsapp, address }, { t }] = await Promise.all([
     loadContactSettings(),
     getServerT('front'),
   ]);
@@ -159,6 +169,16 @@ export async function SiteFooter() {
                   </a>
                 </li>
               )}
+              {address && (
+                <li>
+                  <span
+                    className="footer-link"
+                    style={{ cursor: 'default', wordBreak: 'break-word' }}
+                  >
+                    {address}
+                  </span>
+                </li>
+              )}
               <li><Link href="/contact" className="footer-link">Find a partner</Link></li>
             </ul>
           </div>
@@ -199,6 +219,38 @@ export async function SiteFooter() {
               </a>
             </div>
           </div>
+        </div>
+
+        <div
+          style={{
+            padding: '20px 0 8px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+          }}
+        >
+          <p
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: '0.10em',
+              textTransform: 'uppercase',
+              color: '#F58220',
+              margin: 0,
+            }}
+          >
+            Nigeria · West Africa · Sub-Saharan Africa
+          </p>
+          <p
+            style={{
+              fontSize: 11,
+              color: 'rgba(255,255,255,0.48)',
+              margin: 0,
+              letterSpacing: '0.02em',
+            }}
+          >
+            Distribution · local channels · energy storage · solar · electrical supply
+          </p>
         </div>
 
         <div className="footer-divider" aria-hidden="true" />
@@ -255,7 +307,6 @@ export async function SiteFooter() {
           min-width: 220px;
         }
 
-        /* ---- Footer text links: orange hover ---- */
         .footer-link {
           color: rgba(255, 255, 255, 0.72);
           font-size: 13px;
@@ -271,7 +322,6 @@ export async function SiteFooter() {
           outline: none;
         }
 
-        /* ---- Social icons: orange fill hover ---- */
         .footer-social-icon {
           display: inline-flex;
           align-items: center;
@@ -293,7 +343,6 @@ export async function SiteFooter() {
         }
         .footer-social-icon svg { display: block; }
 
-        /* ---- Email us link ---- */
         .footer-email-link {
           color: rgba(255, 255, 255, 0.85);
           font-size: 13px;
@@ -341,7 +390,6 @@ export async function SiteFooter() {
         }
         .footer-sep { color: rgba(255, 255, 255, 0.25); }
 
-        /* ---- TABLET ---- */
         @media (max-width: 1100px) {
           .footer-wrap { padding: 0 32px; }
           .footer-columns-grid {
@@ -361,7 +409,6 @@ export async function SiteFooter() {
           }
         }
 
-        /* ---- MOBILE ---- */
         @media (max-width: 640px) {
           .footer-wrap { padding: 0 24px; }
           .footer-columns-grid {
