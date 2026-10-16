@@ -19,6 +19,7 @@ const schema = z.object({
   phone: z.string().trim().min(6).max(40),
   location: z.string().trim().max(200).optional(),
   intent: z.enum(['install', 'purchase', 'both']).default('install'),
+  interest: z.enum(['product', 'partnership', 'support', 'visit', 'other']).optional(),
   message: z.string().trim().max(4000).optional(),
   quoteItems: z.array(quoteItemSchema).max(50).optional(),
   consent: z.literal(true),
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest) {
         location: data.location,
         message: data.message ?? '',
         intent: data.intent,
+        interest: data.interest ?? null,
         quoteItems: data.quoteItems ?? [],
         interestedProduct: productNames || null,
         consent: true,
@@ -59,8 +61,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Fire-and-forget: don't block the response on SMTP.
-    // Errors are logged inside sendLeadEmails and never propagate.
     void sendLeadEmails({
       id: lead.id,
       name: lead.name,
