@@ -9710,3 +9710,35 @@ select option:hover {
     z-index: 2;
   }
 }
+
+
+/* ============================================================
+   Impact section: soft bottom fade instead of hard cut (2026-10-17)
+   The globe's glow extends past the section, but overflow:hidden
+   clips it in a hard line. This overlay fades the bottom edge to
+   the next section's background color so the transition reads
+   as intentional gradient, matching the top.
+   ============================================================ */
+
+.impact-section::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 180px;
+  pointer-events: none;
+  z-index: 3;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 14, 31, 0) 0%,
+    rgba(5, 14, 31, 0.55) 55%,
+    rgba(5, 14, 31, 1) 100%
+  );
+}
+
+@media (max-width: 999px) {
+  .impact-section::after {
+    height: 120px;
+  }
+}
