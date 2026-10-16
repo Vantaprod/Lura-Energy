@@ -9541,3 +9541,27 @@ select option:hover {
   background-color: #FFFFFF;
   color: #0A1550;
 }
+
+
+/* ============================================================
+   Impact section: give the globe vertical room (2026-10-16)
+   Section is much taller so the 900px globe fits whole instead
+   of being clipped at the bottom edge.
+   ============================================================ */
+
+.impact-section {
+  padding-top: 120px !important;
+  padding-bottom: 260px !important;
+}
+
+@media (min-width: 900px) {
+  .impact-section {
+    padding-top: 180px !important;
+    padding-bottom: 360px !important;
+  }
+}
+
+/* Keep the globe visually centered in the new taller section */
+.impact-section__globe {
+  top: 50% !important;
+}
