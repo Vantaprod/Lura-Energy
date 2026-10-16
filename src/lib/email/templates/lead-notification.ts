@@ -9,6 +9,19 @@ const INTENT_LABEL: Record<LeadForEmail['intent'], string> = {
   both: 'Purchase + Installation',
 };
 
+const INTEREST_LABEL: Record<string, string> = {
+  product: 'Product enquiry',
+  partnership: 'Partnership / distribution',
+  support: 'Technical support',
+  visit: 'Request a site visit',
+  other: 'Other',
+};
+
+function interestText(lead: LeadForEmail): string | null {
+  if (!lead.interest) return null;
+  return INTEREST_LABEL[lead.interest] ?? lead.interest;
+}
+
 export function leadNotificationHtml(lead: LeadForEmail): string {
   const items = lead.quoteItems
     .map(
@@ -24,6 +37,8 @@ export function leadNotificationHtml(lead: LeadForEmail): string {
     </tr>`,
     )
     .join('');
+
+  const interest = interestText(lead);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -48,6 +63,7 @@ export function leadNotificationHtml(lead: LeadForEmail): string {
               <tr><td style="padding:6px 0;font-size:13px;color:#6B7686;">Email</td><td style="padding:6px 0;font-size:14px;"><a href="mailto:${escapeHtml(lead.email)}" style="color:#2547CC;text-decoration:none;">${escapeHtml(lead.email)}</a></td></tr>
               <tr><td style="padding:6px 0;font-size:13px;color:#6B7686;">Phone</td><td style="padding:6px 0;font-size:14px;"><a href="tel:${escapeHtml(lead.phone)}" style="color:#2547CC;text-decoration:none;">${escapeHtml(lead.phone)}</a></td></tr>
               ${lead.location ? `<tr><td style="padding:6px 0;font-size:13px;color:#6B7686;">Location</td><td style="padding:6px 0;font-size:14px;color:#0B0F17;">${escapeHtml(lead.location)}</td></tr>` : ''}
+              ${interest ? `<tr><td style="padding:6px 0;font-size:13px;color:#6B7686;">Interest</td><td style="padding:6px 0;font-size:14px;color:#0B0F17;">${escapeHtml(interest)}</td></tr>` : ''}
               <tr><td style="padding:6px 0;font-size:13px;color:#6B7686;">Intent</td><td style="padding:6px 0;font-size:14px;color:#0B0F17;">${INTENT_LABEL[lead.intent]}</td></tr>
             </table>
           </td></tr>
@@ -97,6 +113,8 @@ export function leadNotificationText(lead: LeadForEmail): string {
     `Phone:    ${lead.phone}`,
   ];
   if (lead.location) lines.push(`Location: ${lead.location}`);
+  const interest = interestText(lead);
+  if (interest) lines.push(`Interest: ${interest}`);
   lines.push(`Intent:   ${INTENT_LABEL[lead.intent]}`);
 
   if (lead.message) {

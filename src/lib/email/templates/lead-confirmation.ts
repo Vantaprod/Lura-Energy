@@ -9,6 +9,19 @@ const INTENT_LABEL: Record<LeadForEmail['intent'], string> = {
   both: 'Purchase + Installation',
 };
 
+const INTEREST_LABEL: Record<string, string> = {
+  product: 'Product enquiry',
+  partnership: 'Partnership / distribution',
+  support: 'Technical support',
+  visit: 'Request a site visit',
+  other: 'Other',
+};
+
+function interestText(lead: LeadForEmail): string | null {
+  if (!lead.interest) return null;
+  return INTEREST_LABEL[lead.interest] ?? lead.interest;
+}
+
 export function leadConfirmationHtml(lead: LeadForEmail): string {
   const items = lead.quoteItems
     .map(
@@ -21,6 +34,8 @@ export function leadConfirmationHtml(lead: LeadForEmail): string {
     </tr>`,
     )
     .join('');
+
+  const interest = interestText(lead);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -46,6 +61,7 @@ export function leadConfirmationHtml(lead: LeadForEmail): string {
           <tr><td style="padding:20px 32px 0;">
             <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#6B7686;margin-bottom:10px;">Your request</div>
             <table width="100%" cellspacing="0" cellpadding="0">
+              ${interest ? `<tr><td style="padding:6px 0;font-size:13px;color:#6B7686;width:90px;">Interest</td><td style="padding:6px 0;font-size:14px;color:#0B0F17;">${escapeHtml(interest)}</td></tr>` : ''}
               <tr><td style="padding:6px 0;font-size:13px;color:#6B7686;width:90px;">Intent</td><td style="padding:6px 0;font-size:14px;color:#0B0F17;">${INTENT_LABEL[lead.intent]}</td></tr>
               ${lead.location ? `<tr><td style="padding:6px 0;font-size:13px;color:#6B7686;">Location</td><td style="padding:6px 0;font-size:14px;color:#0B0F17;">${escapeHtml(lead.location)}</td></tr>` : ''}
             </table>
@@ -83,8 +99,10 @@ export function leadConfirmationText(lead: LeadForEmail): string {
     'Thank you for contacting Lura Energy. A representative will review your request and reach out within 1 business day.',
     '',
     `Your reference: #${shortId(lead.id)}`,
-    `Intent: ${INTENT_LABEL[lead.intent]}`,
   ];
+  const interest = interestText(lead);
+  if (interest) lines.push(`Interest: ${interest}`);
+  lines.push(`Intent: ${INTENT_LABEL[lead.intent]}`);
   if (lead.location) lines.push(`Location: ${lead.location}`);
   if (lead.quoteItems.length) {
     lines.push('', 'Products you selected:');
