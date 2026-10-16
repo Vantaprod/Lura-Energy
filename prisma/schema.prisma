@@ -255,6 +255,7 @@ model Lead {
   consent            Boolean    @default(false)
   quoteItems         Json?
   intent             String?
+  interest           String?
   status             LeadStatus @default(NEW)
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt

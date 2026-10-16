@@ -99,6 +99,7 @@ export function QuoteBuilder({ initialProduct }: { initialProduct?: string }) {
       phone: String(form.get('phone') ?? '').trim(),
       location: String(form.get('location') ?? '').trim() || undefined,
       intent,
+      interest: String(form.get('interest') ?? '').trim() || undefined,
       message: String(form.get('message') ?? '').trim() || undefined,
       quoteItems: items.map((it) => ({
         productId: it.productId,
@@ -196,6 +197,39 @@ export function QuoteBuilder({ initialProduct }: { initialProduct?: string }) {
 
           <section className="quote-section" data-step="3">
             <h3 className="quote-section__title">{t('quote.section.project')}</h3>
+            <div className="field" style={{ marginTop: '1rem' }}>
+              <label htmlFor="q-interest">I am interested in</label>
+              <select
+                id="q-interest"
+                name="interest"
+                defaultValue=""
+                style={{
+                  width: '100%',
+                  padding: '13px 40px 13px 15px',
+                  backgroundColor: '#F4F6F9',
+                  border: '2px solid transparent',
+                  borderRadius: 6,
+                  fontFamily: 'inherit',
+                  fontSize: 15,
+                  color: '#0A1550',
+                  backgroundImage:
+                    "url(\"data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231428A0' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e\")",
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 12px center',
+                  backgroundSize: '16px',
+                  appearance: 'none',
+                  WebkitAppearance: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="">Select a category</option>
+                <option value="product">Product enquiry</option>
+                <option value="partnership">Partnership / distribution</option>
+                <option value="support">Technical support</option>
+                <option value="visit">Request a site visit</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
             <div className="field">
               <label htmlFor="q-message">{t('quote.field.message')}</label>
               <textarea
