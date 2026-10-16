@@ -9509,3 +9509,35 @@ html body .partner-marquee .partner-marquee__track.partner-marquee__track {
     font-size: 28px;
   }
 }
+
+
+/* ============================================================
+   Native select dropdown — brand the popup (2026-10-16)
+   The OS renders the options list, so we can only nudge:
+   - accent-color sets the highlight on modern browsers
+   - option background/color styles the row + text
+   ============================================================ */
+
+select {
+  accent-color: #1428A0;
+}
+
+select option {
+  background-color: #FFFFFF;
+  color: #0A1550;
+  font-family: var(--font-body), 'DM Sans', system-ui, sans-serif;
+}
+
+/* Chrome/Edge ignore background on :checked options unless you use a
+   gradient trick — this is the known workaround. */
+select option:checked,
+select option:hover {
+  background: linear-gradient(#1428A0, #1428A0);
+  color: #FFFFFF;
+}
+
+/* On dark backgrounds (e.g. admin sidebar), keep options readable */
+.admin-shell select option {
+  background-color: #FFFFFF;
+  color: #0A1550;
+}
