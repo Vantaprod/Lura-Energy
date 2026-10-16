@@ -9365,3 +9365,147 @@ html body .partner-marquee .partner-marquee__track.partner-marquee__track {
 .impact-section__stats {
   max-width: 520px;
 }
+
+
+/* ============================================================
+   CAPABILITY PATH — 4-step process section (2026-10-16)
+   From the Lura proposal. Horizontal on desktop, vertical on
+   mobile. Numbered orange circles, navy background.
+   ============================================================ */
+
+.capability-path {
+  background: #050E1F;
+  color: #FFFFFF;
+  padding: 96px 24px 96px;
+  position: relative;
+  overflow: hidden;
+}
+
+.capability-path__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.capability-path__head {
+  margin-bottom: 56px;
+  max-width: 640px;
+}
+
+.capability-path__eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #F58220;
+  margin: 0 0 14px;
+}
+
+.capability-path__title {
+  font-family: var(--font-manrope), Manrope, system-ui, sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: #FFFFFF;
+  margin: 0;
+}
+@media (min-width: 900px) {
+  .capability-path__title { font-size: 44px; }
+}
+
+.capability-path__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+}
+
+@media (min-width: 800px) {
+  .capability-path__list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 32px;
+  }
+}
+
+.capability-step {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  align-items: flex-start;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+@media (min-width: 800px) {
+  .capability-step {
+    flex-direction: column;
+    gap: 20px;
+    padding-top: 28px;
+  }
+}
+
+.capability-step__number {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #F58220;
+  color: #FFFFFF;
+  font-family: var(--font-manrope), Manrope, system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+@media (min-width: 800px) {
+  .capability-step__number {
+    width: 52px;
+    height: 52px;
+    font-size: 16px;
+  }
+}
+
+.capability-step__content {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.capability-step__title {
+  font-family: var(--font-manrope), Manrope, system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  color: #FFFFFF;
+  margin: 6px 0 8px;
+}
+@media (min-width: 800px) {
+  .capability-step__title {
+    font-size: 20px;
+    margin: 0 0 10px;
+  }
+}
+
+.capability-step__body {
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.62);
+  margin: 0;
+}
+
+@media (max-width: 800px) {
+  .capability-path {
+    padding: 64px 20px 64px;
+  }
+  .capability-path__head {
+    margin-bottom: 32px;
+  }
+  .capability-path__title {
+    font-size: 28px;
+  }
+}

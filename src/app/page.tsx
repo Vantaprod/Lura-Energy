@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db/prisma';
 import { loadHeroSlides } from '@/lib/hero-slides';
 import { HeroCarousel, type HeroSlide } from '@/components/public/hero-carousel';
 import { ImpactSection, type ImpactContent } from '@/components/public/impact-section';
+import { CapabilityPath } from '@/components/public/capability-path';
 import { PartnerMarquee } from '@/components/public/partner-marquee';
 import { getServerT } from '@/lib/i18n/server';
 import { JsonLd } from '@/components/public/json-ld';
@@ -200,6 +201,8 @@ export default async function HomePage() {
       </section>
 
       <ImpactSection content={impactContent} />
+
+      <CapabilityPath />
 
       {intro && (
         <section className="section-generous">
