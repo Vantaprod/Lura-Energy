@@ -227,39 +227,40 @@ export async function SiteFooter() {
 
         <div
           style={{
-            padding: '20px 0 8px',
+            padding: '24px 0 20px',
             display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
+            flexWrap: 'wrap',
+            gap: '16px',
           }}
         >
-          <p
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: '0.10em',
-              textTransform: 'uppercase',
-              color: '#F58220',
-              margin: 0,
-            }}
-          >
-            Nigeria · West Africa · Sub-Saharan Africa
-          </p>
-          <p
-            style={{
-              fontSize: 11,
-              color: 'rgba(255,255,255,0.48)',
-              margin: 0,
-              letterSpacing: '0.02em',
-            }}
-          >
-            Distribution · local channels · energy storage · solar · electrical supply
-          </p>
-        </div>
-
-        <div className="footer-divider" aria-hidden="true" />
-
-        <div className="footer-bottom">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <p
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                letterSpacing: '0.10em',
+                textTransform: 'uppercase',
+                color: '#F58220',
+                margin: 0,
+              }}
+            >
+              Nigeria · West Africa · Sub-Saharan Africa
+            </p>
+            <p
+              style={{
+                fontSize: 11,
+                color: 'rgba(255,255,255,0.48)',
+                margin: 0,
+                letterSpacing: '0.02em',
+              }}
+            >
+              Distribution · local channels · energy storage · solar · electrical supply
+            </p>
+          </div>
+          
+          {/* Logo moved here, above the line */}
           <Link
             href="/"
             aria-label={t('aria.siteHome')}
@@ -273,6 +274,11 @@ export async function SiteFooter() {
               style={{ height: "auto", width: "auto" }}
             />
           </Link>
+        </div>
+
+        <div className="footer-divider" aria-hidden="true" />
+
+        <div className="footer-bottom">
           <div className="footer-bottom__legal">
             <Link href="/privacy" className="footer-link">Privacy Policy</Link>
             <span className="footer-sep">|</span>
@@ -373,16 +379,18 @@ export async function SiteFooter() {
           align-items: center;
           justify-content: center;
           gap: 16px;
-          padding-bottom: 16px;
+          padding: 16px 0 24px;
           flex-wrap: wrap;
-          position: relative;
         }
         .footer-logo-mini {
-          position: absolute;
-          right: 0;
           display: inline-flex;
           align-items: center;
           height: 22px;
+          opacity: 0.8;
+          transition: opacity 0.2s ease;
+        }
+        .footer-logo-mini:hover {
+          opacity: 1;
         }
         .footer-bottom__legal {
           flex: 1;
@@ -437,9 +445,7 @@ export async function SiteFooter() {
             text-align: center;
             padding-bottom: 20px;
           }
-          .footer-logo-mini {
-            position: static;
-          }
+          
           .footer-bottom__legal {
             flex-direction: column;
             gap: 4px;
