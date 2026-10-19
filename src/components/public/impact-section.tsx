@@ -3,13 +3,13 @@
 import CountUp from 'react-countup';
 import { useInView } from 'react-intersection-observer';
 import dynamic from 'next/dynamic';
+import { useTranslation } from '@/lib/i18n/context';
+import { Reveal } from '@/components/ui/reveal';
 
 const HolographicGlobe = dynamic(
   () => import('@/components/public/holographic-globe').then((m) => m.HolographicGlobe),
   { ssr: false, loading: () => null },
 );
-import { useTranslation } from '@/lib/i18n/context';
-import { Reveal } from '@/components/ui/reveal';
 
 export type ImpactStat = {
   label: string;
@@ -86,49 +86,53 @@ export function ImpactSection({ content }: { content?: Partial<ImpactContent> })
       </div>
 
       <div className="impact-section__inner">
-        <Reveal direction="right">`r`n        <div className="impact-section__text">
-          <p className="impact-eyebrow">
-            <span className="impact-eyebrow__bar" aria-hidden="true" />
-            {data.eyebrow}
-          </p>
+        <Reveal direction="right">
+          <div className="impact-section__text">
+            <p className="impact-eyebrow">
+              <span className="impact-eyebrow__bar" aria-hidden="true" />
+              {data.eyebrow}
+            </p>
 
-          <h2 className="impact-heading">
-            {data.headingWhite}{' '}
-            <span className="impact-heading__accent">{data.headingAccent}</span>
-          </h2>
+            <h2 className="impact-heading">
+              {data.headingWhite}{' '}
+              <span className="impact-heading__accent">{data.headingAccent}</span>
+            </h2>
 
-          <div className="impact-rule" aria-hidden="true" />
+            <div className="impact-rule" aria-hidden="true" />
 
-          <p className="impact-body">{data.body1}</p>
-          <p className="impact-body">{data.body2}</p>
+            <p className="impact-body">{data.body1}</p>
+            <p className="impact-body">{data.body2}</p>
 
-          <a className="impact-cta" href={data.ctaHref}>
-            {data.ctaLabel}
-            <span aria-hidden="true">{'\u2192'}</span>
-          </a>
-        </div>
+            <a className="impact-cta" href={data.ctaHref}>
+              {data.ctaLabel}
+              <span aria-hidden="true">{'\u2192'}</span>
+            </a>
+          </div>
+        </Reveal>
 
-        <div className="impact-section__stats">
-          <ul className="impact-stats impact-stats--grid">
-            {data.stats.map((stat, index) => (
-              <li className="impact-stat" key={index}>
-                <span className="impact-stat__value">
-                  {inView ? (
-                    <CountUp
-                      end={stat.value}
-                      duration={4}
-                      separator=","
-                      suffix={stat.suffix}
-                    />
-                  ) : (
-                    <span aria-hidden="true">0{stat.suffix}</span>
-                  )}
-                </span>
-                <span className="impact-stat__label">{stat.label}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <Reveal direction="left" delay={0.2}>
+          <div className="impact-section__stats">
+            <ul className="impact-stats impact-stats--grid">
+              {data.stats.map((stat, index) => (
+                <li className="impact-stat" key={index}>
+                  <span className="impact-stat__value">
+                    {inView ? (
+                      <CountUp
+                        end={stat.value}
+                        duration={4}
+                        separator=","
+                        suffix={stat.suffix}
+                      />
+                    ) : (
+                      <span aria-hidden="true">0{stat.suffix}</span>
+                    )}
+                  </span>
+                  <span className="impact-stat__label">{stat.label}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Reveal>
       </div>
     </section>
   );
