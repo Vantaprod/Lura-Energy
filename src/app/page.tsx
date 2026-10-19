@@ -90,6 +90,9 @@ export default async function HomePage() {
                   'impact.stat3Label',
                   'impact.stat3Value',
                   'impact.stat3Suffix',
+                  'impact.stat4Label',
+                  'impact.stat4Value',
+                  'impact.stat4Suffix',
                 ],
               },
             },
@@ -169,24 +172,24 @@ export default async function HomePage() {
         : '/projects',
     stats: [
       {
-        label: resolve('impact.stat1Label', 'PV installed'),
-        value: parseNumber(String(content['impact.stat1Value'] ?? '90'), 90),
-        suffix: String(content['impact.stat1Suffix'] ?? '+'),
+        label: resolve('impact.stat1Label', 'impact.stat1Label'),
+        value: parseNumber(String(content['impact.stat1Value'] ?? '30'), 30),
+        suffix: String(content['impact.stat1Suffix'] ?? '+ MW'),
       },
       {
-        label: resolve('impact.stat2Label', 'Energy storage'),
-        value: parseNumber(String(content['impact.stat2Value'] ?? '2000'), 2000),
-        suffix: String(content['impact.stat2Suffix'] ?? '+'),
+        label: resolve('impact.stat2Label', 'impact.stat2Label'),
+        value: parseNumber(String(content['impact.stat2Value'] ?? '20'), 20),
+        suffix: String(content['impact.stat2Suffix'] ?? '+ MWh'),
       },
       {
-        label: resolve('impact.stat3Label', 'C&I projects'),
-        value: parseNumber(String(content['impact.stat3Value'] ?? '1000'), 1000),
+        label: resolve('impact.stat3Label', 'impact.stat3Label'),
+        value: parseNumber(String(content['impact.stat3Value'] ?? '30'), 30),
         suffix: String(content['impact.stat3Suffix'] ?? '+'),
       },
       {
-        label: resolve('impact.stat4Label', 'Operating Regions in Nigeria'),
-        value: parseNumber(String(content['impact.stat4Value'] ?? '50'), 50),
-        suffix: String(content['impact.stat4Suffix'] ?? ''),
+        label: resolve('impact.stat4Label', 'impact.stat4Label'),
+        value: parseNumber(String(content['impact.stat4Value'] ?? '90'), 90),
+        suffix: String(content['impact.stat4Suffix'] ?? '+'),
       },
     ],
   };
@@ -225,7 +228,7 @@ export default async function HomePage() {
       )}
 
       <section className="section section-dark">
-        <Reveal>`r`n        <div className="section-heading">
+        <div className="section-heading">
           <div>
             <p className="eyebrow">{t('home.solutionsEyebrow')}</p>
             <h2>{t('home.solutionsHeading')}</h2>
@@ -236,14 +239,16 @@ export default async function HomePage() {
         </div>
         {solutions.length ? (
           <div className="grid">
-            {solutions.map((item) => (
-              <article className="record-card" key={item.id}>
-                <div>
-                  <h3>{item.name}</h3>
-                  {item.summary && <p>{item.summary}</p>}
-                </div>
-                <Link href={'/solutions/' + item.slug}>{t('cta.discover')}</Link>
-              </article>
+            {solutions.map((item, index) => (
+              <Reveal key={item.id} delay={index * 0.1} hover>
+                <article className="record-card">
+                  <div>
+                    <h3>{item.name}</h3>
+                    {item.summary && <p>{item.summary}</p>}
+                  </div>
+                  <Link href={'/solutions/' + item.slug}>{t('cta.discover')}</Link>
+                </article>
+              </Reveal>
             ))}
           </div>
         ) : (
@@ -255,15 +260,17 @@ export default async function HomePage() {
       </section>
 
       <section className="section-generous">
-        <Reveal>`r`n        <div className="section-heading">
-          <div>
-            <p className="eyebrow">{t('home.productsEyebrow')}</p>
-            <h2>{t('home.productsHeading')}</h2>
+        <Reveal>
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">{t('home.productsEyebrow')}</p>
+              <h2>{t('home.productsHeading')}</h2>
+            </div>
+            <Link className="button button-secondary button-small" href="/products">
+              {t('cta.allProducts')}
+            </Link>
           </div>
-          <Link className="button button-secondary button-small" href="/products">
-            {t('cta.allProducts')}
-          </Link>
-        </div>
+        </Reveal>
         {featuredProducts.length ? (
           <div className="grid">
             {featuredProducts.map((item, index) => {
@@ -272,26 +279,28 @@ export default async function HomePage() {
                 ? `/products/${item.category.slug}/${item.slug}`
                 : `/products/${item.slug}`;
               return (
-                <article className="record-card" key={item.id}>
-                  <div>
-                    {image && (
-                      <img
-                        className="record-image"
-                        src={image.url}
-                        alt={image.alt ?? ''}
-                        loading="lazy"
-                        width="900"
-                        height="620"
-                      />
-                    )}
-                    {item.brand && (
-                      <p className="eyebrow eyebrow-plain">{item.brand}</p>
-                    )}
-                    <h3>{item.name}</h3>
-                    {item.summary && <p>{item.summary}</p>}
-                  </div>
-                  <Link href={href}>{t('cta.viewProduct')}</Link>
-                </article>
+                <Reveal key={item.id} delay={index * 0.1} hover>
+                  <article className="record-card">
+                    <div>
+                      {image && (
+                        <img
+                          className="record-image"
+                          src={image.url}
+                          alt={image.alt ?? ''}
+                          loading="lazy"
+                          width="900"
+                          height="620"
+                        />
+                      )}
+                      {item.brand && (
+                        <p className="eyebrow eyebrow-plain">{item.brand}</p>
+                      )}
+                      <h3>{item.name}</h3>
+                      {item.summary && <p>{item.summary}</p>}
+                    </div>
+                    <Link href={href}>{t('cta.viewProduct')}</Link>
+                  </article>
+                </Reveal>
               );
             })}
           </div>
@@ -304,42 +313,46 @@ export default async function HomePage() {
       </section>
 
       <section className="section section-dark">
-        <Reveal>`r`n        <div className="section-heading">
-          <div>
-            <p className="eyebrow">{t('home.projectsEyebrow')}</p>
-            <h2>{t('home.projectsHeading')}</h2>
+        <Reveal>
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">{t('home.projectsEyebrow')}</p>
+              <h2>{t('home.projectsHeading')}</h2>
+            </div>
+            <Link className="button button-ghost button-small" href="/projects">
+              {t('cta.allProjects')}
+            </Link>
           </div>
-          <Link className="button button-ghost button-small" href="/projects">
-            {t('cta.allProjects')}
-          </Link>
-        </div>
+        </Reveal>
         {featuredProjects.length ? (
           <div className="grid">
             {featuredProjects.map((item, index) => {
               const image = item.media.find((m) => m.kind === 'IMAGE');
               return (
-                <article className="record-card" key={item.id}>
-                  <div>
-                    {image && (
-                      <img
-                        className="record-image"
-                        src={image.url}
-                        alt={image.alt ?? ''}
-                        loading="lazy"
-                        width="900"
-                        height="620"
-                      />
-                    )}
-                    {item.location && (
-                      <p className="eyebrow eyebrow-plain">{item.location}</p>
-                    )}
-                    <h3>{item.title}</h3>
-                    {item.category && <p>{item.category}</p>}
-                  </div>
-                  <Link href={'/projects/' + item.slug}>
-                    {t('cta.viewProject')}
-                  </Link>
-                </article>
+                <Reveal key={item.id} delay={index * 0.1} hover>
+                  <article className="record-card">
+                    <div>
+                      {image && (
+                        <img
+                          className="record-image"
+                          src={image.url}
+                          alt={image.alt ?? ''}
+                          loading="lazy"
+                          width="900"
+                          height="620"
+                        />
+                      )}
+                      {item.location && (
+                        <p className="eyebrow eyebrow-plain">{item.location}</p>
+                      )}
+                      <h3>{item.title}</h3>
+                      {item.category && <p>{item.category}</p>}
+                    </div>
+                    <Link href={'/projects/' + item.slug}>
+                      {t('cta.viewProject')}
+                    </Link>
+                  </article>
+                </Reveal>
               );
             })}
           </div>
@@ -353,23 +366,25 @@ export default async function HomePage() {
 
       {testimonials.length > 0 && (
         <section className="section-tight">
-          <Reveal>`r`n        <div className="section-heading">
+          <div className="section-heading">
             <div>
               <p className="eyebrow">{t('home.testimonialsEyebrow')}</p>
               <h2>{t('home.testimonialsHeading')}</h2>
             </div>
           </div>
           <div className="grid">
-            {testimonials.map((item) => (
-              <figure className="record-card testimonial-card" key={item.id}>
-                <blockquote>
-                  <p>
-                    {'\u201C'}
-                    {item.quote}
-                    {'\u201D'}
-                  </p>
-                </blockquote>
-              </figure>
+            {testimonials.map((item, index) => (
+              <Reveal key={item.id} delay={index * 0.1} hover>
+                <figure className="record-card testimonial-card">
+                  <blockquote>
+                    <p>
+                      {'\u201C'}
+                      {item.quote}
+                      {'\u201D'}
+                    </p>
+                  </blockquote>
+                </figure>
+              </Reveal>
             ))}
           </div>
         </section>
@@ -390,14 +405,14 @@ export default async function HomePage() {
         />
       )}
 
-      <section className="split-cta" style={{ position: "relative", overflow: "hidden" }}>
+      <section className="split-cta" style={{ position: 'relative', overflow: 'hidden' }}>
         <EnergyLines />
-        <div style={{ position: "relative", zIndex: 10 }}>
+        <div style={{ position: 'relative', zIndex: 10 }}>
           <p className="eyebrow">{t('home.ctaEyebrow')}</p>
           <h2 className="display-2">{ctaTitle}</h2>
           {ctaBody && <p className="lead">{ctaBody}</p>}
         </div>
-        <div className="hero-actions" style={{ position: "relative", zIndex: 10 }}>
+        <div className="hero-actions" style={{ position: 'relative', zIndex: 10 }}>
           <Link className="button" href="/contact">
             {t('cta.quote')}
           </Link>
