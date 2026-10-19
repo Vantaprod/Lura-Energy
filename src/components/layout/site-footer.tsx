@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { prisma } from '@/lib/db/prisma';
 import { getServerT } from '@/lib/i18n/server';
+import { EnergyLines } from '@/components/ui/energy-lines';
 
 export const dynamic = 'force-dynamic';
 
@@ -110,12 +111,14 @@ export async function SiteFooter() {
       className="site-footer"
       style={{
         background: '#0A1550',
+        position: 'relative',
+        overflow: 'hidden',
         color: 'rgba(255,255,255,0.78)',
         padding: '28px 0 0',
         fontSize: 13,
       }}
     >
-      <div className="footer-wrap">
+      <EnergyLines />`r`n      <div className="footer-wrap" style={{ position: 'relative', zIndex: 10 }}>
         <div className="footer-columns-grid">
           <div className="footer-col">
             <h3 style={footerTitleStyle}>{t('footer.products')}</h3>
