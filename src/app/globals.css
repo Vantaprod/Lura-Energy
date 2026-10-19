@@ -3359,7 +3359,6 @@ select:focus-visible {
   background: #1428A0;
 }
 
-<<<<<<< HEAD
 .product-detail__gallery {
   position: sticky;
   top: 100px;
@@ -10283,12 +10282,3 @@ select option:hover {
     height: 220px !important;
   }
 }
-=======
-.centre-card__badge--pickup {
-  background: #1F7A4D;
-}
-
-.centre-card__badge--both {
-  background: #F58220;
-}
->>>>>>> parent of 509d594 (fix(admin): leads manager layout, styled selects everywhere)
