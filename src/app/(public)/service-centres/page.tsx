@@ -71,9 +71,9 @@ function CentreCard({ centre, labels }: { centre: Centre; labels: Labels }) {
     <article className="centre-card">
       <header className="centre-card__head">
         <div className="centre-card__top">
-          <p className="eyebrow eyebrow-plain">{centre.state ?? 'Nigeria'}</p>
-          <span className={'centre-card__badge centre-card__badge--' + badge.variant}>
-            {badge.label}
+          <p className="eyebrow">{centre.state}</p>
+          <span className={`centre-card__badge centre-card__badge--${centre.type === 'Pickup Point' ? 'pickup' : centre.type === 'Both' ? 'both' : 'service'}`}>
+            {centre.type || 'Service Centre'}
           </span>
         </div>
         <h3 className="centre-card__name">{centre.name}</h3>
