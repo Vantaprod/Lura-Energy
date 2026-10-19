@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/db/prisma';
-import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,8 +7,6 @@ export default async function ServiceCentresPage() {
     where: { published: true },
     orderBy: { sortOrder: 'asc' },
   });
-
-  const { t } = await getServerT('front');
 
   return (
     <div className="section">
@@ -31,14 +28,35 @@ export default async function ServiceCentresPage() {
       ) : (
         <div className="grid grid--centres">
           {centres.map((centre) => {
-            const badgeClass = centre.type === 'Pickup Point' ? 'pickup' : centre.type === 'Both' ? 'both' : 'service';
-            const badgeText = centre.type === 'Both' ? 'SERVICE & PICKUP' : centre.type === 'Pickup Point' ? 'PICKUP POINT' : 'SERVICE CENTRE';
+            let badgeBg = '#1428A0';
+            let badgeText = 'SERVICE CENTRE';
             
+            if (centre.type === 'Pickup Point') {
+              badgeBg = '#1F7A4D';
+              badgeText = 'PICKUP POINT';
+            } else if (centre.type === 'Both') {
+              badgeBg = '#F58220';
+              badgeText = 'SERVICE & PICKUP';
+            }
+
             return (
               <article className="centre-card" key={centre.id}>
-                <div className="centre-card__top">
-                  <p className="eyebrow">{centre.state}</p>
-                  <span className={`centre-card__badge centre-card__badge--${badgeClass}`}>
+                
+                {/* INLINE STYLES: Bulletproof and won't be hidden by global CSS */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <p className="eyebrow" style={{ margin: 0 }}>{centre.state}</p>
+                  <span style={{ 
+                    display: 'inline-block', 
+                    padding: '4px 12px', 
+                    borderRadius: '999px', 
+                    fontSize: '10px', 
+                    fontWeight: 800, 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '0.08em', 
+                    color: '#FFFFFF', 
+                    backgroundColor: badgeBg,
+                    whiteSpace: 'nowrap'
+                  }}>
                     {badgeText}
                   </span>
                 </div>
