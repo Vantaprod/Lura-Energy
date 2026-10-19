@@ -1,44 +1,45 @@
 {
-  "name": "lura-energy-platform",
-  "private": true,
-  "version": "1.0.0",
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
-  "scripts": {
-    "dev": "next dev",
-    "build": "prisma generate && prisma migrate deploy && next build",
-    "start": "next start",
-    "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test tests/unit/permissions.test.mts tests/unit/admin-account-policy.test.mts",
-    "db:migrate": "prisma migrate deploy",
-    "db:seed": "tsx prisma/seed.ts",
-    "admin:create": "tsx scripts/create-owner.ts"
-  },
-  "dependencies": {
-    "@prisma/client": "5.22.0",
-    "bcryptjs": "3.0.3",
-    "cloudinary": "^2.11.0",
-    "next": "16.3.5",
-    "nodemailer": "^10.1.0",
-    "react": "19.3.0",
-    "react-countup": "^6.5.3",
-    "react-dom": "19.3.0",
-    "react-intersection-observer": "^11.0.1",
-    "three": "^0.186.1",
-    "topojson-client": "^3.1.0",
-    "world-atlas": "^2.0.2",
-    "zod": "4.6.5"
-  },
-  "devDependencies": {
-    "@types/node": "22.20.4",
-    "@types/nodemailer": "^8.0.2",
-    "@types/react": "19.3.0",
-    "@types/react-dom": "19.3.0",
-    "@types/three": "^0.186.0",
-    "@types/topojson-client": "^3.1.5",
-    "prisma": "5.22.0",
-    "tsx": "4.23.15",
-    "typescript": "5.9.3"
-  }
+    "name":  "lura-energy-platform",
+    "private":  true,
+    "version":  "1.0.0",
+    "prisma":  {
+                   "seed":  "tsx prisma/seed.ts"
+               },
+    "scripts":  {
+                    "dev":  "next dev",
+                    "build":  "prisma generate \u0026\u0026 prisma migrate deploy \u0026\u0026 next build",
+                    "start":  "next start",
+                    "typecheck":  "tsc --noEmit",
+                    "test":  "node --experimental-strip-types --test tests/unit/permissions.test.mts tests/unit/admin-account-policy.test.mts",
+                    "db:migrate":  "prisma migrate deploy",
+                    "db:seed":  "tsx prisma/seed.ts",
+                    "admin:create":  "tsx scripts/create-owner.ts",
+                    "postinstall":  "prisma generate"
+                },
+    "dependencies":  {
+                         "@prisma/client":  "5.22.0",
+                         "bcryptjs":  "3.0.3",
+                         "cloudinary":  "^2.11.0",
+                         "next":  "16.3.5",
+                         "nodemailer":  "^10.1.0",
+                         "react":  "19.3.0",
+                         "react-countup":  "^6.5.3",
+                         "react-dom":  "19.3.0",
+                         "react-intersection-observer":  "^11.0.1",
+                         "three":  "^0.186.1",
+                         "topojson-client":  "^3.1.0",
+                         "world-atlas":  "^2.0.2",
+                         "zod":  "4.6.5"
+                     },
+    "devDependencies":  {
+                            "@types/node":  "22.20.4",
+                            "@types/nodemailer":  "^8.0.2",
+                            "@types/react":  "19.3.0",
+                            "@types/react-dom":  "19.3.0",
+                            "@types/three":  "^0.186.0",
+                            "@types/topojson-client":  "^3.1.5",
+                            "prisma":  "5.22.0",
+                            "tsx":  "4.23.15",
+                            "typescript":  "5.9.3"
+                        }
 }
