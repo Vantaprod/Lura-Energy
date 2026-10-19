@@ -14,92 +14,93 @@ export function EnergyLines() {
     let animationFrameId: number;
     let width = canvas.offsetWidth;
     let height = canvas.offsetHeight;
-    canvas.width = width;
-    canvas.height = height;
+    let time = 0;
 
-    const lines: any[] = [];
-    const numLines = 25; // Number of moving lines
+    // Handle high-DPI screens for crisp lines
+    const resize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      width = canvas.offsetWidth;
+      height = canvas.offsetHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.scale(dpr, dpr);
+    };
+    resize();
+    window.addEventListener('resize', resize);
 
-    // Initialize lines
-    for (let i = 0; i < numLines; i++) {
-      lines.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        dx: (Math.random() - 0.5) * 2, // Speed X (slow motion)
-        dy: (Math.random() - 0.5) * 2, // Speed Y (slow motion)
-        length: Math.random() * 150 + 50,
-        color: Math.random() > 0.5 ? '#00FFFF' : '#3B82F6', // Cyan and Blue
-      });
-    }
+    // Generate 20 flowing light ribbons
+    const lines = Array.from({ length: 20 }).map(() => ({
+      y: Math.random() * height * 1.5 - height * 0.25,
+      speed: Math.random() * 1.5 + 0.5,       // How fast it moves left/right
+      amplitude: Math.random() * 60 + 20,     // How high the waves go
+      frequency: Math.random() * 0.003 + 0.001,// How tight the waves are
+      phase: Math.random() * Math.PI * 2,
+      width: Math.random() * 1.5 + 0.5,
+      color: Math.random() > 0.7 ? '#FFFFFF' : (Math.random() > 0.5 ? '#00FFFF' : '#3B82F6'),
+      opacity: Math.random() * 0.3 + 0.05,    // Subtle opacity
+      tilt: Math.random() * 0.15 + 0.05       // Diagonal angle
+    }));
 
     const draw = () => {
+      // Clear canvas completely each frame
       ctx.clearRect(0, 0, width, height);
-      ctx.globalAlpha = 0.15; // Subtle opacity so text stays readable
+      
+      // 'lighter' makes overlapping light areas brighter (additive blending)
+      ctx.globalCompositeOperation = 'lighter';
+      time += 0.015;
 
-      for (const line of lines) {
-        // Calculate tail position
-        const tailX = line.x - line.dx * line.length;
-        const tailY = line.y - line.dy * line.length;
-
-        // Create gradient for the energy tail
-        const grad = ctx.createLinearGradient(line.x, line.y, tailX, tailY);
-        grad.addColorStop(0, line.color);
-        grad.addColorStop(1, 'transparent');
-
+      lines.forEach(line => {
         ctx.beginPath();
-        ctx.moveTo(line.x, line.y);
-        ctx.lineTo(tailX, tailY);
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
+        
+        // Draw the curve across the screen
+        for (let x = -100; x < width + 100; x += 15) {
+          // Sine wave math for smooth flowing curves
+          const wave = Math.sin(x * line.frequency + time * line.speed + line.phase) * line.amplitude;
+          const y = line.y + wave + (x * line.tilt); // Add tilt for diagonal flow
+
+          if (x === -100) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+
+        // Draw the core bright line
+        ctx.strokeStyle = line.color;
+        ctx.lineWidth = line.width;
+        ctx.globalAlpha = line.opacity;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = line.color;
         ctx.stroke();
 
-        // Move the line
-        line.x += line.dx;
-        line.y += line.dy;
+        // Draw a thicker, softer glow around the core
+        ctx.lineWidth = line.width * 4;
+        ctx.globalAlpha = line.opacity * 0.2;
+        ctx.stroke();
+      });
 
-        // Reset if it goes off screen (creates continuous flow)
-        if (
-          line.x < -line.length || 
-          line.x > width + line.length || 
-          line.y < -line.length || 
-          line.y > height + line.length
-        ) {
-          line.x = Math.random() * width;
-          line.y = Math.random() * height;
-        }
-      }
       animationFrameId = requestAnimationFrame(draw);
     };
 
     draw();
 
-    const handleResize = () => {
-      width = canvas.offsetWidth;
-      height = canvas.offsetHeight;
-      canvas.width = width;
-      canvas.height = height;
-    };
-
-    window.addEventListener('resize', handleResize);
-
     return () => {
       cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', resize);
     };
   }, []);
 
   return (
-    <canvas 
-      ref={canvasRef} 
-      style={{ 
-        position: 'absolute', 
-        inset: 0, 
-        width: '100%', 
-        height: '100%', 
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        width: '100%',
+        height: '100%',
         pointerEvents: 'none',
-        zIndex: 0
-      }} 
+        zIndex: 0,
+      }}
     />
   );
 }
