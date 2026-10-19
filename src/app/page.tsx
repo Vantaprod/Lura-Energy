@@ -224,7 +224,7 @@ export default async function HomePage() {
       )}
 
       <section className="section section-dark">
-        <div className="section-heading">
+        <Reveal>`r`n        <div className="section-heading">
           <div>
             <p className="eyebrow">{t('home.solutionsEyebrow')}</p>
             <h2>{t('home.solutionsHeading')}</h2>
@@ -254,7 +254,7 @@ export default async function HomePage() {
       </section>
 
       <section className="section-generous">
-        <div className="section-heading">
+        <Reveal>`r`n        <div className="section-heading">
           <div>
             <p className="eyebrow">{t('home.productsEyebrow')}</p>
             <h2>{t('home.productsHeading')}</h2>
@@ -265,7 +265,7 @@ export default async function HomePage() {
         </div>
         {featuredProducts.length ? (
           <div className="grid">
-            {featuredProducts.map((item) => {
+            {featuredProducts.map((item, index) => {
               const image = item.media.find((m) => m.kind === 'IMAGE');
               const href = item.category
                 ? `/products/${item.category.slug}/${item.slug}`
@@ -303,7 +303,7 @@ export default async function HomePage() {
       </section>
 
       <section className="section section-dark">
-        <div className="section-heading">
+        <Reveal>`r`n        <div className="section-heading">
           <div>
             <p className="eyebrow">{t('home.projectsEyebrow')}</p>
             <h2>{t('home.projectsHeading')}</h2>
@@ -314,7 +314,7 @@ export default async function HomePage() {
         </div>
         {featuredProjects.length ? (
           <div className="grid">
-            {featuredProjects.map((item) => {
+            {featuredProjects.map((item, index) => {
               const image = item.media.find((m) => m.kind === 'IMAGE');
               return (
                 <article className="record-card" key={item.id}>
@@ -352,7 +352,7 @@ export default async function HomePage() {
 
       {testimonials.length > 0 && (
         <section className="section-tight">
-          <div className="section-heading">
+          <Reveal>`r`n        <div className="section-heading">
             <div>
               <p className="eyebrow">{t('home.testimonialsEyebrow')}</p>
               <h2>{t('home.testimonialsHeading')}</h2>

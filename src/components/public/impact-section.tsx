@@ -9,6 +9,7 @@ const HolographicGlobe = dynamic(
   { ssr: false, loading: () => null },
 );
 import { useTranslation } from '@/lib/i18n/context';
+import { Reveal } from '@/components/ui/reveal';
 
 export type ImpactStat = {
   label: string;
@@ -85,7 +86,7 @@ export function ImpactSection({ content }: { content?: Partial<ImpactContent> })
       </div>
 
       <div className="impact-section__inner">
-        <div className="impact-section__text">
+        <Reveal direction="right">`r`n        <div className="impact-section__text">
           <p className="impact-eyebrow">
             <span className="impact-eyebrow__bar" aria-hidden="true" />
             {data.eyebrow}

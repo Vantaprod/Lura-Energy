@@ -43,7 +43,7 @@ export function Reveal({
         delay: delay, 
         ease: [0.21, 0.47, 0.32, 0.98]
       }}
-      style={{ cursor: hover ? 'pointer' : 'inherit' }}
+      style={{ cursor: hover ? 'pointer' : 'inherit', height: '100%', display: 'flex', flexDirection: 'column' }}
     >
       {children}
     </motion.div>
