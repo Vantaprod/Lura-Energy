@@ -167,22 +167,22 @@ export default async function HomePage() {
         : '/projects',
     stats: [
       {
-        label: resolve('impact.stat1Label', 'impact.stat1Label'),
+        label: resolve('impact.stat1Label', 'PV installed'),
         value: parseNumber(String(content['impact.stat1Value'] ?? '90'), 90),
         suffix: String(content['impact.stat1Suffix'] ?? '+'),
       },
       {
-        label: resolve('impact.stat2Label', 'impact.stat2Label'),
+        label: resolve('impact.stat2Label', 'Energy storage'),
         value: parseNumber(String(content['impact.stat2Value'] ?? '2000'), 2000),
         suffix: String(content['impact.stat2Suffix'] ?? '+'),
       },
       {
-        label: resolve('impact.stat3Label', 'impact.stat3Label'),
+        label: resolve('impact.stat3Label', 'C&I projects'),
         value: parseNumber(String(content['impact.stat3Value'] ?? '1000'), 1000),
         suffix: String(content['impact.stat3Suffix'] ?? '+'),
       },
       {
-        label: resolve('impact.stat4Label', 'impact.stat4Label'),
+        label: resolve('impact.stat4Label', 'Operating Regions in Nigeria'),
         value: parseNumber(String(content['impact.stat4Value'] ?? '50'), 50),
         suffix: String(content['impact.stat4Suffix'] ?? ''),
       },
