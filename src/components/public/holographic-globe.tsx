@@ -544,7 +544,7 @@ export function HolographicGlobe({ className }: { className?: string }) {
       };
       window.addEventListener('resize', onResize);
 
-      const clock = new THREE.Timer();
+      const clock = new THREE.Clock();
       let raf = 0;
       const tick = (): void => {
         if (disposed) return;
