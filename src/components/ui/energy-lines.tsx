@@ -16,7 +16,6 @@ export function EnergyLines() {
     let height = canvas.offsetHeight;
     let time = 0;
 
-    // Handle high-DPI screens for crisp lines
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
       width = canvas.offsetWidth;
@@ -28,35 +27,35 @@ export function EnergyLines() {
     resize();
     window.addEventListener('resize', resize);
 
-    // Generate 20 flowing light ribbons
-    const lines = Array.from({ length: 20 }).map(() => ({
-      y: Math.random() * height * 1.5 - height * 0.25,
-      speed: Math.random() * 1.5 + 0.5,       // How fast it moves left/right
-      amplitude: Math.random() * 60 + 20,     // How high the waves go
-      frequency: Math.random() * 0.003 + 0.001,// How tight the waves are
+    // Use dark, subtle blues to blend with the footer background (#0A1550)
+    const colors = ['#1E3A8A', '#1D4ED8', '#2563EB', '#0A1550'];
+
+    const lines = Array.from({ length: 15 }).map(() => ({
+      // Start y slightly below the top edge so it doesn't draw a harsh line at y=0
+      y: Math.random() * height * 1.2 + 10, 
+      speed: Math.random() * 0.5 + 0.2,       // Much slower
+      amplitude: Math.random() * 40 + 20,     
+      frequency: Math.random() * 0.002 + 0.001,
       phase: Math.random() * Math.PI * 2,
-      width: Math.random() * 1.5 + 0.5,
-      color: Math.random() > 0.7 ? '#FFFFFF' : (Math.random() > 0.5 ? '#00FFFF' : '#3B82F6'),
-      opacity: Math.random() * 0.3 + 0.05,    // Subtle opacity
-      tilt: Math.random() * 0.15 + 0.05       // Diagonal angle
+      width: Math.random() * 1 + 0.5,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      opacity: Math.random() * 0.1 + 0.02,    // Very subtle
+      tilt: Math.random() * 0.1 + 0.05       
     }));
 
     const draw = () => {
-      // Clear canvas completely each frame
       ctx.clearRect(0, 0, width, height);
-      
-      // 'lighter' makes overlapping light areas brighter (additive blending)
       ctx.globalCompositeOperation = 'lighter';
-      time += 0.015;
+      
+      // Slower time progression
+      time += 0.005;
 
       lines.forEach(line => {
         ctx.beginPath();
         
-        // Draw the curve across the screen
         for (let x = -100; x < width + 100; x += 15) {
-          // Sine wave math for smooth flowing curves
           const wave = Math.sin(x * line.frequency + time * line.speed + line.phase) * line.amplitude;
-          const y = line.y + wave + (x * line.tilt); // Add tilt for diagonal flow
+          const y = line.y + wave + (x * line.tilt);
 
           if (x === -100) {
             ctx.moveTo(x, y);
@@ -65,17 +64,17 @@ export function EnergyLines() {
           }
         }
 
-        // Draw the core bright line
+        // Core line
         ctx.strokeStyle = line.color;
         ctx.lineWidth = line.width;
         ctx.globalAlpha = line.opacity;
-        ctx.shadowBlur = 15;
+        ctx.shadowBlur = 10;
         ctx.shadowColor = line.color;
         ctx.stroke();
 
-        // Draw a thicker, softer glow around the core
-        ctx.lineWidth = line.width * 4;
-        ctx.globalAlpha = line.opacity * 0.2;
+        // Soft glow
+        ctx.lineWidth = line.width * 3;
+        ctx.globalAlpha = line.opacity * 0.3;
         ctx.stroke();
       });
 

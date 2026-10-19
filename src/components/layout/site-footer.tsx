@@ -403,7 +403,7 @@ export async function SiteFooter() {
             grid-column: 1 / -1;
             border-left: none;
             padding-left: 0;
-            border-top: 1px solid rgba(255, 255, 255, 0.10);
+            
             padding-top: 20px;
             flex-direction: row;
             gap: 48px;
@@ -423,7 +423,7 @@ export async function SiteFooter() {
             grid-column: 1 / -1;
             flex-direction: row;
             gap: 32px;
-            border-top: 1px solid rgba(255, 255, 255, 0.10);
+            
             padding-top: 16px;
             justify-content: flex-start;
           }
