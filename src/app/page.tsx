@@ -4,6 +4,7 @@ import { loadHeroSlides } from '@/lib/hero-slides';
 import { HeroCarousel, type HeroSlide } from '@/components/public/hero-carousel';
 import { ImpactSection, type ImpactContent } from '@/components/public/impact-section';
 import { CapabilityPath } from '@/components/public/capability-path';
+import { Reveal } from '@/components/ui/reveal';
 import { PartnerMarquee } from '@/components/public/partner-marquee';
 import { getServerT } from '@/lib/i18n/server';
 import { JsonLd } from '@/components/public/json-ld';
@@ -207,13 +208,17 @@ export default async function HomePage() {
       {intro && (
         <section className="section-generous">
           <div className="editorial">
-            <div>
-              <p className="eyebrow">{t('home.aboutEyebrow')}</p>
-              <h2 className="display-2">{t('home.aboutHeading')}</h2>
-            </div>
-            <div>
-              <p className="lead">{intro}</p>
-            </div>
+            <Reveal direction="right">
+              <div>
+                <p className="eyebrow">{t('home.aboutEyebrow')}</p>
+                <h2 className="display-2">{t('home.aboutHeading')}</h2>
+              </div>
+            </Reveal>
+            <Reveal direction="left" delay={0.2}>
+              <div>
+                <p className="lead">{intro}</p>
+              </div>
+            </Reveal>
           </div>
         </section>
       )}
