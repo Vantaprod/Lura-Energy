@@ -5,6 +5,7 @@ import { HeroCarousel, type HeroSlide } from '@/components/public/hero-carousel'
 import { ImpactSection, type ImpactContent } from '@/components/public/impact-section';
 import { CapabilityPath } from '@/components/public/capability-path';
 import { Reveal } from '@/components/ui/reveal';
+import { EnergyLines } from '@/components/ui/energy-lines';
 import { PartnerMarquee } from '@/components/public/partner-marquee';
 import { getServerT } from '@/lib/i18n/server';
 import { JsonLd } from '@/components/public/json-ld';
@@ -389,13 +390,14 @@ export default async function HomePage() {
         />
       )}
 
-      <section className="split-cta">
-        <div>
+      <section className="split-cta" style={{ position: "relative", overflow: "hidden" }}>
+        <EnergyLines />
+        <div style={{ position: "relative", zIndex: 10 }}>
           <p className="eyebrow">{t('home.ctaEyebrow')}</p>
           <h2 className="display-2">{ctaTitle}</h2>
           {ctaBody && <p className="lead">{ctaBody}</p>}
         </div>
-        <div className="hero-actions">
+        <div className="hero-actions" style={{ position: "relative", zIndex: 10 }}>
           <Link className="button" href="/contact">
             {t('cta.quote')}
           </Link>
