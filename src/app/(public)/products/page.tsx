@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db/prisma';
+import { ContentIndex } from '@/components/public/content-index';
 import { getServerT } from '@/lib/i18n/server';
 import { SeriesCard, SeriesFeaturedCard } from '@/components/public/series-card';
 
@@ -9,22 +10,16 @@ export default async function ProductsPage() {
     process.env.NODE_ENV === 'development' &&
     process.env.PREVIEW_WITHOUT_DATABASE === 'true';
 
-  const [categories, { t }] = await Promise.all([
+  const [items, { t }] = await Promise.all([
     isPreview
       ? Promise.resolve([])
-      : prisma.productCategory.findMany({
+      : prisma.product.findMany({
           where: { published: true },
-          orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-          include: {
-            _count: {
-              select: { products: { where: { published: true } } },
-            },
-          },
+          include: { category: true, media: true },
+          orderBy: { sortOrder: 'asc' },
         }),
-    getServerT('front'),
+    getServerT(),
   ]);
-
-  const [featured, ...rest] = categories;
 
   return (
     <main>

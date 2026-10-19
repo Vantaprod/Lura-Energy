@@ -1,7 +1,6 @@
 'use client';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from '@/lib/i18n/context';
-import { Select } from '@/components/ui/select';
 
 type Lead = {
   id: string;
@@ -91,43 +90,31 @@ export function LeadsManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const load = useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      setError('');
-      const params = new URLSearchParams({ page: String(page) });
-      if (query.trim()) params.set('q', query.trim());
-      if (status) params.set('status', status);
-      try {
-        const response = await fetch(`/api/admin/leads?${params}`, { signal });
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error ?? t('admin.leads.error.load'));
-        }
-        setResult(data);
-        setPage(data.page);
-      } catch (reason) {
-        if (reason instanceof Error && reason.name === 'AbortError') return;
-        setError(
-          reason instanceof Error ? reason.message : t('admin.leads.error.load'),
-        );
-      } finally {
-        if (!signal?.aborted) setLoading(false);
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    },
-    [page, query, status],
-  );
+  const load = useCallback(async (signal?: AbortSignal) => {
+    setLoading(true);
+    setError('');
+    const params = new URLSearchParams({ page: String(page) });
+    if (query.trim()) params.set('q', query.trim());
+    if (status) params.set('status', status);
+    try {
+      const response = await fetch(`/api/admin/leads?${params}`, { signal });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? t('admin.leads.error.load'));
+      setResult(data);
+      setPage(data.page);
+    } catch (reason) {
+      if (reason instanceof Error && reason.name === 'AbortError') return;
+      setError(reason instanceof Error ? reason.message : t('admin.leads.error.load'));
+    } finally {
+      if (!signal?.aborted) setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, query, status]);
 
   useEffect(() => {
     const controller = new AbortController();
-    const timer = setTimeout(() => {
-      void load(controller.signal);
-    }, query ? 250 : 0);
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
-    };
+    const timer = setTimeout(() => { void load(controller.signal); }, query ? 250 : 0);
+    return () => { clearTimeout(timer); controller.abort(); };
   }, [load, query]);
 
   async function update(id: string, nextStatus: string) {
@@ -142,9 +129,7 @@ export function LeadsManager() {
       if (!response.ok) throw new Error(data.error ?? t('admin.leads.error.update'));
       await load();
     } catch (reason) {
-      setError(
-        reason instanceof Error ? reason.message : t('admin.leads.error.update'),
-      );
+      setError(reason instanceof Error ? reason.message : t('admin.leads.error.update'));
     }
   }
 
@@ -173,18 +158,6 @@ export function LeadsManager() {
     }
   }
 
-  const statusOptions = useMemo(
-    () => [
-      { value: '', label: t('admin.leads.filter.all') },
-      ...statuses.map((s) => ({ value: s, label: t(`admin.leads.status.${s}`) })),
-    ],
-    [t],
-  );
-
-  function statusOptionsForRow() {
-    return statuses.map((s) => ({ value: s, label: t(`admin.leads.status.${s}`) }));
-  }
-
   return (
     <>
       <div
@@ -196,44 +169,31 @@ export function LeadsManager() {
           marginBottom: '1.5rem',
         }}
       >
-        <div className="field" style={{ marginBottom: 0 }}>
+        <div className="field">
           <label htmlFor="lead-search">{t('admin.leads.search.label')}</label>
           <input
             id="lead-search"
             type="search"
             value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setPage(1);
-            }}
+            onChange={(event) => { setQuery(event.target.value); setPage(1); }}
             placeholder={t('admin.leads.search.placeholder')}
             maxLength={120}
           />
         </div>
         <div className="field" style={{ marginBottom: 0 }}>
           <label htmlFor="lead-status">{t('admin.leads.filter.label')}</label>
-          <Select
+          <select
             id="lead-status"
             value={status}
-            onChange={(v) => {
-              setStatus(v);
-              setPage(1);
-            }}
-            options={statusOptions}
-            fullWidth
-          />
-        </div>
-        <div style={{ paddingBottom: '2px' }}>
-          <button
-            type="button"
-            className="button"
-            onClick={() => {
-              setPage(1);
-              void load();
-            }}
+            onChange={(event) => { setStatus(event.target.value); setPage(1); }}
           >
-            {t('admin.leads.action.search')}
-          </button>
+            <option value="">{t('admin.leads.filter.all')}</option>
+            {statuses.map((item) => (
+              <option key={item} value={item}>
+                {t(`admin.leads.status.${item}`)}
+              </option>
+            ))}
+          </select>
         </div>
         <div style={{ paddingBottom: '2px' }}>
           <a
@@ -258,7 +218,7 @@ export function LeadsManager() {
       </div>
 
       {error && (
-        <p role="alert" className="form-error" style={{ marginBottom: '1rem' }}>
+        <p role="alert" className="form-error">
           {error}{' '}
           <button
             type="button"
@@ -271,7 +231,7 @@ export function LeadsManager() {
       )}
 
       {result && (
-        <p className="form-note" aria-live="polite" style={{ marginBottom: '1rem' }}>
+        <p className="form-note" aria-live="polite">
           {summaryParts.join(' \u00B7 ')}
         </p>
       )}
@@ -315,25 +275,23 @@ export function LeadsManager() {
                     <InterestBadge value={item.interest} />
                     <br />
                     <span className="form-note">
-                      {[
-                        item.location,
-                        item.interestedSolution,
-                        item.interestedProduct,
-                      ]
+                      {[item.location, item.interestedSolution, item.interestedProduct]
                         .filter(Boolean)
                         .join(' \u00B7 ')}
                     </span>
                   </td>
                   <td>
-                    <Select
+                    <select
+                      aria-label={fill(t('admin.leads.statusAria'), { name: item.name })}
                       value={item.status}
-                      onChange={(v) => void update(item.id, v)}
-                      options={statusOptionsForRow()}
-                      aria-label={fill(t('admin.leads.statusAria'), {
-                        name: item.name,
-                      })}
-                      minWidth={160}
-                    />
+                      onChange={(event) => void update(item.id, event.target.value)}
+                    >
+                      {statuses.map((value) => (
+                        <option key={value} value={value}>
+                          {t(`admin.leads.status.${value}`)}
+                        </option>
+                      ))}
+                    </select>
                   </td>
                 </tr>
               ))}
@@ -345,23 +303,13 @@ export function LeadsManager() {
           {loading
             ? t('admin.leads.state.loading')
             : query || status
-              ? t('admin.leads.empty.filtered')
-              : t('admin.leads.empty.none')}
+            ? t('admin.leads.empty.filtered')
+            : t('admin.leads.empty.none')}
         </p>
       )}
 
       {result && result.pageCount > 1 && (
-        <nav
-          className="pagination"
-          aria-label={t('aria.pagination.leads')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '12px',
-            marginTop: '1.5rem',
-          }}
-        >
+       <nav className="pagination" aria-label={t('aria.pagination.leads')}>
           <button
             className="admin-action"
             disabled={page <= 1 || loading}
@@ -369,7 +317,7 @@ export function LeadsManager() {
           >
             {t('admin.leads.pagination.previous')}
           </button>
-          <span className="form-note">
+          <span>
             {fill(t('admin.leads.pagination.pageOf'), {
               page: result.page,
               count: result.pageCount,

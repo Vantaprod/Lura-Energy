@@ -29,26 +29,26 @@ enum MediaKind {
 }
 
 model User {
-  id                 String            @id @default(cuid())
-  email              String            @unique
-  name               String
-  passwordHash       String
-  role               Role              @default(ADMIN)
-  active             Boolean           @default(true)
+  id                  String            @id @default(cuid())
+  email               String            @unique
+  name                String
+  passwordHash        String
+  role                Role              @default(ADMIN)
+  active              Boolean           @default(true)
   passwordChangedAt   DateTime?
-  passwordChangeCount Int      @default(0)
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-  lastLoginAt        DateTime?
-  sessions           Session[]
-  auditLogs          AuditLog[]
-  invitationsCreated AdminInvitation[] @relation("Inviter")
-  avatarUrl          String?
-  lastSeenAt         DateTime?
-  displayName        String?
-  sentMessages       Message[]         @relation("SentMessages")
-  receivedMessages   Message[]         @relation("ReceivedMessages")
-  notifications      Notification[]
+  passwordChangeCount Int               @default(0)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  lastLoginAt         DateTime?
+  sessions            Session[]
+  auditLogs           AuditLog[]
+  invitationsCreated  AdminInvitation[] @relation("Inviter")
+  avatarUrl           String?
+  lastSeenAt          DateTime?
+  displayName         String?
+  sentMessages        Message[]         @relation("SentMessages")
+  receivedMessages    Message[]         @relation("ReceivedMessages")
+  notifications       Notification[]
 }
 
 model Session {

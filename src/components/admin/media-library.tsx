@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from '@/lib/i18n/context';
 import { MediaPreviewModal, type PreviewItem } from '@/components/admin/media-preview-modal';
 
@@ -18,7 +18,6 @@ type MediaItem = {
 };
 
 type Filter = 'ALL' | MediaKind;
-type SortKey = 'newest' | 'oldest' | 'nameAsc' | 'nameDesc' | 'largest' | 'smallest';
 
 const FILTERS: { key: Filter; labelKey: string }[] = [
   { key: 'ALL', labelKey: 'admin.mediaLib.filter.all' },
@@ -27,170 +26,11 @@ const FILTERS: { key: Filter; labelKey: string }[] = [
   { key: 'DOCUMENT', labelKey: 'admin.mediaLib.filter.documents' },
 ];
 
-const SORTS: { key: SortKey; labelKey: string }[] = [
-  { key: 'newest', labelKey: 'admin.mediaLib.sort.newest' },
-  { key: 'oldest', labelKey: 'admin.mediaLib.sort.oldest' },
-  { key: 'nameAsc', labelKey: 'admin.mediaLib.sort.nameAsc' },
-  { key: 'nameDesc', labelKey: 'admin.mediaLib.sort.nameDesc' },
-  { key: 'largest', labelKey: 'admin.mediaLib.sort.largest' },
-  { key: 'smallest', labelKey: 'admin.mediaLib.sort.smallest' },
-];
-
-const PAGE_SIZE = 24;
-
 function formatBytes(n: number | null): string {
   if (!n || n <= 0) return '';
   if (n < 1024) return n + ' B';
   if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
   return (n / 1024 / 1024).toFixed(1) + ' MB';
-}
-
-function fill(template: string, vars: Record<string, string | number>): string {
-  return Object.entries(vars).reduce(
-    (acc, [key, value]) => acc.replaceAll(`{${key}}`, String(value)),
-    template,
-  );
-}
-
-function itemName(m: MediaItem): string {
-  return (m.alt || m.title || m.url.split('/').pop() || '').toLowerCase();
-}
-
-function SortSelect({
-  value,
-  options,
-  onChange,
-}: {
-  value: SortKey;
-  options: { key: SortKey; label: string }[];
-  onChange: (next: SortKey) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function onDoc(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false);
-    }
-    document.addEventListener('mousedown', onDoc);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDoc);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
-  const current = options.find((o) => o.key === value) ?? options[0];
-
-  return (
-    <div ref={ref} style={{ position: 'relative' }}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '10px',
-          padding: '9px 14px',
-          minWidth: '200px',
-          background: '#FFFFFF',
-          border: '1px solid ' + (open ? '#1428A0' : '#E4E7EC'),
-          borderRadius: '6px',
-          fontFamily: 'inherit',
-          fontSize: '14px',
-          fontWeight: 600,
-          color: '#0A1550',
-          cursor: 'pointer',
-          transition: 'border-color 150ms ease',
-          lineHeight: 1.2,
-        }}
-      >
-        <span style={{ flex: 1, textAlign: 'left' }}>{current.label}</span>
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{
-            transition: 'transform 200ms ease',
-            transform: open ? 'rotate(180deg)' : 'none',
-          }}
-          aria-hidden="true"
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
-
-      {open && (
-        <div
-          role="listbox"
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 6px)',
-            left: 0,
-            minWidth: '220px',
-            background: '#FFFFFF',
-            border: '1px solid #E4E7EC',
-            borderRadius: '8px',
-            boxShadow: '0 12px 32px rgba(5, 14, 31, 0.14)',
-            padding: '6px',
-            zIndex: 200,
-          }}
-        >
-          {options.map((o) => {
-            const active = o.key === value;
-            return (
-              <button
-                key={o.key}
-                type="button"
-                role="option"
-                aria-selected={active}
-                onClick={() => {
-                  onChange(o.key);
-                  setOpen(false);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  width: '100%',
-                  textAlign: 'left',
-                  padding: '9px 12px',
-                  background: active ? '#E8EEF9' : 'transparent',
-                  color: active ? '#1428A0' : '#0A1550',
-                  border: 0,
-                  borderRadius: '5px',
-                  fontFamily: 'inherit',
-                  fontSize: '14px',
-                  fontWeight: active ? 700 : 500,
-                  cursor: 'pointer',
-                  transition: 'background 120ms ease',
-                  lineHeight: 1.25,
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) e.currentTarget.style.background = '#F4F6F9';
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) e.currentTarget.style.background = 'transparent';
-                }}
-              >
-                {o.label}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
 }
 
 export function MediaLibrary() {
@@ -204,7 +44,6 @@ export function MediaLibrary() {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [bulkDeleting, setBulkDeleting] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -270,11 +109,6 @@ export function MediaLibrary() {
       setError(t('admin.mediaLib.error.delete'));
       return;
     }
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.delete(item.id);
-      return next;
-    });
     setItems((prev) => prev.filter((m) => m.id !== item.id));
   }
 
@@ -442,21 +276,13 @@ export function MediaLibrary() {
         failed ? ' ' + failed + ' ' + t('admin.mediaLib.status.failed') : ''
       }`,
     );
-    await load();
-  }
+  });
 
   const dropTitle = uploading
     ? t('admin.mediaLib.drop.titleUploading')
     : dragging
     ? t('admin.mediaLib.drop.titleDragging')
     : t('admin.mediaLib.drop.title');
-
-  const totalLabel =
-    sorted.length === 1
-      ? t('admin.mediaLib.count.one')
-      : t('admin.mediaLib.count.many');
-
-  const sortOptions = SORTS.map((s) => ({ key: s.key, label: t(s.labelKey) }));
 
   return (
     <div className="media-library">
@@ -538,35 +364,11 @@ export function MediaLibrary() {
                   transition: 'background 150ms ease, color 150ms ease',
                 }}
               >
-                {t(f.labelKey)} ({counts[f.key]})
+                {t(f.labelKey)}
               </button>
             );
           })}
         </div>
-      </div>
-
-      <div className="media-library__toolbar">
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            flexWrap: 'wrap',
-          }}
-        >
-          <span
-            style={{
-              fontSize: '13px',
-              fontWeight: 700,
-              color: '#2B3441',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {t('admin.mediaLib.sort.label')}
-          </span>
-          <SortSelect value={sort} options={sortOptions} onChange={setSort} />
-        </div>
-
         <input
           type="search"
           className="media-library__search"
@@ -576,59 +378,7 @@ export function MediaLibrary() {
         />
       </div>
 
-      {selected.size > 0 && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            flexWrap: 'wrap',
-            padding: '12px 16px',
-            margin: '0 0 16px',
-            background: '#E8EEF9',
-            border: '1px solid #1428A0',
-            borderRadius: '6px',
-          }}
-        >
-          <strong style={{ fontSize: '14px', color: '#1428A0' }}>
-            {fill(t('admin.mediaLib.bulk.selected'), { n: selected.size })}
-          </strong>
-          <button
-            type="button"
-            className="admin-action admin-action--danger"
-            onClick={() => void deleteSelected()}
-            disabled={bulkDeleting}
-          >
-            {bulkDeleting
-              ? t('admin.actions.saving')
-              : t('admin.mediaLib.bulk.deleteSelected')}
-          </button>
-          <button
-            type="button"
-            className="admin-action"
-            onClick={clearSelection}
-            disabled={bulkDeleting}
-          >
-            {t('admin.mediaLib.bulk.clear')}
-          </button>
-          <button
-            type="button"
-            className="admin-action"
-            onClick={toggleSelectAllOnPage}
-            disabled={bulkDeleting}
-          >
-            {t('admin.mediaLib.bulk.selectAllOnPage')}
-          </button>
-        </div>
-      )}
-
-      {sorted.length > 0 && (
-        <p className="form-note" style={{ margin: '0 0 12px' }}>
-          {sorted.length} {totalLabel}
-        </p>
-      )}
-
-      {paginated.length === 0 ? (
+      {visible.length === 0 ? (
         <div className="empty-panel" style={{ marginTop: '24px' }}>
           <strong>{t('admin.mediaLib.empty.title')}</strong>
           {t('admin.mediaLib.empty.body')}
@@ -737,8 +487,26 @@ export function MediaLibrary() {
                   </button>
                 </div>
               </div>
-            );
-          })}
+              <div className="media-tile__info">
+                <p className="media-tile__name">
+                  {m.alt || m.title || m.url.split('/').pop()}
+                </p>
+                <p className="media-tile__meta">{formatBytes(m.sizeBytes)}</p>
+              </div>
+              <div className="media-tile__actions">
+                <button type="button" className="admin-action" onClick={() => void copyUrl(m.url)}>
+                  {t('admin.mediaLib.action.copyUrl')}
+                </button>
+                <button
+                  type="button"
+                  className="admin-action admin-action--danger"
+                  onClick={() => void remove(m)}
+                >
+                  {t('admin.mediaLib.action.delete')}
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

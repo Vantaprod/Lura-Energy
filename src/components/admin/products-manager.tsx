@@ -14,7 +14,6 @@ type Product = {
   id: string;
   name: string;
   slug: string;
-  modelNumber: string | null;
   brand: string | null;
   summary: string | null;
   description: string | null;
@@ -40,7 +39,6 @@ type Category = { id: string; name: string; slug: string; published: boolean };
 type EditValues = {
   name: string;
   slug: string;
-  modelNumber: string;
   brand: string;
   categoryId: string;
   summary: string;
@@ -62,11 +60,11 @@ type ProductResult = {
   pageSize: number;
   pageCount: number;
 };
+type ProductResult = { items: Product[]; total: number; page: number; pageSize: number; pageCount: number };
 
 const emptyEdit = (product: Product): EditValues => ({
   name: product.name,
   slug: product.slug,
-  modelNumber: product.modelNumber ?? '',
   brand: product.brand ?? '',
   categoryId: product.categoryId ?? '',
   summary: product.summary ?? '',
@@ -104,51 +102,43 @@ export function ProductsManager() {
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const bannerFileRef = useRef<HTMLInputElement>(null);
 
-  const load = useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      setError('');
-      const params = new URLSearchParams({ page: String(page) });
-      if (query.trim()) params.set('q', query.trim());
-      if (categoryFilter) params.set('categoryId', categoryFilter);
-      if (stateFilter) params.set('state', stateFilter);
-      try {
-        const [productsResponse, categoriesResponse] = await Promise.all([
-          fetch(`/api/admin/products?${params}`, { signal }),
-          fetch('/api/admin/content?collection=product-categories', { signal }),
-        ]);
-        const productResult = await productsResponse.json();
-        if (!productsResponse.ok) {
-          throw new Error(productResult.error ?? t('admin.prod.error.load'));
-        }
-        if (!categoriesResponse.ok) {
-          throw new Error(t('admin.prod.error.categories'));
-        }
-        const data: ProductResult = productResult;
-        setItems(data.items);
-        setTotal(data.total);
-        setPageCount(data.pageCount);
-        setPage(data.page);
-        setCategories(await categoriesResponse.json());
-      } catch (reason) {
-        if (reason instanceof Error && reason.name === 'AbortError') return;
-        setError(reason instanceof Error ? reason.message : t('admin.prod.error.load'));
-      } finally {
-        if (!signal?.aborted) setLoading(false);
+  const load = useCallback(async (signal?: AbortSignal) => {
+    setLoading(true);
+    setError('');
+    const params = new URLSearchParams({ page: String(page) });
+    if (query.trim()) params.set('q', query.trim());
+    if (categoryFilter) params.set('categoryId', categoryFilter);
+    if (stateFilter) params.set('state', stateFilter);
+    try {
+      const [productsResponse, categoriesResponse] = await Promise.all([
+        fetch(`/api/admin/products?${params}`, { signal }),
+        fetch('/api/admin/content?collection=product-categories', { signal }),
+      ]);
+      const productResult = await productsResponse.json();
+      if (!productsResponse.ok) {
+        throw new Error(productResult.error ?? t('admin.prod.error.load'));
       }
-    },
-    [page, query, categoryFilter, stateFilter, t],
-  );
+      if (!categoriesResponse.ok) {
+        throw new Error(t('admin.prod.error.categories'));
+      }
+      const data: ProductResult = productResult;
+      setItems(data.items);
+      setTotal(data.total);
+      setPageCount(data.pageCount);
+      setPage(data.page);
+      setCategories(await categoriesResponse.json());
+    } catch (reason) {
+      if (reason instanceof Error && reason.name === 'AbortError') return;
+      setError(reason instanceof Error ? reason.message : t('admin.prod.error.load'));
+    } finally {
+      if (!signal?.aborted) setLoading(false);
+    }
+  }, [page, query, categoryFilter, stateFilter, t]);
 
   useEffect(() => {
     const controller = new AbortController();
-    const timer = setTimeout(() => {
-      void load(controller.signal);
-    }, query ? 250 : 0);
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
-    };
+    const timer = setTimeout(() => { void load(controller.signal); }, query ? 250 : 0);
+    return () => { clearTimeout(timer); controller.abort(); };
   }, [load, query]);
 
   // Highlight and scroll to the single matching row when the search
@@ -248,15 +238,11 @@ export function ProductsManager() {
       const response = await fetch('/api/admin/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          categoryId: createCategoryId || undefined,
-        }),
+        body: JSON.stringify({ ...form, categoryId: form.categoryId || undefined }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? t('admin.prod.error.save'));
       formElement.reset();
-      setCreateCategoryId('');
       setPage(1);
       await load();
       const created: Product = {
@@ -282,10 +268,6 @@ export function ProductsManager() {
     event.preventDefault();
     if (!editing || !values) return;
     setError('');
-    const keyFeaturesArray = values.keyFeatures
-      .split('\n')
-      .map((s) => s.trim())
-      .filter(Boolean);
     try {
       const response = await fetch('/api/admin/products/' + editing.id, {
         method: 'PATCH',
@@ -351,9 +333,7 @@ export function ProductsManager() {
             value={values?.[key] ?? ''}
             maxLength={key === 'keyFeatures' ? 4000 : key === 'notice' ? 4000 : 10000}
             onChange={(event) =>
-              setValues((current) =>
-                current ? { ...current, [key]: event.target.value } : current,
-              )
+              setValues((current) => (current ? { ...current, [key]: event.target.value } : current))
             }
           />
         ) : (
@@ -362,9 +342,7 @@ export function ProductsManager() {
             value={values?.[key] ?? ''}
             maxLength={key === 'seoDescription' ? 320 : key === 'brand' ? 80 : 500}
             onChange={(event) =>
-              setValues((current) =>
-                current ? { ...current, [key]: event.target.value } : current,
-              )
+              setValues((current) => (current ? { ...current, [key]: event.target.value } : current))
             }
           />
         )}
@@ -419,15 +397,12 @@ export function ProductsManager() {
         </div>
         <div className="field">
           <label htmlFor="categoryId">{t('admin.prod.form.category')}</label>
-          <Select
-            id="categoryId"
-            name="categoryId"
-            value={createCategoryId}
-            onChange={setCreateCategoryId}
-            options={createCategoryOptions}
-            placeholder={t('admin.prod.form.categoryNone')}
-            fullWidth
-          />
+          <select id="categoryId" name="categoryId">
+            <option value="">{t('admin.prod.form.categoryNone')}</option>
+            {categories.filter((item) => item.published).map((item) => (
+              <option key={item.id} value={item.id}>{item.name}</option>
+            ))}
+          </select>
           <span className="form-note">{t('admin.prod.form.categoryHint')}</span>
         </div>
         <div className="field">
@@ -461,10 +436,7 @@ export function ProductsManager() {
       <form
         role="search"
         className="lead-filters"
-        onSubmit={(event) => {
-          event.preventDefault();
-          setPage(1);
-        }}
+        onSubmit={(event) => { event.preventDefault(); setPage(1); }}
       >
         <div className="field">
           <label htmlFor="product-search">{t('admin.prod.list.search')}</label>
@@ -472,40 +444,35 @@ export function ProductsManager() {
             id="product-search"
             type="search"
             value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setPage(1);
-            }}
+            onChange={(event) => { setQuery(event.target.value); setPage(1); }}
             placeholder={t('admin.prod.list.searchPlaceholder')}
             maxLength={120}
           />
         </div>
         <div className="field">
           <label htmlFor="product-category-filter">{t('admin.prod.list.category')}</label>
-          <Select
+          <select
             id="product-category-filter"
             value={categoryFilter}
-            onChange={(v) => {
-              setCategoryFilter(v);
-              setPage(1);
-            }}
-            options={filterCategoryOptions}
-            placeholder={t('admin.prod.list.allCategories')}
-            fullWidth
-          />
+            onChange={(event) => { setCategoryFilter(event.target.value); setPage(1); }}
+          >
+            <option value="">{t('admin.prod.list.allCategories')}</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>{category.name}</option>
+            ))}
+          </select>
         </div>
         <div className="field">
           <label htmlFor="product-state-filter">{t('admin.prod.list.publication')}</label>
-          <Select
+          <select
             id="product-state-filter"
             value={stateFilter}
-            onChange={(v) => {
-              setStateFilter(v);
-              setPage(1);
-            }}
-            options={stateOptions}
-            fullWidth
-          />
+            onChange={(event) => { setStateFilter(event.target.value); setPage(1); }}
+          >
+            <option value="">{t('admin.prod.list.allRecords')}</option>
+            <option value="PUBLISHED">{t('admin.prod.list.published')}</option>
+            <option value="DRAFT">{t('admin.prod.list.draft')}</option>
+          </select>
         </div>
       </form>
 
@@ -570,21 +537,10 @@ export function ProductsManager() {
                 >
                   <td>
                     {item.name}
-                    {item.modelNumber && (
-                      <>
-                        <br />
-                        <span className="form-note" style={{ fontFamily: 'monospace' }}>
-                          {item.modelNumber}
-                        </span>
-                      </>
-                    )}
                     <br />
                     <span className="form-note">{item.slug}</span>
                     <br />
-                    <ProductSpecifications
-                      productId={item.id}
-                      initial={item.specifications}
-                    />
+                    <ProductSpecifications productId={item.id} initial={item.specifications} />
                   </td>
                   <td>{item.brand ?? '-'}</td>
                   <td>{item.category?.name ?? '-'}</td>
@@ -657,9 +613,7 @@ export function ProductsManager() {
           >
             {t('admin.actions.cancel')}
           </button>
-          <span>
-            {page} / {pageCount}
-          </span>
+          <span>{page} / {pageCount}</span>
           <button
             className="admin-action"
             disabled={page >= pageCount || loading}
@@ -678,26 +632,24 @@ export function ProductsManager() {
           </div>
           {editField('name', t('admin.prod.form.name'))}
           {editField('slug', t('admin.prod.form.slug'))}
-          {editField('modelNumber', t('admin.prod.form.modelNumber'))}
           {editField('brand', t('admin.prod.form.brand'))}
           <div className="field">
             <label htmlFor="edit-categoryId">{t('admin.prod.form.category')}</label>
-            <Select
+            <select
               id="edit-categoryId"
               value={values.categoryId}
-              onChange={(v) => setValues({ ...values, categoryId: v })}
-              options={editCategoryOptions}
-              placeholder={t('admin.prod.form.categoryNone')}
-              fullWidth
-            />
+              onChange={(event) => setValues({ ...values, categoryId: event.target.value })}
+            >
+              <option value="">{t('admin.prod.form.categoryNone')}</option>
+              {categories.filter((item) => item.published).map((item) => (
+                <option value={item.id} key={item.id}>{item.name}</option>
+              ))}
+            </select>
           </div>
-          {editField('sortOrder', t('admin.prod.form.sortOrder'))}
           {editField('summary', t('admin.prod.form.summary'))}
           {editField('status', t('admin.prod.edit.status'))}
           {editField('warranty', t('admin.prod.edit.warranty'))}
           {editField('description', t('admin.prod.form.description'), true)}
-          {editField('keyFeatures', t('admin.prod.form.keyFeatures'), true)}
-          {editField('datasheetUrl', t('admin.prod.form.datasheetUrl'))}
 
           <div className="field-wide">
             <label>{t('admin.prod.form.images')}</label>

@@ -266,7 +266,7 @@ export async function SiteFooter() {
               alt="Lura Energy"
               width={70}
               height={22}
-              style={{ height: 22, width: "auto" }}
+              style={{ height: "auto", width: "auto" }}
             />
           </Link>
           <div className="footer-bottom__legal">

@@ -1,7 +1,6 @@
-import { PrismaClient, Role, MediaKind } from '@prisma/client';
-
+import { PrismaClient } from '@prisma/client';
+import { INITIAL_ADMIN_SEAT_LIMIT } from '../src/lib/auth/admin-capacity';
 const prisma = new PrismaClient();
-
 async function main() {
   console.log('Seeding settings...');
 
@@ -458,12 +457,4 @@ async function main() {
 
   console.log('Seed complete.');
 }
-
-main()
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().finally(async () => prisma.$disconnect()).catch(error => { console.error(error); process.exitCode = 1; });
