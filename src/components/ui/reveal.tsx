@@ -6,11 +6,13 @@ import { ReactNode } from 'react';
 export function Reveal({ 
   children, 
   delay = 0, 
-  direction = 'up' 
+  direction = 'up',
+  hover = false
 }: { 
   children: ReactNode; 
   delay?: number; 
-  direction?: 'up' | 'down' | 'left' | 'right' 
+  direction?: 'up' | 'down' | 'left' | 'right';
+  hover?: boolean;
 }) {
   const directions = {
     up: { y: 40, x: 0 },
@@ -30,12 +32,18 @@ export function Reveal({
         x: 0, 
         y: 0 
       }}
+      whileHover={
+        hover 
+          ? { scale: 1.02, y: -5, transition: { duration: 0.2, delay: 0 } } 
+          : undefined
+      }
       viewport={{ once: true, margin: "-100px" }}
       transition={{ 
         duration: 0.7, 
         delay: delay, 
-        ease: [0.21, 0.47, 0.32, 0.98] // Custom cubic-bezier for smooth easing
+        ease: [0.21, 0.47, 0.32, 0.98]
       }}
+      style={{ cursor: hover ? 'pointer' : 'inherit' }}
     >
       {children}
     </motion.div>

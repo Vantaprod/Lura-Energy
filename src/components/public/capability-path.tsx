@@ -23,7 +23,7 @@ export function CapabilityPath() {
         <ol className="capability-path__list">
           {STEPS.map((step, index) => (
             <li className="capability-step" key={step.number}>
-              <Reveal delay={index * 0.15}>
+              <Reveal delay={index * 0.15} hover>
                 <span className="capability-step__number" aria-hidden="true">
                   {step.number}
                 </span>

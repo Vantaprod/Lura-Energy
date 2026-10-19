@@ -208,13 +208,13 @@ export default async function HomePage() {
       {intro && (
         <section className="section-generous">
           <div className="editorial">
-            <Reveal direction="right">
+            <Reveal direction="right" hover>
               <div>
                 <p className="eyebrow">{t('home.aboutEyebrow')}</p>
                 <h2 className="display-2">{t('home.aboutHeading')}</h2>
               </div>
             </Reveal>
-            <Reveal direction="left" delay={0.2}>
+            <Reveal direction="left" delay={0.2} hover>
               <div>
                 <p className="lead">{intro}</p>
               </div>
