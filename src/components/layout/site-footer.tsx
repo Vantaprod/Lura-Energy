@@ -371,15 +371,18 @@ export async function SiteFooter() {
         .footer-bottom {
           display: flex;
           align-items: center;
+          justify-content: center;
           gap: 16px;
           padding-bottom: 16px;
           flex-wrap: wrap;
+          position: relative;
         }
         .footer-logo-mini {
+          position: absolute;
+          right: 0;
           display: inline-flex;
           align-items: center;
           height: 22px;
-          flex: 0 0 auto;
         }
         .footer-bottom__legal {
           flex: 1;
@@ -430,9 +433,12 @@ export async function SiteFooter() {
           }
           .footer-bottom {
             flex-direction: column;
-            gap: 12px;
+            gap: 16px;
             text-align: center;
             padding-bottom: 20px;
+          }
+          .footer-logo-mini {
+            position: static;
           }
           .footer-bottom__legal {
             flex-direction: column;
