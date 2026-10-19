@@ -10282,3 +10282,16 @@ select option:hover {
     height: 220px !important;
   }
 }
+
+
+/* --- Fix service centre badges (2026-10-19) ---
+   Previous version was being crushed by flexbox. This forces
+   a minimum size and proper spacing so the text is always readable. */
+.centre-card__badge {
+  min-width: 80px !important;
+  min-height: 24px !important;
+  justify-content: center !important;
+  padding: 4px 12px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
