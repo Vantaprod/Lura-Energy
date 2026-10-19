@@ -71,15 +71,12 @@ function CentreCard({ centre, labels }: { centre: Centre; labels: Labels }) {
     <article className="centre-card">
       <header className="centre-card__head">
         <div className="centre-card__top">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-              <p className="eyebrow" style={{ margin: 0 }}>{centre.state}</p>
-              <span className={`centre-card__badge centre-card__badge--${centre.type === "Pickup Point" ? "pickup" : centre.type === "Both" ? "both" : "service"}`}>
-                {centre.type === "Both" ? "SERVICE & PICKUP" : centre.type === "Pickup Point" ? "PICKUP POINT" : "SERVICE CENTRE"}
-              </span>
-            </div>
-          <span className={`centre-card__badge centre-card__badge--${centre.type === 'Pickup Point' ? 'pickup' : centre.type === 'Both' ? 'both' : 'service'}`}>
+          <p className="eyebrow">{centre.state}</p>
+          <span className={centre-card__badge centre-card__badge--}>
             {centre.type === 'Both' ? 'SERVICE & PICKUP' : centre.type === 'Pickup Point' ? 'PICKUP POINT' : 'SERVICE CENTRE'}
           </span>
+        </div>
+          
         </div>
         <h3 className="centre-card__name">{centre.name}</h3>
         <p className="centre-card__address">
