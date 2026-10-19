@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from '@/lib/i18n/context';
 import { Select } from '@/components/ui/select';
 import { MediaDropzone, type ProductMedia } from '@/components/admin/media-dropzone';
@@ -190,19 +190,11 @@ export function ProjectsManager() {
       </div>
       <div className="field">
         <label>{t('admin.proj.form.category')}</label>
-        <input
-          name="category"
-          maxLength={100}
-          defaultValue={value?.category ?? ''}
-        />
+        <input name="category" maxLength={100} defaultValue={value?.category ?? ''} />
       </div>
       <div className="field">
         <label>{t('admin.proj.form.location')}</label>
-        <input
-          name="location"
-          maxLength={160}
-          defaultValue={value?.location ?? ''}
-        />
+        <input name="location" maxLength={160} defaultValue={value?.location ?? ''} />
       </div>
       <div className="field field-wide">
         <label>{t('admin.proj.form.description')}</label>
@@ -259,14 +251,23 @@ export function ProjectsManager() {
         </p>
       )}
 
-      <h2 style={{ fontSize: '1.8rem', marginTop: '3rem' }}>
+      <h2 style={{ fontSize: '1.8rem', margin: '3rem 0 1.5rem' }}>
         {t('admin.proj.list.title')}
       </h2>
 
-      <div className="lead-filters">
-        <label>
-          {t('admin.proj.list.search')}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(220px, 1fr) auto auto',
+          gap: '16px',
+          alignItems: 'end',
+          marginBottom: '1.25rem',
+        }}
+      >
+        <div className="field" style={{ marginBottom: 0 }}>
+          <label htmlFor="proj-search">{t('admin.proj.list.search')}</label>
           <input
+            id="proj-search"
             type="search"
             value={query}
             onChange={(e) => {
@@ -275,41 +276,37 @@ export function ProjectsManager() {
             }}
             placeholder={t('admin.proj.list.searchPlaceholder')}
           />
-        </label>
-        <label>
-          {t('admin.proj.form.category')}
-          <select
+        </div>
+        <div className="field" style={{ marginBottom: 0, minWidth: '200px' }}>
+          <label htmlFor="proj-category-filter">{t('admin.proj.form.category')}</label>
+          <Select
+            id="proj-category-filter"
             value={category}
-            onChange={(e) => {
-              setCategory(e.target.value);
+            onChange={(v) => {
+              setCategory(v);
               setPage(1);
             }}
-          >
-            <option value="">{t('admin.proj.list.allCategories') || 'All categories'}</option>
-            {result.categories.map((x) => (
-              <option key={x} value={x}>
-                {x}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t('admin.proj.list.state')}
-          <select
+            options={categoryOptions}
+            placeholder={t('admin.prod.list.allCategories')}
+            fullWidth
+          />
+        </div>
+        <div className="field" style={{ marginBottom: 0, minWidth: '180px' }}>
+          <label htmlFor="proj-state-filter">{t('admin.proj.list.state')}</label>
+          <Select
+            id="proj-state-filter"
             value={state}
-            onChange={(e) => {
-              setState(e.target.value);
+            onChange={(v) => {
+              setState(v);
               setPage(1);
             }}
-          >
-            <option value="">{t('admin.proj.list.allRecords')}</option>
-            <option value="PUBLISHED">{t('admin.proj.list.published')}</option>
-            <option value="DRAFT">{t('admin.proj.list.draft')}</option>
-          </select>
-        </label>
+            options={stateOptions}
+            fullWidth
+          />
+        </div>
       </div>
 
-      <p aria-live="polite" className="form-note">
+      <p aria-live="polite" className="form-note" style={{ marginBottom: '1rem' }}>
         {loading
           ? t('admin.proj.list.loading')
           : `${result.total} ${
@@ -394,27 +391,38 @@ export function ProjectsManager() {
         )
       )}
 
-      <nav aria-label={t('aria.pagination.projects')} className="pagination">
-        <button
-          type="button"
-          className="admin-action"
-          disabled={page <= 1 || loading}
-          onClick={() => setPage((p) => p - 1)}
+      {result.pageCount > 1 && (
+        <nav
+          aria-label={t('aria.pagination.projects')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px',
+            marginTop: '1.5rem',
+          }}
         >
-          {'\u2190'}
-        </button>
-        <span>
-          {result.page} / {result.pageCount}
-        </span>
-        <button
-          type="button"
-          className="admin-action"
-          disabled={page >= result.pageCount || loading}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          {'\u2192'}
-        </button>
-      </nav>
+          <button
+            type="button"
+            className="admin-action"
+            disabled={page <= 1 || loading}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            {t('admin.cms.pagination.previous')}
+          </button>
+          <span className="form-note">
+            {result.page} / {result.pageCount}
+          </span>
+          <button
+            type="button"
+            className="admin-action"
+            disabled={page >= result.pageCount || loading}
+            onClick={() => setPage((p) => Math.min(result.pageCount, p + 1))}
+          >
+            {t('admin.cms.pagination.next')}
+          </button>
+        </nav>
+      )}
 
       {editing && (
         <form className="form-grid edit-panel" onSubmit={save}>
