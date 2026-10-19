@@ -111,14 +111,15 @@ export async function SiteFooter() {
       className="site-footer"
       style={{
         background: '#0A1550',
-        position: 'relative',
-        overflow: 'hidden',
         color: 'rgba(255,255,255,0.78)',
         padding: '28px 0 0',
         fontSize: 13,
+        position: 'relative',
+        overflow: 'hidden'
       }}
     >
-      <EnergyLines />`r`n      <div className="footer-wrap" style={{ position: 'relative', zIndex: 10 }}>
+      <EnergyLines />
+      <div className="footer-wrap" style={{ position: 'relative', zIndex: 10 }}>
         <div className="footer-columns-grid">
           <div className="footer-col">
             <h3 style={footerTitleStyle}>{t('footer.products')}</h3>
@@ -403,7 +404,7 @@ export async function SiteFooter() {
             grid-column: 1 / -1;
             border-left: none;
             padding-left: 0;
-            
+            border-top: 1px solid rgba(255, 255, 255, 0.10);
             padding-top: 20px;
             flex-direction: row;
             gap: 48px;
@@ -423,7 +424,7 @@ export async function SiteFooter() {
             grid-column: 1 / -1;
             flex-direction: row;
             gap: 32px;
-            
+            border-top: 1px solid rgba(255, 255, 255, 0.10);
             padding-top: 16px;
             justify-content: flex-start;
           }
