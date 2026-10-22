@@ -10350,3 +10350,27 @@ select option:hover {
     top: 45% !important;
   }
 }
+
+
+/* ============================================================
+   FINAL FIX: Remove the massive 1200px gap, resize globe
+   ============================================================ */
+.impact-section {
+  min-height: 0 !important;
+  padding-top: 100px !important;
+  padding-bottom: 100px !important;
+  display: block !important;
+}
+
+@media (min-width: 900px) {
+  .impact-section {
+    padding-top: 140px !important;
+    padding-bottom: 140px !important;
+  }
+  .impact-section__globe {
+    width: clamp(450px, 50vw, 750px) !important;
+    height: clamp(450px, 50vw, 750px) !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+}

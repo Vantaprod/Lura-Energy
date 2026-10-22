@@ -157,39 +157,19 @@ export default async function HomePage() {
       ? String(content['home.ctaBody'])
       : '';
 
-  const impactContent: ImpactContent = {
+    const impactContent: ImpactContent = {
     eyebrow: resolve('impact.eyebrow', 'impact.eyebrow'),
     headingWhite: resolve('impact.headingWhite', 'impact.headingWhite'),
     headingAccent: resolve('impact.headingAccent', 'impact.headingAccent'),
     body1: resolve('impact.body1', 'impact.body1'),
     body2: resolve('impact.body2', 'impact.body2'),
     ctaLabel: resolve('impact.ctaLabel', 'impact.ctaLabel'),
-    ctaHref:
-      typeof content['impact.ctaHref'] === 'string' &&
-      String(content['impact.ctaHref']).trim()
-        ? String(content['impact.ctaHref'])
-        : '/projects',
+    ctaHref: '/projects',
     stats: [
-      {
-        label: resolve('impact.stat1Label', 'PV installed'),
-        value: parseNumber(String(content['impact.stat1Value'] ?? '30'), 30),
-        suffix: String(content['impact.stat1Suffix'] ?? '+ MW'),
-      },
-      {
-        label: resolve('impact.stat2Label', 'Energy storage'),
-        value: parseNumber(String(content['impact.stat2Value'] ?? '20'), 20),
-        suffix: String(content['impact.stat2Suffix'] ?? '+ MWh'),
-      },
-      {
-        label: resolve('impact.stat3Label', 'C&I projects'),
-        value: parseNumber(String(content['impact.stat3Value'] ?? '30'), 30),
-        suffix: String(content['impact.stat3Suffix'] ?? '+'),
-      },
-      {
-        label: resolve('impact.stat4Label', 'Operating Regions in Nigeria'),
-        value: parseNumber(String(content['impact.stat4Value'] ?? '90'), 90),
-        suffix: String(content['impact.stat4Suffix'] ?? '+'),
-      },
+      { label: 'PV installed', value: 30, suffix: '+ MW' },
+      { label: 'Energy storage', value: 20, suffix: '+ MWh' },
+      { label: 'C&I projects', value: 30, suffix: '+' },
+      { label: 'Operating Regions in Nigeria', value: 90, suffix: '+' },
     ],
   };
 
