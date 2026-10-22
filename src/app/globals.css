@@ -10336,3 +10336,17 @@ select option:hover {
   position: relative !important;
   z-index: 10 !important;
 }
+
+
+/* Fix Globe cutting off at the bottom */
+@media (min-width: 900px) {
+  .impact-section {
+    min-height: 1200px !important;
+    padding-bottom: 200px !important;
+  }
+  .impact-section__globe {
+    width: clamp(560px, 55vw, 750px) !important;
+    height: clamp(560px, 55vw, 750px) !important;
+    top: 45% !important;
+  }
+}
