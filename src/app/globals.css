@@ -10374,3 +10374,32 @@ select option:hover {
     transform: translate(-50%, -50%) !important;
   }
 }
+
+
+/* ============================================================
+   FINAL GLOBE FIX: Force section to be tall enough for the globe
+   ============================================================ */
+@media (min-width: 900px) {
+  .impact-section {
+    /* The globe is max 750px tall. Setting min-height to 950px 
+       gives it 100px of breathing room on top and bottom. */
+    min-height: 950px !important; 
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding-top: 40px !important;
+    padding-bottom: 40px !important;
+  }
+  
+  .impact-section__inner {
+    width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  .impact-section__globe {
+    width: clamp(450px, 50vw, 750px) !important;
+    height: clamp(450px, 50vw, 750px) !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+}
