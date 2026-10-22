@@ -1,113 +1,71 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { OptimizedImage } from '@/components/ui/optimized-image';
-import { useTranslation } from '@/lib/i18n/context';
+import { useState } from 'react';
 
-type Media = {
+export type Media = {
   id: string;
   url: string;
-  alt: string;
-  kind: 'IMAGE' | 'VIDEO' | 'DOCUMENT';
+  alt: string | null;
+  kind: string;
 };
 
 type Props = {
   items: Media[];
-  emptyLabel: string;
+  emptyLabel?: string;
 };
 
-const AUTOPLAY_MS = 4000;
-
-export function ProductGallery({ items, emptyLabel }: Props) {
-  const { t } = useTranslation();
+export function ProductGallery({ items, emptyLabel = 'No images available' }: Props) {
   const images = items.filter((m) => m.kind === 'IMAGE');
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-
-  // Reset slide when the product changes
-  useEffect(() => {
-    setIndex(0);
-  }, [items]);
-
-  const go = useCallback(
-    (dir: 1 | -1) => {
-      setIndex((i) => {
-        const n = images.length;
-        if (n === 0) return 0;
-        return (i + dir + n) % n;
-      });
-    },
-    [images.length],
-  );
-
-  // Autoplay, paused on hover or when only one image
-  useEffect(() => {
-    if (images.length < 2 || paused) return;
-    const timer = window.setInterval(() => go(1), AUTOPLAY_MS);
-    return () => window.clearInterval(timer);
-  }, [images.length, paused, go]);
 
   if (images.length === 0) {
-    return <div className="pdp-gallery__empty">{emptyLabel}</div>;
+    return (
+      <div className="pdp-gallery__empty">
+        {emptyLabel}
+      </div>
+    );
   }
 
-  const multiple = images.length > 1;
+  const current = images[index];
 
   return (
-    <div
-      className="pdp-gallery"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-    >
+    <div className="pdp-gallery">
       <div className="pdp-gallery__stage">
         {images.map((img, i) => (
           <div
             key={img.id}
-            className={'pdp-gallery__slide' + (i === index ? ' is-active' : '')}
-            aria-hidden={i !== index}
+            className={`pdp-gallery__slide ${i === index ? 'is-active' : ''}`}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <OptimizedImage
-              src={img.url}
-              alt={img.alt}
-              loading={i === 0 ? 'eager' : 'lazy'}
-            />
+            <img src={img.url} alt={img.alt || ''} />
           </div>
         ))}
 
-        {multiple && (
+        {images.length > 1 && (
           <>
             <button
               type="button"
               className="pdp-gallery__nav pdp-gallery__nav--prev"
-              onClick={() => go(-1)}
-              aria-label={t('aria.galleryPrev')}
+              onClick={() => setIndex((i) => (i === 0 ? images.length - 1 : i - 1))}
+              aria-label="Previous image"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
+              ←
             </button>
             <button
               type="button"
               className="pdp-gallery__nav pdp-gallery__nav--next"
-              onClick={() => go(1)}
-              aria-label={t('aria.galleryNext')}
+              onClick={() => setIndex((i) => (i === images.length - 1 ? 0 : i + 1))}
+              aria-label="Next image"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
+              →
             </button>
-
-            <div className="pdp-gallery__dots" role="tablist">
-              {images.map((img, i) => (
+            <div className="pdp-gallery__dots">
+              {images.map((_, i) => (
                 <button
-                  key={img.id}
+                  key={i}
                   type="button"
-                  role="tab"
-                  aria-selected={i === index}
-                  aria-label={`${i + 1} / ${images.length}`}
-                  className={'pdp-gallery__dot' + (i === index ? ' is-active' : '')}
+                  className={`pdp-gallery__dot ${i === index ? 'is-active' : ''}`}
                   onClick={() => setIndex(i)}
+                  aria-label={`Go to image ${i + 1}`}
                 />
               ))}
             </div>
@@ -115,18 +73,16 @@ export function ProductGallery({ items, emptyLabel }: Props) {
         )}
       </div>
 
-      {multiple && (
+      {images.length > 1 && (
         <div className="pdp-gallery__thumbs">
           {images.map((img, i) => (
             <button
               key={img.id}
               type="button"
-              className={'pdp-gallery__thumb' + (i === index ? ' is-active' : '')}
+              className={`pdp-gallery__thumb ${i === index ? 'is-active' : ''}`}
               onClick={() => setIndex(i)}
-              aria-label={`Show image ${i + 1}`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <OptimizedImage src={img.url} alt="" />
+              <img src={img.url} alt={img.alt || ''} />
             </button>
           ))}
         </div>
