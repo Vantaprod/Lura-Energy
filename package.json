@@ -7,11 +7,11 @@
     },
     "scripts": {
         "dev": "next dev",
-        "build": "prisma generate && prisma migrate deploy && next build",
+        "build": "prisma generate && prisma db push && next build",
         "start": "next start",
         "typecheck": "tsc --noEmit",
         "test": "node --experimental-strip-types --test tests/unit/permissions.test.mts tests/unit/admin-account-policy.test.mts",
-        "db:migrate": "prisma migrate deploy",
+        "db:migrate": "prisma db push",
         "db:seed": "tsx prisma/seed.ts",
         "admin:create": "tsx scripts/create-owner.ts",
         "postinstall": "prisma generate"
