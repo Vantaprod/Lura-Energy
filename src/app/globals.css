@@ -10446,3 +10446,37 @@ select option:hover {
     transform: translate(-50%, -50%) !important;
   }
 }
+
+
+/* ============================================================
+   FIX: Stop the overlapping sections. 
+   Reset the negative margin on the capability path and ensure 
+   the impact section has enough padding so the globe fits.
+   ============================================================ */
+
+/* 1. Remove the negative margin that was pulling this section up */
+.capability-path {
+  margin-top: 0 !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* 2. Ensure the impact section stacks cleanly and fits the globe */
+@media (min-width: 900px) {
+  .impact-section {
+    min-height: 900px !important;
+    padding-top: 100px !important;
+    padding-bottom: 100px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+  
+  .impact-section__globe {
+    width: 700px !important;
+    height: 700px !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+}
