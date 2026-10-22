@@ -10403,3 +10403,19 @@ select option:hover {
     transform: translate(-50%, -50%) !important;
   }
 }
+
+
+/* ============================================================
+   FORCE SECTION HEIGHT: Fix the absolute globe getting cut off
+   ============================================================ */
+@media (min-width: 900px) {
+  .impact-section {
+    /* Force the section to be taller than the globe (which is 750px) */
+    min-height: 1000px !important; 
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+}

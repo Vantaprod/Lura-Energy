@@ -157,7 +157,7 @@ export default async function HomePage() {
       ? String(content['home.ctaBody'])
       : '';
 
-    const impactContent: ImpactContent = {
+      const impactContent: ImpactContent = {
     eyebrow: resolve('impact.eyebrow', 'impact.eyebrow'),
     headingWhite: resolve('impact.headingWhite', 'impact.headingWhite'),
     headingAccent: resolve('impact.headingAccent', 'impact.headingAccent'),
