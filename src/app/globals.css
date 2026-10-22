@@ -10308,3 +10308,31 @@ select option:hover {
   white-space: nowrap !important;
   flex-shrink: 0 !important;
 }
+
+
+/* ============================================================
+   EMERGENCY RESTORE: Globe height, footer overflow, and badges
+   ============================================================ */
+@media (min-width: 900px) {
+  .impact-section {
+    min-height: 1040px !important;
+    padding-top: 120px !important;
+    padding-bottom: 60px !important;
+  }
+  .impact-section__globe {
+    top: 50% !important;
+    width: clamp(560px, 62vw, 900px) !important;
+    height: clamp(560px, 62vw, 900px) !important;
+    opacity: 1 !important;
+  }
+}
+
+.site-footer {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.footer-wrap {
+  position: relative !important;
+  z-index: 10 !important;
+}
