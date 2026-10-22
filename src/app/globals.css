@@ -10419,3 +10419,30 @@ select option:hover {
     padding-bottom: 0 !important;
   }
 }
+
+
+/* ============================================================
+   FORCE GLOBE CONTAINMENT (Bulletproof)
+   ============================================================ */
+@media (min-width: 900px) {
+  .impact-section {
+    padding-top: 150px !important;
+    padding-bottom: 150px !important;
+    min-height: 1100px !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+  }
+  
+  .impact-section__inner {
+    z-index: 2 !important;
+  }
+
+  .impact-section__globe {
+    width: 800px !important;
+    height: 800px !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+}

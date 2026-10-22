@@ -42,7 +42,7 @@ export const DEFAULT_IMPACT: ImpactContent = {
     { label: 'PV installed', value: 30, suffix: '+ MW' },
     { label: 'Energy storage', value: 20, suffix: '+ MWh' },
     { label: 'C&I projects', value: 30, suffix: '+' },
-    { label: 'Local team', value: 50, suffix: '' },
+    { label: 'Operating Regions in Nigeria', value: 90, suffix: '+' },
   ],
 };
 
@@ -58,10 +58,10 @@ export function ImpactSection({ content }: { content?: Partial<ImpactContent> })
     ctaLabel: t('impact.ctaLabel'),
     ctaHref: '/projects',
     stats: [
-      { label: t('impact.stat1Label'), value: 30, suffix: '+ MW' },
-      { label: t('impact.stat2Label'), value: 20, suffix: '+ MWh' },
-      { label: t('impact.stat3Label'), value: 30, suffix: '+' },
-      { label: t('impact.stat4Label'), value: 50, suffix: '' },
+      { label: 'PV installed', value: 30, suffix: '+ MW' },
+      { label: 'Energy storage', value: 20, suffix: '+ MWh' },
+      { label: 'C&I projects', value: 30, suffix: '+' },
+      { label: 'Operating Regions in Nigeria', value: 90, suffix: '+' },
     ],
   };
 
