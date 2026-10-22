@@ -10480,3 +10480,344 @@ select option:hover {
     transform: translate(-50%, -50%) !important;
   }
 }
+
+
+/* ============================================================
+   LOCAL TEST: Big globe, fix overlap
+   ============================================================ */
+
+/* 1. Kill the negative margin completely so sections stack normally */
+.capability-path {
+  margin-top: 0 !important;
+}
+
+/* 2. Make the impact section big enough to hold the big globe */
+@media (min-width: 900px) {
+  .impact-section {
+    min-height: 1150px !important; /* Big container */
+    padding-top: 120px !important;
+    padding-bottom: 120px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+  }
+  
+  /* 3. Make the globe big again */
+  .impact-section__globe {
+    width: clamp(600px, 65vw, 950px) !important;
+    height: clamp(600px, 65vw, 950px) !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+}
+
+
+/* ============================================================
+   FINAL GLOBE FIX (Bulletproof)
+   ============================================================ */
+
+@media (min-width: 900px) {
+  .impact-section {
+    /* Let the section size itself naturally to the text */
+    min-height: auto !important;
+    height: auto !important;
+    display: block !important;
+    padding-top: 120px !important;
+    padding-bottom: 50px !important;
+    
+    /* Let the globe overflow outside the section without being cut */
+    overflow: visible !important; 
+    
+    /* Push the next section down so it doesn't swallow the globe */
+    margin-bottom: 450px !important; 
+  }
+
+  .impact-section__globe {
+    /* Make it big again */
+    width: 900px !important;
+    height: 900px !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 0 !important;
+  }
+  
+  .impact-section__inner {
+    position: relative !important;
+    z-index: 2 !important;
+  }
+}
+
+/* Ensure the next section stacks normally without negative margins */
+.capability-path {
+  margin-top: 0 !important;
+}
+
+
+/* ============================================================
+   FINAL OVERRIDE: Clean Stacking, Big Globe, No Overlaps
+   ============================================================ */
+
+/* 1. Reset everything and force the section to be tall enough */
+.impact-section {
+  min-height: 950px !important;     /* Tall enough for the 850px globe */
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  overflow: hidden !important;      /* CRITICAL: Stops overlapping */
+  margin-bottom: 0 !important;      /* Removes the huge white gap */
+  padding: 0 !important;
+  background: #050E1F !important;   /* Ensure background matches */
+}
+
+/* 2. Keep the content centered and above the globe */
+.impact-section__inner {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 100% !important;
+  max-width: 1440px !important;
+  margin: 0 auto !important;
+  padding: 0 48px !important;
+}
+
+/* 3. Make the globe big again, but strictly inside the section */
+.impact-section__globe {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 850px !important;          /* Big globe */
+  height: 850px !important;         /* Big globe */
+  z-index: 0 !important;
+  pointer-events: none !important;
+}
+
+/* 4. Ensure the next section sits perfectly below it */
+.capability-path {
+  margin-top: 0 !important;
+  position: relative !important;
+  z-index: 3 !important;
+}
+
+/* Mobile override to keep it safe */
+@media (max-width: 899px) {
+  .impact-section {
+    min-height: 0 !important;
+    padding: 60px 20px !important;
+  }
+  .impact-section__globe {
+    width: 120vw !important;
+    height: 120vw !important;
+    opacity: 0.28 !important;
+  }
+}
+
+
+/* ============================================================
+   RESTORE THE GLOWING BACKGROUND
+   ============================================================ */
+.impact-section {
+  background-color: #050E1F !important;
+  background-image: 
+    radial-gradient(ellipse 70% 60% at 50% 50%, rgba(37,71,204,0.22), transparent 70%),
+    linear-gradient(180deg, #050E1F 0%, #0A1550 50%, #050E1F 100%) !important;
+}
+
+
+/* ============================================================
+   FIX WIDTH: Stretch the inner container to fill the screen
+   ============================================================ */
+@media (min-width: 1000px) {
+  .impact-section__inner {
+    max-width: 1600px !important; /* Increased from 1440px */
+    width: 100% !important;
+    padding: 0 4vw !important; /* Responsive padding instead of fixed 48px */
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important; /* Spread text and stats */
+    gap: 40px !important;
+    align-items: center !important;
+  }
+}
+
+
+/* ============================================================
+   RESTORE THE GLOWING BACKGROUND
+   ============================================================ */
+.impact-section {
+  background-color: #050E1F !important;
+  background-image: 
+    radial-gradient(ellipse 70% 60% at 50% 50%, rgba(37,71,204,0.22), transparent 70%),
+    linear-gradient(180deg, #050E1F 0%, #0A1550 50%, #050E1F 100%) !important;
+}
+
+
+/* ============================================================
+   OVERLAP FIX: Let globe spill into the next section
+   ============================================================ */
+@media (min-width: 900px) {
+  .impact-section {
+    min-height: 650px !important; /* Shrink the section to fit the text */
+    overflow: visible !important; /* Let the globe spill out */
+    padding-bottom: 0 !important;
+    z-index: 10 !important; /* Ensure globe stays on top */
+  }
+
+  .impact-section__globe {
+    top: 55% !important; /* Shift globe down slightly */
+  }
+
+  .capability-path {
+    margin-top: -250px !important; /* Pull Capability Path UP under the globe */
+    padding-top: 250px !important; /* Push its text down so it doesn't hide behind the globe */
+    position: relative !important;
+    z-index: 1 !important; /* Keep it behind the globe */
+  }
+}
+
+
+/* ============================================================
+   FIX LAYERING AND OVERLAP
+   ============================================================ */
+@media (min-width: 900px) {
+  .impact-section {
+    /* Give it enough height for the text, but let the globe spill */
+    min-height: 750px !important; 
+    padding-top: 100px !important;
+    padding-bottom: 0 !important;
+    overflow: visible !important; 
+    z-index: 1 !important;
+  }
+
+  /* CRITICAL: Ensure the text and stats are ON TOP of the globe */
+  .impact-section__inner {
+    position: relative !important;
+    z-index: 10 !important; 
+  }
+
+  /* Keep the globe centered and behind the text */
+  .impact-section__globe {
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 850px !important;
+    height: 850px !important;
+    z-index: 0 !important; /* Puts it behind the text */
+  }
+
+  /* Pull the next section up, but ensure it has a solid background to cover the globe */
+  .capability-path {
+    margin-top: -150px !important; /* Pulls the section up */
+    padding-top: 150px !important; /* Pushes the text down so the globe sits above it */
+    position: relative !important;
+    z-index: 5 !important; 
+    background-color: #050E1F !important; /* Solid background to hide the bottom of the globe */
+  }
+}
+
+
+/* ============================================================
+   PERFECT LAYOUT: Readable text, globe overlapping next section
+   ============================================================ */
+
+@media (min-width: 900px) {
+  /* 1. Shrink section to fit the globe, remove the bottom fade */
+  .impact-section {
+    min-height: 850px !important;
+    padding-top: 100px !important;
+    padding-bottom: 0 !important;
+    overflow: visible !important; 
+    position: relative !important;
+  }
+  
+  /* KILL the gradient overlay that was washing out the text */
+  .impact-section::after {
+    display: none !important; 
+  }
+
+  /* 2. Ensure text and stats are ALWAYS on top of the globe */
+  .impact-section__inner {
+    position: relative !important;
+    z-index: 50 !important; 
+  }
+
+  /* 3. The big globe, centered and behind the text */
+  .impact-section__globe {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 900px !important;
+    height: 900px !important;
+    z-index: 0 !important;
+  }
+
+  /* 4. Pull Capability Path up so the globe spills over it */
+  .capability-path {
+    margin-top: -150px !important; /* Pulls section up */
+    padding-top: 150px !important; /* Pushes its text down so globe doesn't hide it */
+    position: relative !important;
+    z-index: 5 !important;
+  }
+}
+
+
+/* ============================================================
+   EMERGENCY RESET: RESTORE ORIGINAL GLOBE AND LAYOUT
+   ============================================================ */
+.impact-section {
+  position: relative !important;
+  isolation: isolate !important;
+  background-color: #050E1F !important;
+  background-image:
+    radial-gradient(ellipse 70% 60% at 50% 50%, rgba(37,71,204,0.22), transparent 70%),
+    linear-gradient(180deg, #050E1F 0%, #0A1550 50%, #050E1F 100%) !important;
+  color: #FFFFFF !important;
+  overflow: hidden !important;
+  padding: 96px 24px 120px !important;
+  min-height: auto !important;
+  margin-bottom: 0 !important;
+}
+
+@media (min-width: 900px) {
+  .impact-section {
+    padding: 140px 48px 180px !important;
+  }
+}
+
+.impact-section__globe {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: clamp(480px, 62vw, 900px) !important;
+  height: clamp(480px, 62vw, 900px) !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  opacity: 1 !important;
+}
+
+.impact-section__inner {
+  position: relative !important;
+  z-index: 2 !important;
+  max-width: 1440px !important;
+  margin: 0 auto !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 56px !important;
+  align-items: center !important;
+}
+
+@media (min-width: 1000px) {
+  .impact-section__inner {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 4fr) !important;
+    gap: 80px !important;
+  }
+}
+
+.capability-path {
+  margin-top: 0 !important;
+}
+
+.impact-section::after {
+  display: none !important;
+}

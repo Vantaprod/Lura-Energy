@@ -1,130 +1,112 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db/prisma';
-import Link from 'next/link';
-import type { Metadata } from 'next';
-import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
+export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  if (
-    process.env.NODE_ENV === 'development' &&
-    process.env.PREVIEW_WITHOUT_DATABASE === 'true'
-  ) {
-    return {};
-  }
-  const item = await prisma.product.findFirst({
-    where: { slug, published: true },
-    select: { name: true, seoTitle: true, seoDescription: true, summary: true },
-  });
-  return item
-    ? {
-        title: item.seoTitle ?? item.name,
-        description: item.seoDescription ?? item.summary ?? undefined,
-      }
-    : {};
-}
 
-export default async function ProductPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
-  const [item, { t }] = await Promise.all([
-    prisma.product.findFirst({
-      where: { slug, published: true },
-      include: {
-        category: true,
-        specifications: { orderBy: { sortOrder: 'asc' } },
-        media: true,
-      },
-    }),
-    getServerT(),
-  ]);
-  if (!item) notFound();
+  const category = await prisma.productCategory.findUnique({
+    where: { slug },
+    include: {
+      products: {
+        where: { published: true },
+        include: { media: true },
+        orderBy: { sortOrder: 'asc' }
+      }
+    }
+  });
+
+  if (!category) notFound();
 
   return (
-    <main>
-      <section className="page-intro">
-        <p className="eyebrow">{item.category?.name ?? t('detail.productEyebrow')}</p>
-        <h1>{item.name}</h1>
-        {item.summary && <p>{item.summary}</p>}
-        <Link
-          className="button"
-          href={'/contact?product=' + encodeURIComponent(item.name)}
-        >
-          {t('detail.requestInfo')} {'\u2192'}
-        </Link>
-      </section>
-      <section className="content-section">
-        {item.media.length > 0 && (
-          <div className="media-gallery">
-            {item.media.map((media) =>
-              media.kind === 'IMAGE' ? (
-                <img
-                  className="record-image"
-                  key={media.id}
-                  src={media.url}
-                  alt={media.alt ?? media.title ?? item.name}
-                  loading="lazy"
-                  width="1200"
-                  height="800"
-                />
-              ) : media.kind === 'VIDEO' ? (
-                <video
-                  key={media.id}
-                  controls
-                  preload="none"
-                  aria-label={media.title ?? item.name}
-                >
-                  <source src={media.url} />
-                </video>
-              ) : (
-                <a
-                  key={media.id}
-                  href={media.url}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {media.title ?? t('detail.document')}
-                </a>
-              ),
-            )}
-          </div>
-        )}
-        <div className="editorial">
-          <div>
-            <h2>{t('detail.productDetails')}</h2>
-            {item.description && <p>{item.description}</p>}
-          </div>
-          {item.specifications.length > 0 && (
-            <table className="detail-specs">
-              <tbody>
-                {item.specifications.map((spec) => (
-                  <tr key={spec.id}>
-                    <td>{spec.label}</td>
-                    <td>
-                      {spec.value}
-                      {spec.unit ? ' ' + spec.unit : ''}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+    <main className="section">
+      <div className="section-heading">
+        <div>
+          <p className="eyebrow">Series</p>
+          <h1 className="display-2">{category.name}</h1>
         </div>
-        {item.warranty && (
-          <p className="form-note">
-            {t('detail.warranty')}: {item.warranty}
-          </p>
+        {category.summary && (
+          <p className="lead" style={{ maxWidth: 400 }}>{category.summary}</p>
         )}
-      </section>
+      </div>
+
+      {category.products.length === 0 ? (
+        <div className="empty-panel">
+          <strong>No products found</strong>
+          <p>Products for this series will appear here once added.</p>
+        </div>
+      ) : (
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
+          gap: '2rem',
+          marginTop: '2rem'
+        }}>
+          {category.products.map((product) => {
+            const image = product.media?.find((m) => m.kind === 'IMAGE')?.url || product.heroImageUrl;
+            
+            return (
+              <Link 
+                key={product.id} 
+                href={`/products/${category.slug}/${product.slug}`} 
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  background: '#FFFFFF',
+                  border: '1px solid #E4E7EC',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                }}
+              >
+                <div style={{ 
+                  height: '240px', 
+                  backgroundColor: '#F7F8FA', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  padding: '1.5rem'
+                }}>
+                  {image ? (
+                    <img 
+                      src={image} 
+                      alt={product.name} 
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                    />
+                  ) : (
+                    <span style={{ color: '#939AA5', fontSize: '14px' }}>No image available</span>
+                  )}
+                </div>
+                
+                <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {product.brand && (
+                    <p style={{ margin: 0, fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#F58220' }}>
+                      {product.brand}
+                    </p>
+                  )}
+                  <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#0A1550' }}>
+                    {product.name}
+                  </h3>
+                  {product.modelNumber && (
+                    <p style={{ margin: 0, fontSize: '13px', color: '#6B7686', fontFamily: 'monospace' }}>
+                      {product.modelNumber}
+                    </p>
+                  )}
+                  {product.summary && (
+                    <p style={{ margin: '0.5rem 0 0', fontSize: '14px', lineHeight: 1.5, color: '#2B3441', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {product.summary}
+                    </p>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </main>
   );
 }

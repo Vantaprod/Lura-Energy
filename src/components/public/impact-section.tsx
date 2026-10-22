@@ -28,50 +28,30 @@ export type ImpactContent = {
   stats: ImpactStat[];
 };
 
-export const DEFAULT_IMPACT: ImpactContent = {
-  eyebrow: 'Our Impact',
-  headingWhite: 'Powering',
-  headingAccent: 'Possibility',
-  body1:
-    'What started with a vision for more accessible and reliable energy is becoming a growing presence across Nigeria. Lura continues to expand through successful solar projects, strategic installer partnerships, and an increasing operational footprint across key regions.',
-  body2:
-    'Every project represents more than an installation \u2014 it represents a home, business, or organization gaining greater access to dependable energy.',
-  ctaLabel: 'Learn more',
-  ctaHref: '/projects',
-  stats: [
+export function ImpactSection({ content }: { content?: Partial<ImpactContent> }) {
+  const { t } = useTranslation();
+
+  const defaultStats: ImpactStat[] = [
     { label: 'PV installed', value: 30, suffix: '+ MW' },
     { label: 'Energy storage', value: 20, suffix: '+ MWh' },
     { label: 'C&I projects', value: 30, suffix: '+' },
     { label: 'Operating Regions in Nigeria', value: 90, suffix: '+' },
-  ],
-};
+  ];
 
-export function ImpactSection({ content }: { content?: Partial<ImpactContent> }) {
-  const { t } = useTranslation();
+  // If the DB passes bad stats or missing labels, fallback to the hardcoded ones
+  const safeStats = (content?.stats && content.stats.length === 4 && content.stats.every(s => !s.label.includes('.')))
+    ? content.stats
+    : defaultStats;
 
-  const translatedDefaults: ImpactContent = {
-    eyebrow: t('impact.eyebrow'),
-    headingWhite: t('impact.headingWhite'),
-    headingAccent: t('impact.headingAccent'),
-    body1: t('impact.body1'),
-    body2: t('impact.body2'),
-    ctaLabel: t('impact.ctaLabel'),
-    ctaHref: '/projects',
-    stats: [
-      { label: 'PV installed', value: 30, suffix: '+ MW' },
-      { label: 'Energy storage', value: 20, suffix: '+ MWh' },
-      { label: 'C&I projects', value: 30, suffix: '+' },
-      { label: 'Operating Regions in Nigeria', value: 90, suffix: '+' },
-    ],
-  };
-
-  const data: ImpactContent = {
-    ...translatedDefaults,
-    ...content,
-    stats:
-      content?.stats && content.stats.length
-        ? content.stats
-        : translatedDefaults.stats,
+  const data = {
+    eyebrow: content?.eyebrow || 'Our Impact',
+    headingWhite: content?.headingWhite || 'Powering',
+    headingAccent: content?.headingAccent || 'Possibility',
+    body1: content?.body1 || 'What started with a vision for more accessible and reliable energy is becoming a growing presence across Nigeria. Lura continues to expand through successful solar projects, strategic distributor partnerships, and an increasing operational footprint across key regions.',
+    body2: content?.body2 || 'Every project represents more than an installation — it represents a home, business, or organization gaining greater access to dependable energy.',
+    ctaLabel: content?.ctaLabel || 'Learn more',
+    ctaHref: content?.ctaHref || '/projects',
+    stats: safeStats,
   };
 
   const { ref, inView } = useInView({
