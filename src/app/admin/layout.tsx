@@ -13,7 +13,8 @@ export default async function AdminLayout({
     getServerLang('admin'),
   ]);
 
-  const isMaster = isMasterEmail(user?.email ?? null);
+  // Check the database role instead of the hardcoded email list
+  const isMaster = user?.role === 'OWNER';
 
   return (
     <>
