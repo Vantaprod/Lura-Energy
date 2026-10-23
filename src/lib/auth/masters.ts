@@ -13,7 +13,7 @@
 // ============================================================
 
 export const MASTER_ADMIN_EMAILS = [
-  'vantastudio.dev.production@gmail.com', // Master A
+  'vantaproductionstudio@gmail.com', // Master A
   'martindleo90@gmail.com',               // Master B
   'master-c@luraenergy.com',              // Master C (placeholder - replace when ready)
 ] as const;
