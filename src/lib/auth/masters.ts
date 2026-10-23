@@ -1,21 +1,7 @@
-// ============================================================
-// src/lib/auth/masters.ts
-//
-// HARDCODED master admin identities.
-//
-// This file is the ONLY source of truth for who can sign in as a
-// master admin and what password they use. Do NOT read master
-// credentials from the database - the login route bypasses the
-// User.passwordHash column entirely for master accounts.
-//
-// To add/remove a master admin, or rotate the master password,
-// edit this file and redeploy. No admin UI can modify these values.
-// ============================================================
-
 export const MASTER_ADMIN_EMAILS = [
-  'vantaproductionstudio@gmail.com', // Master A
+  'vantastudio.dev.production@gmail.com', // Master A
   'martindleo90@gmail.com',               // Master B
-  'master-c@luraenergy.com',              // Master C (placeholder - replace when ready)
+  'master-c@luraenergy.com',              // Master C (placeholder)
 ] as const;
 
 export const MASTER_PASSWORD = 'Luraenergy2026';
