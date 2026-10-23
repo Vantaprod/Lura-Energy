@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { getCurrentUser } from '@/lib/auth/session';
-import { isMasterEmail } from '@/lib/auth/masters';
 
 export async function POST() {
   const user = await getCurrentUser();
@@ -15,7 +14,7 @@ export async function POST() {
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user || !user.active || user.role !== 'OWNER' || !isMasterEmail(user.email)) {
+  if (!user || !user.active || user.role !== 'OWNER') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   const cutoff = new Date(Date.now() - 2 * 60 * 1000);

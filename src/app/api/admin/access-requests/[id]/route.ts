@@ -4,7 +4,6 @@ import bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
 import { prisma } from '@/lib/db/prisma';
 import { getCurrentUser } from '@/lib/auth/session';
-import { isMasterEmail } from '@/lib/auth/masters';
 import { sameOrigin } from '@/lib/security/origin';
 import { sendCredentialsEmail } from '@/lib/mail/send-credentials';
 import { getTransport } from '@/lib/email/transport';
@@ -18,7 +17,7 @@ const schema = z.object({
 
 async function requireMaster() {
   const user = await getCurrentUser();
-  if (!user || !user.active || user.role !== 'OWNER' || !isMasterEmail(user.email)) {
+  if (!user || !user.active || user.role !== 'OWNER') {
     return null;
   }
   return user;

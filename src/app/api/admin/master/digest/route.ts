@@ -2,13 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { getCurrentUser } from '@/lib/auth/session';
-import { isMasterEmail } from '@/lib/auth/masters';
 import { sameOrigin } from '@/lib/security/origin';
 
 export async function GET() {
   const me = await getCurrentUser();
   if (!me?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isMasterEmail(me.email)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (me.role !== 'OWNER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const [enabledRow, freqRow, lastRunRow] = await Promise.all([
     prisma.setting.findUnique({ where: { key: 'digest.enabled' } }),
@@ -31,7 +30,7 @@ const schema = z.object({
 export async function PATCH(req: NextRequest) {
   const me = await getCurrentUser();
   if (!me?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isMasterEmail(me.email)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (me.role !== 'OWNER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   if (!sameOrigin(req)) return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
 
   const parsed = schema.safeParse(await req.json().catch(() => null));

@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { getCurrentUser } from '@/lib/auth/session';
-import { isMasterEmail } from '@/lib/auth/masters';
 
 export async function GET() {
   const me = await getCurrentUser();
   if (!me?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isMasterEmail(me.email)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (me.role !== 'OWNER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const msgs = await prisma.message.findMany({
     orderBy: { createdAt: 'desc' },

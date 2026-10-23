@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { getCurrentUser } from '@/lib/auth/session';
-import { isMasterEmail } from '@/lib/auth/masters';
 import { sameOrigin } from '@/lib/security/origin';
 
 const schema = z.object({
@@ -13,7 +12,7 @@ const schema = z.object({
 export async function POST(req: NextRequest) {
   const me = await getCurrentUser();
   if (!me?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isMasterEmail(me.email)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (me.role !== 'OWNER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   if (!sameOrigin(req)) return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
 
   const parsed = schema.safeParse(await req.json().catch(() => null));

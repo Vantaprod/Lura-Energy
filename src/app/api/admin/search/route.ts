@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { getCurrentUser } from '@/lib/auth/session';
-import { isMasterEmail } from '@/lib/auth/masters';
 
 export async function GET(req: NextRequest) {
   const me = await getCurrentUser();
@@ -12,7 +11,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ messages: [], notifications: [], audit: [], q });
   }
 
-  const isMaster = isMasterEmail(me.email);
+  const isMaster = me.role === 'OWNER';
 
   const [messages, notifications, audit] = await Promise.all([
     // Messages: only ones I'm part of, unless master.

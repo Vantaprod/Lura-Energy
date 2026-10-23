@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { getCurrentUser } from '@/lib/auth/session';
-import { isMasterEmail } from '@/lib/auth/masters';
 
 export const ONLINE_WINDOW_MS = 2 * 60 * 1000;
 
@@ -19,7 +18,7 @@ export async function GET() {
   if (!user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  if (!isMasterEmail(user.email)) {
+  if (user.role !== 'OWNER') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

@@ -2,7 +2,6 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { getServerLang } from '@/lib/i18n/server';
 import { AdminGate } from '@/components/layout/admin-gate';
 import { PresenceBeacon } from '@/components/admin/presence-beacon';
-import { isMasterEmail } from '@/lib/auth/masters';
 
 export default async function AdminLayout({
   children,

@@ -8,7 +8,6 @@ import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db/prisma';
 import { getCurrentUser, SESSION_COOKIE } from '@/lib/auth/session';
-import { isMasterEmail } from '@/lib/auth/masters';
 import { sameOrigin } from '@/lib/security/origin';
 import { cookies } from 'next/headers';
 
@@ -30,7 +29,7 @@ export async function POST(request: NextRequest) {
   const me = await getCurrentUser();
   if (!me) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  if (isMasterEmail(me.email)) {
+  if (me.role === 'OWNER') {
     return NextResponse.json(
       {
         error:
