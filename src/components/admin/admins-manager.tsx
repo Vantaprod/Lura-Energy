@@ -1,9 +1,10 @@
 'use client';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { useTranslation } from '@/lib/i18n/context';
 
-type Account = {
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from '@/lib/i18n/context';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+
+type User = {
   id: string;
   email: string;
   name: string;
@@ -12,9 +13,16 @@ type Account = {
   createdAt: string;
   lastLoginAt: string | null;
 };
-type Invitation = { id: string; email: string; expiresAt: string };
-type Payload = {
-  users: Account[];
+
+type Invitation = {
+  id: string;
+  email: string;
+  role: 'OWNER' | 'ADMIN';
+  expiresAt: string;
+};
+
+type AdminData = {
+  users: User[];
   pending: Invitation[];
   capacity: number;
   used: number;
@@ -23,444 +31,403 @@ type Payload = {
 
 export function AdminsManager() {
   const { t } = useTranslation();
-  const [data, setData] = useState<Payload | null>(null);
-  const [capacity, setCapacity] = useState<number | null>(null);
-  const [email, setEmail] = useState('');
-  const [invite, setInvite] = useState('');
+  const [data, setData] = useState<AdminData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [bulkBusy, setBulkBusy] = useState(false);
+  const [success, setSuccess] = useState('');
+  
+  // Selection state
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  
+  // Invite state
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteLink, setInviteLink] = useState('');
+  const [inviteBusy, setInviteBusy] = useState(false);
+  
+  // Capacity state
+  const [capacity, setCapacity] = useState(6);
+  const [capacityBusy, setCapacityBusy] = useState(false);
 
-  async function load() {
-    const response = await fetch('/api/admin/administrators');
-    if (response.ok) {
-      const result: Payload = await response.json();
-      setData(result);
-      setCapacity(result.capacity);
-      // Prune selection to still-existing ids.
-      setSelected((prev) => {
-        const ids = new Set(result.users.map((u) => u.id));
-        const next = new Set<string>();
-        for (const id of prev) if (ids.has(id)) next.add(id);
-        return next;
-      });
-    } else setError(t('admin.admins.error.load'));
-  }
-  useEffect(() => { void load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  // Custom Dialog State
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    title: string;
+    message: string;
+    confirmText: string;
+    isDestructive: boolean;
+    onConfirm: () => void;
+  } | null>(null);
 
-  async function createInvite(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError('');
-    setMessage('');
-    const response = await fetch('/api/admin/administrators', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      setError(result.error);
-      return;
+  const loadData = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/administrators');
+      if (!res.ok) throw new Error('Failed to load administrators');
+      const json = await res.json();
+      setData(json);
+      setCapacity(json.capacity);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-    setInvite(result.invitationUrl);
-    setEmail('');
-    setMessage(t('admin.admins.notice.inviteCreated'));
-    await load();
-  }
+  }, []);
 
-  async function updateCapacity(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError('');
-    setMessage('');
-    const response = await fetch('/api/admin/administrators/capacity', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ capacity: Number(capacity) }),
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      setError(result.error);
-      return;
-    }
-    setMessage(t('admin.admins.notice.capacityUpdated'));
-    await load();
-  }
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  async function toggle(account: Account) {
-    if (account.active && !window.confirm(t('admin.admins.confirm.disable'))) return;
-    setError('');
-    setMessage('');
-    const response = await fetch(`/api/admin/administrators/${account.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ active: !account.active }),
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      setError(result.error);
-      return;
-    }
-    setMessage(
-      account.active
-        ? t('admin.admins.notice.disabled')
-        : t('admin.admins.notice.reactivated'),
+  const showDialog = (config: typeof confirmConfig) => {
+    setConfirmConfig(config);
+    setConfirmOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setConfirmOpen(false);
+    setTimeout(() => setConfirmConfig(null), 200);
+  };
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     );
-    await load();
-  }
+  };
 
-  async function remove(account: Account) {
-    if (
-      !window.confirm(
-        t('admin.admins.confirm.remove').replace('{name}', account.name),
-      )
-    )
-      return;
-    setError('');
-    setMessage('');
-    const response = await fetch(`/api/admin/administrators/${account.id}`, {
-      method: 'DELETE',
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      setError(result.error);
-      return;
+  const toggleAll = () => {
+    if (!data) return;
+    const manageableUsers = data.users.filter(u => u.id !== data.currentUserId);
+    if (selectedIds.length === manageableUsers.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(manageableUsers.map(u => u.id));
     }
-    setMessage(t('admin.admins.notice.removed'));
-    await load();
-  }
+  };
 
-  async function changeRole(account: Account) {
-    const role = account.role === 'ADMIN' ? 'OWNER' : 'ADMIN';
-    if (
-      !window.confirm(
-        t('admin.admins.confirm.role')
-          .replace('{name}', account.name)
-          .replace('{role}', role),
-      )
-    )
-      return;
-    setError('');
-    setMessage('');
-    const response = await fetch(`/api/admin/administrators/${account.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ role }),
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      setError(result.error);
-      return;
+  // --- ACTIONS ---
+
+  const updateRole = async (id: string, role: 'OWNER' | 'ADMIN') => {
+    setError(''); setSuccess('');
+    try {
+      const res = await fetch(`/api/admin/administrators/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed to update role');
+      setSuccess('Role updated successfully.');
+      loadData();
+    } catch (err: any) {
+      setError(err.message);
     }
-    setMessage(t('admin.admins.notice.roleChanged').replace('{role}', role));
-    await load();
-  }
+  };
 
-  // ----- bulk helpers -----
-  const selectableIds: string[] = (data?.users ?? [])
-    .filter((u) => u.id !== data?.currentUserId)
-    .map((u) => u.id);
+  const toggleActive = async (id: string, active: boolean) => {
+    setError(''); setSuccess('');
+    try {
+      const res = await fetch(`/api/admin/administrators/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed to update status');
+      setSuccess('Status updated successfully.');
+      loadData();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
 
-  function toggleRow(id: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
+  const deleteUser = async (id: string) => {
+    setError(''); setSuccess('');
+    try {
+      const res = await fetch(`/api/admin/administrators/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed to remove user');
+      setSuccess('User removed successfully.');
+      loadData();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
 
-  function toggleAll() {
-    setSelected((prev) => {
-      if (prev.size === selectableIds.length && selectableIds.length > 0) {
-        return new Set();
+  const confirmRemoveUser = (user: User) => {
+    showDialog({
+      title: `Remove ${user.name || user.email}`,
+      message: 'Permanently remove this user? Their sessions will be revoked. Audit events and invitations will be retained.',
+      confirmText: 'Remove',
+      isDestructive: true,
+      onConfirm: () => {
+        handleCloseDialog();
+        deleteUser(user.id);
       }
-      return new Set(selectableIds);
     });
-  }
+  };
 
-  async function runBulk(action: 'deactivate' | 'activate' | 'remove') {
-    const ids = Array.from(selected);
-    if (ids.length === 0) return;
+  const handleBulkAction = (action: 'activate' | 'deactivate' | 'remove') => {
+    if (action === 'remove') {
+      showDialog({
+        title: `Remove ${selectedIds.length} Users`,
+        message: 'Permanently remove the selected users? Their sessions will be revoked.',
+        confirmText: 'Remove All',
+        isDestructive: true,
+        onConfirm: async () => {
+          handleCloseDialog();
+          await executeBulkAction(action);
+        }
+      });
+    } else {
+      executeBulkAction(action);
+    }
+  };
 
-    const confirmMsg =
-      action === 'remove'
-        ? t('admin.admins.bulk.confirmRemove').replace('{n}', String(ids.length))
-        : action === 'deactivate'
-        ? t('admin.admins.bulk.confirmDeactivate').replace('{n}', String(ids.length))
-        : t('admin.admins.bulk.confirmActivate').replace('{n}', String(ids.length));
-
-    if (!window.confirm(confirmMsg)) return;
-
-    setBulkBusy(true);
-    setError('');
-    setMessage('');
+  const executeBulkAction = async (action: 'activate' | 'deactivate' | 'remove') => {
+    setError(''); setSuccess('');
     try {
       const res = await fetch('/api/admin/administrators/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids, action }),
+        body: JSON.stringify({ ids: selectedIds, action }),
       });
-      const result = (await res.json().catch(() => ({}))) as {
-        ok?: number;
-        skipped?: number;
-        errors?: string[];
-        error?: string;
-      };
-      if (!res.ok) {
-        setError(result.error ?? t('admin.admins.bulk.errorGeneric'));
-        return;
-      }
-      setMessage(
-        t('admin.admins.bulk.result')
-          .replace('{ok}', String(result.ok ?? 0))
-          .replace('{skipped}', String(result.skipped ?? 0)),
-      );
-      if (result.errors && result.errors.length > 0) {
-        setError(result.errors.slice(0, 5).join(' · '));
-      }
-      setSelected(new Set());
-      await load();
-    } finally {
-      setBulkBusy(false);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Bulk action failed');
+      
+      setSuccess(`Bulk action completed.`);
+      setSelectedIds([]);
+      loadData();
+    } catch (err: any) {
+      setError(err.message);
     }
-  }
+  };
 
-  const allSelected =
-    selectableIds.length > 0 && selected.size === selectableIds.length;
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(''); setSuccess(''); setInviteLink('');
+    setInviteBusy(true);
+    try {
+      const res = await fetch('/api/admin/administrators', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to create invitation');
+      
+      setInviteLink(json.invitationUrl);
+      setInviteEmail('');
+      loadData();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setInviteBusy(false);
+    }
+  };
+
+  const handleUpdateCapacity = async () => {
+    setError(''); setSuccess('');
+    setCapacityBusy(true);
+    try {
+      const res = await fetch('/api/admin/administrators/capacity', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ capacity }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to update capacity');
+      
+      setSuccess('Capacity updated successfully.');
+      loadData();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setCapacityBusy(false);
+    }
+  };
+
+  if (loading) return <p className="form-note">Loading administrators...</p>;
+  if (!data) return <p className="form-error">Failed to load data.</p>;
+
+  const manageableUsers = data.users.filter(u => u.id !== data.currentUserId);
 
   return (
-    <>
-      <div className="stats">
-        <div className="stat">
-          <strong>{data?.capacity ?? '\u2014'}</strong>
-          {t('admin.admins.stat.seatLimit')}
+    <div>
+      {error && <p className="form-error" style={{ marginBottom: '1rem' }}>{error}</p>}
+      {success && <p className="form-success" style={{ marginBottom: '1rem' }}>{success}</p>}
+
+      {/* --- CAPACITY SECTION --- */}
+      <section style={{ marginBottom: '3rem', padding: '1.5rem', background: '#F7F8FA', borderRadius: '8px' }}>
+        <h2 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', fontWeight: 700 }}>Seat limit</h2>
+        <p className="form-note" style={{ marginBottom: '1rem' }}>
+          {data.used} of {data.capacity} seats currently in use ({data.pending.length} pending invites).
+        </p>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <input
+            type="number"
+            min={1}
+            max={100}
+            value={capacity}
+            onChange={e => setCapacity(Number(e.target.value))}
+            style={{ padding: '10px', borderRadius: '6px', border: '1px solid #DDE2EB', width: '100px' }}
+          />
+          <button
+            type="button"
+            className="button button-secondary"
+            onClick={handleUpdateCapacity}
+            disabled={capacityBusy || capacity === data.capacity}
+          >
+            {capacityBusy ? 'Updating...' : 'Update capacity'}
+          </button>
         </div>
-        <div className="stat">
-          <strong>{data?.used ?? '\u2014'}</strong>
-          {t('admin.admins.stat.active')}
-        </div>
-        <div className="stat">
-          <strong>
-            {data ? data.capacity - data.used - data.pending.length : '\u2014'}
-          </strong>
-          {t('admin.admins.stat.available')}
-        </div>
-      </div>
+      </section>
 
-      <form
-        onSubmit={updateCapacity}
-        className="field"
-        style={{ maxWidth: 400 }}
-      >
-        <label htmlFor="capacity">{t('admin.admins.field.capacity')}</label>
-        <input
-          id="capacity"
-          type="number"
-          min="1"
-          max="100"
-          value={capacity ?? ''}
-          onChange={(event) => setCapacity(Number(event.target.value))}
-        />
-        <button className="button" disabled={capacity === null}>
-          {t('admin.admins.action.updateCapacity')}
-        </button>
-      </form>
+      {/* --- INVITE SECTION --- */}
+      <section style={{ marginBottom: '3rem' }}>
+        <h2 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', fontWeight: 700 }}>Invite administrator</h2>
+        <p className="form-note" style={{ marginBottom: '1rem' }}>Send an invitation link to a new team member.</p>
+        
+        <form onSubmit={handleInvite} style={{ display: 'flex', gap: '1rem', alignItems: 'center', maxWidth: '600px' }}>
+          <input
+            type="email"
+            required
+            placeholder="Official email address"
+            value={inviteEmail}
+            onChange={e => setInviteEmail(e.target.value)}
+            style={{ flex: 1, padding: '12px', borderRadius: '6px', border: '1px solid #DDE2EB' }}
+          />
+          <button type="submit" className="button" disabled={inviteBusy || !inviteEmail}>
+            {inviteBusy ? 'Generating...' : 'Create 48-hour invitation'}
+          </button>
+        </form>
 
-      {message && <p role="status">{message}</p>}
-
-      <h2 style={{ fontSize: '1.8rem', marginTop: '3rem' }}>
-        {t('admin.admins.invite.title')}
-      </h2>
-      <form className="hero-actions" onSubmit={createInvite}>
-        <input
-          className="admin-input"
-          type="email"
-          required
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder={t('admin.admins.invite.emailPlaceholder')}
-        />
-        <button className="button">{t('admin.admins.invite.create')}</button>
-      </form>
-
-      {invite && (
-        <div className="success-box">
-          {t('admin.admins.invite.copyLink')}{' '}
-          <input className="admin-input" readOnly value={invite} />
-        </div>
-      )}
-
-      <h2 style={{ fontSize: '1.8rem', marginTop: '3rem' }}>
-        {t('admin.admins.accounts.title')}
-      </h2>
-
-      {selected.size > 0 && (
-        <div className="bulk-bar" role="region" aria-label={t('admin.admins.bulk.label')}>
-          <span className="bulk-bar__count">
-            {t('admin.admins.bulk.selected').replace('{n}', String(selected.size))}
-          </span>
-          <div className="bulk-bar__actions">
-            <button
-              type="button"
-              className="admin-action"
-              disabled={bulkBusy}
-              onClick={() => void runBulk('deactivate')}
-            >
-              {t('admin.admins.bulk.deactivate')}
-            </button>
-            <button
-              type="button"
-              className="admin-action"
-              disabled={bulkBusy}
-              onClick={() => void runBulk('activate')}
-            >
-              {t('admin.admins.bulk.activate')}
-            </button>
-            <button
-              type="button"
-              className="admin-action admin-action--danger"
-              disabled={bulkBusy}
-              onClick={() => void runBulk('remove')}
-            >
-              {t('admin.admins.bulk.remove')}
-            </button>
-            <button
-              type="button"
-              className="admin-action admin-action--ghost"
-              disabled={bulkBusy}
-              onClick={() => setSelected(new Set())}
-            >
-              {t('admin.admins.bulk.clear')}
-            </button>
+        {inviteLink && (
+          <div style={{ marginTop: '1rem', padding: '1rem', background: '#E0F2FE', borderRadius: '6px', border: '1px solid #BAE6FD' }}>
+            <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Invitation link created!</p>
+            <code style={{ display: 'block', padding: '8px', background: '#FFF', borderRadius: '4px', wordBreak: 'break-all' }}>
+              {inviteLink}
+            </code>
           </div>
-        </div>
-      )}
+        )}
 
-      {data?.users.length ? (
+        {data.pending.length > 0 && (
+          <div style={{ marginTop: '1.5rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>Pending Invitations</h3>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {data.pending.map(inv => (
+                <li key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #E4E7EC' }}>
+                  <span>{inv.email} ({inv.role})</span>
+                  <span className="form-note">Expires {new Date(inv.expiresAt).toLocaleDateString()}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
+
+      {/* --- ACCOUNTS TABLE --- */}
+      <section>
+        <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', fontWeight: 700 }}>Accounts</h2>
+        
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem', padding: '12px', background: '#F7F8FA', borderRadius: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: 600 }}>{selectedIds.length} selected</span>
+          <div style={{ flex: 1 }} />
+          <button className="admin-action" onClick={() => handleBulkAction('deactivate')} disabled={selectedIds.length === 0}>Deactivate</button>
+          <button className="admin-action" onClick={() => handleBulkAction('activate')} disabled={selectedIds.length === 0}>Activate</button>
+          <button className="admin-action" style={{ background: '#DC2626', color: '#FFF', borderColor: '#DC2626' }} onClick={() => handleBulkAction('remove')} disabled={selectedIds.length === 0}>Remove</button>
+          <button className="admin-action" onClick={() => setSelectedIds([])} disabled={selectedIds.length === 0}>Clear</button>
+        </div>
+
         <div style={{ overflowX: 'auto' }}>
           <table className="admin-table">
             <thead>
               <tr>
-                <th style={{ width: 36 }}>
-                  <input
-                    type="checkbox"
-                    aria-label={t('admin.admins.bulk.selectAll')}
-                    checked={allSelected}
+                <th style={{ width: '40px' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={selectedIds.length === manageableUsers.length && manageableUsers.length > 0}
                     onChange={toggleAll}
-                    disabled={selectableIds.length === 0}
                   />
                 </th>
-                <th>{t('admin.admins.col.administrator')}</th>
-                <th>{t('admin.admins.col.role')}</th>
-                <th>{t('admin.admins.col.status')}</th>
-                <th>{t('admin.admins.col.lastSignIn')}</th>
-                <th>{t('admin.admins.col.actions')}</th>
+                <th>Administrator</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Last Sign In</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {data.users.map((account) => {
-                const isMe = account.id === data.currentUserId;
-                const isSel = selected.has(account.id);
-                return (
-                  <tr key={account.id} className={isSel ? 'is-selected' : ''}>
-                    <td>
-                      {!isMe && (
-                        <input
-                          type="checkbox"
-                          aria-label={t('admin.admins.bulk.selectOne').replace(
-                            '{name}',
-                            account.name,
-                          )}
-                          checked={isSel}
-                          onChange={() => toggleRow(account.id)}
-                        />
-                      )}
-                    </td>
-                    <td>
-                      <Link
-                        href={`/admin/administrators/${account.id}`}
-                        style={{
-                          color: '#1428A0',
-                          fontWeight: 700,
-                          textDecoration: 'none',
-                        }}
-                      >
-                        {account.name}
-                      </Link>
-                      <br />
-                      <span className="form-note">{account.email}</span>
-                    </td>
-                    <td>{account.role}</td>
-                    <td>
-                      {account.active
-                        ? t('admin.admins.status.active')
-                        : t('admin.admins.status.disabled')}
-                    </td>
-                    <td>
-                      {account.lastLoginAt
-                        ? new Date(account.lastLoginAt).toLocaleString()
-                        : t('admin.admins.status.never')}
-                    </td>
-                    <td>
-                      {!isMe && (
+              {data.users.map(user => (
+                <tr key={user.id}>
+                  <td>
+                    {user.id !== data.currentUserId && (
+                      <input 
+                        type="checkbox" 
+                        checked={selectedIds.includes(user.id)}
+                        onChange={() => toggleSelection(user.id)}
+                      />
+                    )}
+                  </td>
+                  <td>
+                    <strong>{user.name}</strong>
+                    <br />
+                    <span className="form-note">{user.email}</span>
+                  </td>
+                  <td>
+                    <span style={{ 
+                      padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: 700,
+                      background: user.role === 'OWNER' ? '#FEF3C7' : '#E0E7FF',
+                      color: user.role === 'OWNER' ? '#92400E' : '#3730A3'
+                    }}>
+                      {user.role}
+                    </span>
+                  </td>
+                  <td>
+                    <span style={{ color: user.active ? '#059669' : '#DC2626', fontWeight: 600 }}>
+                      {user.active ? 'Active' : 'Disabled'}
+                    </span>
+                  </td>
+                  <td className="form-note">
+                    {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : 'Never'}
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {user.id !== data.currentUserId && (
                         <>
-                          <button
-                            className="admin-action"
-                            onClick={() => void changeRole(account)}
-                          >
-                            {account.role === 'ADMIN'
-                              ? t('admin.admins.action.makeOwner')
-                              : t('admin.admins.action.makeAdmin')}
-                          </button>{' '}
-                          <button
-                            className="admin-action"
-                            onClick={() => void toggle(account)}
-                          >
-                            {account.active
-                              ? t('admin.admins.action.disable')
-                              : t('admin.admins.action.reactivate')}
-                          </button>{' '}
-                          <button
-                            className="admin-action"
-                            onClick={() => void remove(account)}
-                          >
-                            {t('admin.admins.action.remove')}
+                          {user.role === 'ADMIN' ? (
+                            <button className="admin-action" onClick={() => updateRole(user.id, 'OWNER')}>Make owner</button>
+                          ) : (
+                            <button className="admin-action" onClick={() => updateRole(user.id, 'ADMIN')}>Make admin</button>
+                          )}
+                          
+                          <button className="admin-action" onClick={() => toggleActive(user.id, !user.active)}>
+                            {user.active ? 'Disable' : 'Activate'}
+                          </button>
+                          
+                          <button className="admin-action" style={{ color: '#DC2626' }} onClick={() => confirmRemoveUser(user)}>
+                            Remove
                           </button>
                         </>
                       )}
-                    </td>
-                  </tr>
-                );
-              })}
+                      {user.id === data.currentUserId && (
+                        <span className="form-note">You</span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-      ) : (
-        <p className="form-note">{t('admin.admins.empty.noAccounts')}</p>
-      )}
+      </section>
 
-      {data?.pending.length ? (
-        <>
-          <h2 style={{ fontSize: '1.6rem', marginTop: '2rem' }}>
-            {t('admin.admins.pending.title')}
-          </h2>
-          <ul>
-            {data.pending.map((item) => (
-              <li key={item.id}>
-                {item.email} {'\u00B7'} {t('admin.admins.pending.expires')}{' '}
-                {new Date(item.expiresAt).toLocaleString()}
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null}
-
-      {error && (
-        <p role="alert" className="form-error">
-          {error}
-        </p>
+      {/* --- CUSTOM CONFIRM DIALOG --- */}
+      {confirmConfig && (
+        <ConfirmDialog
+          open={confirmOpen}
+          title={confirmConfig.title}
+          message={confirmConfig.message}
+          confirmText={confirmConfig.confirmText}
+          isDestructive={confirmConfig.isDestructive}
+          onCancel={handleCloseDialog}
+          onConfirm={confirmConfig.onConfirm}
+        />
       )}
-    </>
+    </div>
   );
 }

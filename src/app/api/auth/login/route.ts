@@ -4,11 +4,7 @@ import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db/prisma';
 import { createSession } from '@/lib/auth/session';
-import {
-  isMasterEmail,
-  isMasterPassword,
-  getMasterDisplayName,
-} from '@/lib/auth/masters';
+import { isMasterPassword, getMasterDisplayName } from '@/lib/auth/masters';
 import { sameOrigin } from '@/lib/security/origin';
 
 export const runtime = 'nodejs';
@@ -93,40 +89,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, isMaster });
   }
 
-  // ---- MASTER ADMIN FLOW ----
+  // ---- MASTER ADMIN FLOW (Database Driven) ----
   if (intent === 'master') {
-    if (!isMasterEmail(email)) return recordFailure();
-    if (!isMasterPassword(password)) return recordFailure();
-
-    let user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email,
-          name: getMasterDisplayName(email),
-          passwordHash: '__MASTER_MANAGED_IN_CODE__',
-          role: 'OWNER',
-          active: true,
-        },
-      });
-    } else if (user.role !== 'OWNER' || !user.active) {
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: { role: 'OWNER', active: true },
-      });
+    const user = await prisma.user.findUnique({ where: { email } });
+    
+    // Check if the user exists AND has the OWNER role in the DB
+    if (!user || user.role !== 'OWNER' || !user.active) {
+      return recordFailure();
+    }
+    
+    // Check against the hardcoded master password
+    if (!isMasterPassword(password)) {
+      return recordFailure();
     }
 
     return succeed(user.id, true);
   }
 
   // ---- REGULAR ADMIN FLOW ----
-  if (isMasterEmail(email)) {
-    return NextResponse.json(
-      { error: 'Use the Master admin tab to sign in.' },
-      { status: 401 },
-    );
-  }
-
   const user = await prisma.user.findUnique({ where: { email } });
   const match =
     user && user.active ? await bcrypt.compare(password, user.passwordHash) : false;
