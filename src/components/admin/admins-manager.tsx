@@ -36,19 +36,13 @@ export function AdminsManager() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   
-  // Selection state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  
-  // Invite state
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteLink, setInviteLink] = useState('');
   const [inviteBusy, setInviteBusy] = useState(false);
-  
-  // Capacity state
   const [capacity, setCapacity] = useState(6);
   const [capacityBusy, setCapacityBusy] = useState(false);
 
-  // Custom Dialog State
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState<{
     title: string;
@@ -94,29 +88,12 @@ export function AdminsManager() {
 
   const toggleAll = () => {
     if (!data) return;
-    const manageableUsers = data.users.filter(u => u.id !== data.currentUserId);
+    // Only selectable users are active admins who are not the current user
+    const manageableUsers = data.users.filter(u => u.id !== data.currentUserId && u.role === 'ADMIN');
     if (selectedIds.length === manageableUsers.length) {
       setSelectedIds([]);
     } else {
       setSelectedIds(manageableUsers.map(u => u.id));
-    }
-  };
-
-  // --- ACTIONS ---
-
-  const updateRole = async (id: string, role: 'OWNER' | 'ADMIN') => {
-    setError(''); setSuccess('');
-    try {
-      const res = await fetch(`/api/admin/administrators/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role }),
-      });
-      if (!res.ok) throw new Error((await res.json()).error || 'Failed to update role');
-      setSuccess('Role updated successfully.');
-      loadData();
-    } catch (err: any) {
-      setError(err.message);
     }
   };
 
@@ -151,7 +128,7 @@ export function AdminsManager() {
   const confirmRemoveUser = (user: User) => {
     showDialog({
       title: `Remove ${user.name || user.email}`,
-      message: 'Permanently remove this user? Their sessions will be revoked. Audit events and invitations will be retained.',
+      message: 'Permanently remove this administrator? Their sessions will be revoked.',
       confirmText: 'Remove',
       isDestructive: true,
       onConfirm: () => {
@@ -164,8 +141,8 @@ export function AdminsManager() {
   const handleBulkAction = (action: 'activate' | 'deactivate' | 'remove') => {
     if (action === 'remove') {
       showDialog({
-        title: `Remove ${selectedIds.length} Users`,
-        message: 'Permanently remove the selected users? Their sessions will be revoked.',
+        title: `Remove ${selectedIds.length} Admins`,
+        message: 'Permanently remove the selected administrators? Their sessions will be revoked.',
         confirmText: 'Remove All',
         isDestructive: true,
         onConfirm: async () => {
@@ -244,14 +221,14 @@ export function AdminsManager() {
   if (loading) return <p className="form-note">Loading administrators...</p>;
   if (!data) return <p className="form-error">Failed to load data.</p>;
 
-  const manageableUsers = data.users.filter(u => u.id !== data.currentUserId);
+  // Only regular ADMINs can be selected in bulk
+  const manageableUsers = data.users.filter(u => u.id !== data.currentUserId && u.role === 'ADMIN');
 
   return (
     <div>
       {error && <p className="form-error" style={{ marginBottom: '1rem' }}>{error}</p>}
       {success && <p className="form-success" style={{ marginBottom: '1rem' }}>{success}</p>}
 
-      {/* --- CAPACITY SECTION --- */}
       <section style={{ marginBottom: '3rem', padding: '1.5rem', background: '#F7F8FA', borderRadius: '8px' }}>
         <h2 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', fontWeight: 700 }}>Seat limit</h2>
         <p className="form-note" style={{ marginBottom: '1rem' }}>
@@ -277,11 +254,8 @@ export function AdminsManager() {
         </div>
       </section>
 
-      {/* --- INVITE SECTION --- */}
       <section style={{ marginBottom: '3rem' }}>
         <h2 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', fontWeight: 700 }}>Invite administrator</h2>
-        <p className="form-note" style={{ marginBottom: '1rem' }}>Send an invitation link to a new team member.</p>
-        
         <form onSubmit={handleInvite} style={{ display: 'flex', gap: '1rem', alignItems: 'center', maxWidth: '600px' }}>
           <input
             type="email"
@@ -304,23 +278,8 @@ export function AdminsManager() {
             </code>
           </div>
         )}
-
-        {data.pending.length > 0 && (
-          <div style={{ marginTop: '1.5rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>Pending Invitations</h3>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {data.pending.map(inv => (
-                <li key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #E4E7EC' }}>
-                  <span>{inv.email} ({inv.role})</span>
-                  <span className="form-note">Expires {new Date(inv.expiresAt).toLocaleDateString()}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </section>
 
-      {/* --- ACCOUNTS TABLE --- */}
       <section>
         <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', fontWeight: 700 }}>Accounts</h2>
         
@@ -355,7 +314,8 @@ export function AdminsManager() {
               {data.users.map(user => (
                 <tr key={user.id}>
                   <td>
-                    {user.id !== data.currentUserId && (
+                    {/* Only show checkbox for ADMINs that aren't the current user */}
+                    {user.id !== data.currentUserId && user.role === 'ADMIN' && (
                       <input 
                         type="checkbox" 
                         checked={selectedIds.includes(user.id)}
@@ -387,14 +347,15 @@ export function AdminsManager() {
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      {user.id !== data.currentUserId && (
+                      {/* If it's the current user, just show "You" */}
+                      {user.id === data.currentUserId ? (
+                        <span className="form-note">You</span>
+                      ) : user.role === 'OWNER' ? (
+                        /* If it's another OWNER, show no actions */
+                        <span className="form-note" style={{ color: '#9CA3AF' }}>Protected</span>
+                      ) : (
+                        /* If it's an ADMIN, show Disable/Activate and Remove */
                         <>
-                          {user.role === 'ADMIN' ? (
-                            <button className="admin-action" onClick={() => updateRole(user.id, 'OWNER')}>Make owner</button>
-                          ) : (
-                            <button className="admin-action" onClick={() => updateRole(user.id, 'ADMIN')}>Make admin</button>
-                          )}
-                          
                           <button className="admin-action" onClick={() => toggleActive(user.id, !user.active)}>
                             {user.active ? 'Disable' : 'Activate'}
                           </button>
@@ -403,9 +364,6 @@ export function AdminsManager() {
                             Remove
                           </button>
                         </>
-                      )}
-                      {user.id === data.currentUserId && (
-                        <span className="form-note">You</span>
                       )}
                     </div>
                   </td>
@@ -416,7 +374,6 @@ export function AdminsManager() {
         </div>
       </section>
 
-      {/* --- CUSTOM CONFIRM DIALOG --- */}
       {confirmConfig && (
         <ConfirmDialog
           open={confirmOpen}
